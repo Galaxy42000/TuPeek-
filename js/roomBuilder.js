@@ -22,7 +22,31 @@ function wallFrames(W, D) {
   };
 }
 
+// Rotation that turns a fixture's front (+z local) toward a compass direction.
 const FACING = { south: 0, east: Math.PI / 2, north: Math.PI, west: -Math.PI / 2 };
+
+// Corner frames: origin at the room corner, local x and z both run along a wall away from it.
+function cornerFrames(W, D) {
+  return {
+    'north-west': { x: 0, z: 0, rot: 0, walls: (a) => ({ north: [0, a], west: [D - a, D] }) },
+    'north-east': { x: W, z: 0, rot: -Math.PI / 2, walls: (a) => ({ north: [W - a, W], east: [0, a] }) },
+    'south-east': { x: W, z: D, rot: Math.PI, walls: (a) => ({ east: [D - a, D], south: [0, a] }) },
+    'south-west': { x: 0, z: D, rot: Math.PI / 2, walls: (a) => ({ south: [W - a, W], west: [0, a] }) },
+  };
+}
+
+// Flat shape (x, z) → horizontal slab of thickness h whose underside sits at y.
+function slab(points, h, y, mat) {
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], i) => (i ? shape.lineTo(x, -z) : shape.moveTo(x, -z)));
+  shape.closePath();
+  const geo = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: false });
+  geo.rotateX(-Math.PI / 2);
+  const m = new THREE.Mesh(geo, mat);
+  m.position.y = y;
+  m.castShadow = m.receiveShadow = true;
+  return m;
+}
 
 export function buildRoom(cfg) {
   const { width: W, depth: D, height: H, wallThickness: t = 4.5 } = cfg.room;
@@ -37,12 +61,30 @@ export function buildRoom(cfg) {
   const counters = {};
   const nextId = (p) => `${p}${(counters[p] = (counters[p] || 0) + 1)}`;
 
+  // Which walls exist (open sides of the kitchen are simply left out).
+  const wallSpecs = cfg.room.walls || Object.fromEntries(WALL_NAMES.map((n) => [n, {}]));
+  // Floor/ceiling can extend past the room box on open sides.
+  const fm = { north: 0, east: 0, south: 0, west: 0, ...(cfg.room.floorMargin || {}) };
+  const floorBox = { x0: -fm.west, x1: W + fm.east, z0: -fm.north, z1: D + fm.south };
+
   const wallGroup = (wall, start = 0) => {
     const fr = frames[wall];
     if (!fr) throw new Error(`Unknown wall "${wall}" (use north, east, south or west)`);
     const g = new THREE.Group();
     g.rotation.y = fr.rot;
     g.position.copy(fr.origin).addScaledVector(fr.u, start);
+    return g;
+  };
+
+  // Group for a free-standing row whose footprint covers world x ∈ [x, x+w'], z ∈ [z, z+d']
+  // (w along the fronts, d deep) with its fronts facing `facing`.
+  const placeFootprint = (x, z, w, d, facing) => {
+    const rot = FACING[facing] ?? 0;
+    const ux = Math.cos(rot), uz = -Math.sin(rot), nx = Math.sin(rot), nz = Math.cos(rot);
+    const pts = [[0, 0], [w, 0], [0, d], [w, d]].map(([a, b]) => [a * ux + b * nx, a * uz + b * nz]);
+    const g = new THREE.Group();
+    g.rotation.y = rot;
+    g.position.set(x - Math.min(...pts.map((p) => p[0])), 0, z - Math.min(...pts.map((p) => p[1])));
     return g;
   };
 
@@ -63,11 +105,12 @@ export function buildRoom(cfg) {
   };
 
   // ---------- floor & ceiling ----------
-  const floor = addBox(root, M.floor, -t, -1, -t, W + 2 * t, 1, D + 2 * t, { cast: false });
-  tag(floor, { id: 'Floor', type: 'Floor', width: W, depth: D, notes: `Room is ${fmtFtIn(W)} (north/south walls) by ${fmtFtIn(D)} (east/west walls)` });
+  const fw = floorBox.x1 - floorBox.x0, fd = floorBox.z1 - floorBox.z0;
+  const floor = addBox(root, M.floor, floorBox.x0 - t, -1, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false });
+  tag(floor, { id: 'Floor', type: 'Floor', notes: `Kitchen is ${fmtFtIn(W)} along the north/south walls and ${fmtFtIn(D)} along the east/west walls.` });
 
   const ceiling = new THREE.Group();
-  addBox(ceiling, M.ceiling, -t, H, -t, W + 2 * t, 1, D + 2 * t, { cast: false });
+  addBox(ceiling, M.ceiling, floorBox.x0 - t, H, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false });
   tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H });
   root.add(ceiling);
 
@@ -79,15 +122,18 @@ export function buildRoom(cfg) {
   }));
 
   for (const name of WALL_NAMES) {
+    const spec = wallSpecs[name];
+    if (!spec) continue;
     const fr = frames[name];
     const g = wallGroup(name);
-    // north/south walls run past the corners so the corners are closed
-    const ext = name === 'north' || name === 'south' ? t : 0;
+    // Walls run past their corners (into the neighboring wall, or on into the next room).
+    const lo = -(spec.extendLeft ?? (name === 'north' || name === 'south' ? t : 0));
+    const hi = fr.len + (spec.extendRight ?? (name === 'north' || name === 'south' ? t : 0));
     const ops = openings.filter((o) => o.wall === name);
-    for (const r of panelRects(fr.len + 2 * ext, H, ops.map((o) => ({ ...o, start: o.start + ext })))) {
-      addBox(g, M.wall, r.x - ext, r.y, -t, r.w, r.h, t, { cast: false });
+    for (const r of panelRects(hi - lo, H, ops.map((o) => ({ ...o, start: o.start - lo })))) {
+      addBox(g, M.wall, r.x + lo, r.y, -t, r.w, r.h, t, { cast: false });
     }
-    tag(g, { id: `${cap(name)} wall`, type: 'Wall', width: fr.len, height: H, notes: 'Length is the inside face, corner to corner.' });
+    tag(g, { id: `${cap(name)} wall`, type: 'Wall', width: fr.len, height: H, notes: 'Length is the kitchen section of the wall, corner to corner.' });
     label(g, `${cap(name)} wall · ${fmtFtIn(fr.len)}`, fr.len / 2, H - 6, 1, 'wall');
 
     for (const o of ops) {
@@ -95,14 +141,28 @@ export function buildRoom(cfg) {
       F.opening(og, ctx, o, t);
       g.add(og);
       const kind = { window: 'Window', door: 'Doorway', opening: 'Cased opening' }[o.type] || 'Opening';
-      tag(og, { id: o.id, type: kind, wall: name, start: o.start, width: o.width, height: o.height, bottom: o.bottom || undefined });
+      tag(og, { id: o.id, type: kind, wall: name, start: o.start, width: o.width, height: o.height, bottom: o.bottom || undefined, notes: o.notes });
       label(og, `${o.id} · ${fmtIn(o.width)}`, o.start + o.width / 2, o.bottom + o.height / 2, 1);
       if (o.bottom === 0) occupied[name].push([o.start, o.start + o.width]);
     }
     root.add(g);
     const center = fr.origin.clone().addScaledVector(fr.u, fr.len / 2).setY(H / 2);
-    walls.push({ name, group: g, center, normal: fr.n.clone() });
+    walls.push({ name, group: g, center, normal: fr.n.clone(), lo, hi });
   }
+
+  // tile behind a counter, split around windows/doors on that wall
+  const backsplash = (g, wall, runStart, a, b, counterTop, height) => {
+    const rel = openings
+      .filter((o) => o.wall === wall)
+      .map((o) => {
+        const trim = o.type === 'opening' ? 0 : 3.5; // stop tile at the casing
+        return { start: o.start - trim - runStart - a, width: o.width + 2 * trim, bottom: o.bottom - counterTop - (o.type === 'window' ? 3.75 : 0), height: o.height + 2 * trim + 3.75 };
+      });
+    const bs = new THREE.Group();
+    for (const r of panelRects(b - a, height, rel)) addBox(bs, M.backsplash, a + r.x, counterTop + r.y, 0, r.w, r.h, 0.375, { cast: false });
+    g.add(bs);
+    return bs;
+  };
 
   // ---------- base cabinet runs (with countertop, sink, backsplash) ----------
   for (const spec of cfg.baseRuns || []) {
@@ -121,6 +181,7 @@ export function buildRoom(cfg) {
       const id = it.id || nextId({ dishwasher: 'DW', range: 'RANGE' }[kind] || 'B');
       if (kind === 'dishwasher') F.dishwasher(ig, ctx, it.width, run);
       else if (kind === 'range') F.range(ig, ctx, it.width, run);
+      else if (kind === 'panel') addBox(ig, M.cabinet, 0, 0, 0, it.width, run.height, run.depth + 0.75);
       else if (kind === 'gap') { /* empty space, e.g. for a trash can or seating knee space */ }
       else F.baseCabinet(ig, ctx, it.width, run, kind === 'sink' ? 'sink' : it.fronts || 'door-drawer', it);
       if (kind === 'sink') sinks.push({ x, w: it.width, it });
@@ -131,9 +192,9 @@ export function buildRoom(cfg) {
         seg.b = x + it.width;
       } else seg = null;
 
-      const typeName = { cabinet: 'Base cabinet', sink: 'Sink base', dishwasher: 'Dishwasher', range: 'Range', gap: 'Open space' }[kind];
-      tag(ig, { id, type: typeName, wall: run.wall, start: run.start + x, width: it.width, height: kind === 'range' ? run.height + run.counterThickness : run.height, depth: run.depth, fronts: kind === 'cabinet' ? it.fronts || 'door-drawer' : undefined, notes: it.notes });
-      label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, run.height * 0.5, run.depth + 2);
+      const typeName = { cabinet: 'Base cabinet', sink: 'Sink base', dishwasher: 'Dishwasher', range: 'Range', gap: 'Open space', panel: 'End panel' }[kind];
+      tag(ig, { id, type: typeName, wall: run.wall, start: run.start + x, width: it.width, height: kind === 'range' ? run.height + run.counterThickness : run.height, depth: run.depth, fronts: kind === 'cabinet' ? it.fronts || 'door-drawer' : undefined, code: it.code, notes: it.notes });
+      if (kind !== 'panel') label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, run.height * 0.5, run.depth + 2);
       x += it.width;
     }
     const total = x;
@@ -176,23 +237,60 @@ export function buildRoom(cfg) {
 
     if (run.backsplash > 0) {
       const a = -run.extendLeft, b = total + run.extendRight;
-      const rel = openings
-        .filter((o) => o.wall === run.wall)
-        .map((o) => {
-          const trim = o.type === 'opening' ? 0 : 3.5; // stop tile at the casing
-          return { start: o.start - trim - run.start - a, width: o.width + 2 * trim, bottom: o.bottom - counterTop - (o.type === 'window' ? 3.75 : 0), height: o.height + 2 * trim + 3.75 };
-        });
-      const bs = new THREE.Group();
-      for (const r of panelRects(b - a, run.backsplash, rel)) addBox(bs, M.backsplash, a + r.x, counterTop + r.y, 0, r.w, r.h, 0.375, { cast: false });
+      const bs = backsplash(g, run.wall, run.start, a, b, counterTop, run.backsplash);
       tag(bs, { id: `${run.id || 'Run'} backsplash`, type: 'Backsplash', wall: run.wall, start: run.start + a, width: b - a, height: run.backsplash });
-      g.add(bs);
     }
     occupied[run.wall].push([run.start - run.extendLeft, run.start + total + run.extendRight]);
   }
 
-  // ---------- wall cabinet runs (uppers, hoods) ----------
+  // ---------- diagonal corner cabinets ----------
+  const cframes = cornerFrames(W, D);
+  for (const spec of cfg.corners || []) {
+    const cf = cframes[spec.corner];
+    if (!cf) throw new Error(`Unknown corner "${spec.corner}"`);
+    const upper = spec.kind === 'wall';
+    const c = upper
+      ? { size: 24, depth: 12, bottom: 54, height: 30, ...spec }
+      : { size: 36, depth: 24, height: 34.5, toeKick: 4, counterThickness: 1.5, overhang: 1, backsplash: 18, ...spec };
+    const id = c.id || nextId(upper ? 'U' : 'B');
+    const g = new THREE.Group();
+    g.position.set(cf.x, 0, cf.z);
+    g.rotation.y = cf.rot;
+    root.add(g);
+    const a = c.size, d = c.depth;
+    const pent = (dd) => [[0, 0], [a, 0], [a, dd], [dd, a], [0, a]];
+    const mat = M.cabinet;
+    // the door sits on the 45° face between (d, a) and (a, d)
+    const front = new THREE.Group();
+    front.position.set(d, 0, a);
+    front.rotation.y = Math.PI / 4;
+    g.add(front);
+    const L = (a - d) * Math.SQRT2;
+    if (upper) {
+      g.add(slab(pent(d), c.height, c.bottom, mat));
+      F.fronts(front, ctx, mat, L, c.bottom, c.bottom + c.height, 0, 'doors', { doors: 1, hinge: c.hinge }, { upper: true });
+    } else {
+      g.add(slab(pent(d), c.height - c.toeKick, c.toeKick, mat));
+      g.add(slab(pent(d - 3), c.toeKick, 0, M.toeKick));
+      F.fronts(front, ctx, mat, L, c.toeKick, c.height, 0, c.fronts || 'door-drawer', { doors: 1, hinge: c.hinge });
+      const top = slab(pent(d + c.overhang), c.counterThickness, c.height, M.counter);
+      tag(top, { id: `${id} countertop`, type: 'Countertop (corner)', width: a, depth: a });
+      g.add(top);
+      const ct = c.height + c.counterThickness;
+      if (c.backsplash > 0) {
+        addBox(g, M.backsplash, 0, ct, 0, a, c.backsplash, 0.375, { cast: false });
+        addBox(g, M.backsplash, 0, ct, 0.375, 0.375, c.backsplash, a - 0.375, { cast: false });
+      }
+      for (const [wall, span] of Object.entries(cf.walls(a))) occupied[wall].push(span);
+    }
+    const yMid = upper ? c.bottom + c.height / 2 : c.height * 0.5;
+    tag(g, { id, type: upper ? 'Diagonal corner wall cabinet' : 'Diagonal corner base cabinet', code: c.code, width: a, depth: d, height: c.height, bottom: upper ? c.bottom : undefined, notes: `${spec.corner} corner. Runs ${fmtIn(a)} along each wall; the door is on the 45° face.${c.notes ? ' ' + c.notes : ''}` });
+    label(g, `${id} · ${fmtIn(a)}`, (a + d) / 2 + 2, yMid, (a + d) / 2 + 2);
+  }
+
+  // ---------- wall cabinet runs (uppers, hoods, microwaves) ----------
   for (const spec of cfg.wallRuns || []) {
-    const run = { depth: 12, height: 36, bottom: 54, ...spec };
+    const run = { depth: 12, height: 30, bottom: 54, ...spec };
     const g = wallGroup(run.wall, run.start);
     root.add(g);
     let x = 0;
@@ -208,108 +306,122 @@ export function buildRoom(cfg) {
         F.hood(ig, ctx, it.width, hb, H, it.depth ?? 20);
         tag(ig, { id, type: 'Range hood', wall: run.wall, start: run.start + x, width: it.width, bottom: hb, depth: it.depth ?? 20 });
         label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, hb + 6, (it.depth ?? 20) + 1);
+      } else if (kind === 'microwave') {
+        const id = it.id || nextId('MW');
+        F.microwave(ig, ctx, it.width, bottom, h, d);
+        tag(ig, { id, type: 'Over-the-range microwave', code: it.code, wall: run.wall, start: run.start + x, width: it.width, height: h, depth: d, bottom, notes: it.notes });
+        label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, bottom + h / 2, d + 2);
       } else if (kind !== 'gap') {
         const id = it.id || nextId('U');
         F.upperCabinet(ig, ctx, it.width, bottom, h, d, it.fronts || 'doors', it);
-        tag(ig, { id, type: 'Wall cabinet', wall: run.wall, start: run.start + x, width: it.width, height: h, depth: d, bottom, fronts: it.fronts || 'doors', notes: it.notes });
+        tag(ig, { id, type: 'Wall cabinet', wall: run.wall, start: run.start + x, width: it.width, height: h, depth: d, bottom, fronts: it.fronts || 'doors', code: it.code, notes: it.notes });
         label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, bottom + h / 2, d + 2);
       }
       x += it.width;
     }
   }
 
-  // ---------- tall items (fridge, pantry) ----------
+  // ---------- tall items (fridge, pantry) — on a wall, or free-standing with x/z/facing ----------
   for (const it of cfg.tall || []) {
-    const g = wallGroup(it.wall, it.start);
+    const g = it.wall ? wallGroup(it.wall, it.start) : placeFootprint(it.x, it.z, it.width, it.depth, it.facing);
     root.add(g);
     const type = it.type || 'pantry';
     const id = it.id || nextId(type === 'fridge' ? 'REF' : 'T');
     if (type === 'fridge') F.fridge(g, ctx, it.width, it.height, it.depth);
     else F.tallCabinet(g, ctx, it.width, it.height, it.depth, it.toeKick ?? 4, it);
-    tag(g, { id, type: type === 'fridge' ? 'Refrigerator' : 'Tall cabinet', wall: it.wall, start: it.start, width: it.width, height: it.height, depth: it.depth, notes: it.notes });
+    const where = it.wall ? {} : { notes: `${it.notes ? it.notes + ' ' : ''}Doors face ${it.facing}.` };
+    tag(g, { id, type: type === 'fridge' ? 'Refrigerator' : 'Tall cabinet', code: it.code, wall: it.wall, start: it.wall ? it.start : undefined, width: it.width, height: it.height, depth: it.depth, notes: it.notes, ...where });
     label(g, `${id} · ${fmtIn(it.width)}`, it.width / 2, it.height * 0.6, it.depth + 2);
-    occupied[it.wall].push([it.start, it.start + it.width]);
+    if (it.wall) occupied[it.wall].push([it.start, it.start + it.width]);
+  }
+
+  // ---------- plain panels (end panels, fillers): world-aligned boxes ----------
+  for (const p of cfg.panels || []) {
+    const m = addBox(root, M[p.material || 'cabinet'], p.x, p.bottom ?? 0, p.z, p.width, p.height, p.depth);
+    tag(m, { id: p.id || 'Panel', type: 'Panel', code: p.code, width: p.width, depth: p.depth, height: p.height, notes: p.notes });
   }
 
   // ---------- islands ----------
-  const islandGroups = {};
+  const islands = {};
   for (const spec of cfg.islands || []) {
-    const isl = { height: 34.5, depth: 24, toeKick: 4, counterThickness: 1.5, facing: 'north', ...spec };
-    const ov = { front: 1, back: 12, sides: 1, ...(spec.overhang || {}) };
+    const isl = { height: 34.5, toeKick: 4, counterThickness: 1.5, ...spec };
     const id = isl.id || nextId('ISLAND');
-    const w = isl.items.reduce((s, i) => s + i.width, 0);
+    const c = isl.counter;
     const g = new THREE.Group();
-    g.position.set(isl.center.x, 0, isl.center.z);
-    g.rotation.y = FACING[isl.facing] ?? 0;
     root.add(g);
-    islandGroups[id] = { group: g, w, isl, ov };
+    islands[id] = c;
 
-    const cab = new THREE.Group();
-    cab.position.set(-w / 2, 0, -isl.depth / 2);
-    g.add(cab);
-    let x = 0;
-    for (const it of isl.items) {
-      const ig = new THREE.Group();
-      ig.position.x = x;
-      cab.add(ig);
-      const iid = it.id || nextId('B');
-      F.baseCabinet(ig, ctx, it.width, isl, it.fronts || 'door-drawer', { ...it, material: 'island' });
-      tag(ig, { id: iid, type: 'Island cabinet', start: x, width: it.width, height: isl.height, depth: isl.depth, fronts: it.fronts || 'door-drawer', notes: `Measured from the left end of island ${id}.` });
-      label(ig, `${iid} · ${fmtIn(it.width)}`, it.width / 2, isl.height * 0.5, isl.depth + 2);
-      x += it.width;
+    for (const row of isl.rows || []) {
+      const w = row.items.reduce((s, i) => s + i.width, 0);
+      const rg = placeFootprint(row.x, row.z, w, row.depth, row.facing);
+      g.add(rg);
+      const run = { depth: row.depth, height: isl.height, toeKick: isl.toeKick };
+      let x = 0;
+      for (const it of row.items) {
+        const ig = new THREE.Group();
+        ig.position.x = x;
+        rg.add(ig);
+        const iid = it.id || nextId('B');
+        F.baseCabinet(ig, ctx, it.width, run, it.fronts || 'door-drawer', { ...it, material: 'island' });
+        tag(ig, { id: iid, type: 'Island cabinet', code: it.code, width: it.width, height: isl.height, depth: row.depth, fronts: it.fronts || 'door-drawer', notes: `${it.notes ? it.notes + ' ' : ''}Faces ${row.facing}.` });
+        label(ig, `${iid} · ${fmtIn(it.width)}`, it.width / 2, isl.height * 0.5, row.depth + 2);
+        x += it.width;
+      }
     }
-    // finished back and ends
-    addBox(g, M.island, -w / 2, 0, -isl.depth / 2 - 0.75, w, isl.height, 0.75);
-    const shape = new THREE.Shape();
-    const x0 = -w / 2 - ov.sides, x1 = w / 2 + ov.sides;
-    const zf = isl.depth / 2 + ov.front, zb = -isl.depth / 2 - 0.75 - ov.back;
-    shape.moveTo(x0, -zb);
-    shape.lineTo(x1, -zb);
-    shape.lineTo(x1, -zf);
-    shape.lineTo(x0, -zf);
-    shape.closePath();
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: isl.counterThickness, bevelEnabled: false });
-    geo.rotateX(-Math.PI / 2);
-    const top = new THREE.Mesh(geo, M.counter);
-    top.position.y = isl.height;
-    top.castShadow = top.receiveShadow = true;
-    g.add(top);
-    tag(g, { id, type: 'Island', width: x1 - x0, depth: zf - zb, height: isl.height + isl.counterThickness, notes: `Center is ${fmtIn(isl.center.x)} from the west wall and ${fmtIn(isl.center.z)} from the north wall. Cabinet fronts face ${isl.facing}; seating overhang ${fmtIn(ov.back)}.` });
-    label(g, `${id} · ${fmtIn(x1 - x0)} × ${fmtIn(zf - zb)}`, 0, isl.height + isl.counterThickness + 3, (zf + zb) / 2, 'island');
 
-    const n = isl.stools ?? 0;
-    for (let i = 0; i < n; i++) F.stool(g, ctx, -w / 2 + (w * (i + 0.5)) / n, zb + 8, isl.stoolHeight ?? 25);
+    const top = slab([[c.x, c.z], [c.x + c.width, c.z], [c.x + c.width, c.z + c.depth], [c.x, c.z + c.depth]], isl.counterThickness, isl.height, M.counter);
+    g.add(top);
+    for (const p of isl.posts || []) {
+      const s = p.size ?? 3;
+      const post = addBox(g, M.island, p.x, 0, p.z, s, isl.height, s);
+      tag(post, { id: p.id || 'Post', type: 'Support post', code: p.code, width: s, depth: s, height: isl.height });
+    }
+    tag(g, { id, type: 'Island', width: c.width, depth: c.depth, height: isl.height + isl.counterThickness, notes: `Counter's north-west corner is ${fmtIn(c.x)} east of the west reference line and ${fmtIn(c.z)} from the north wall.${isl.notes ? ' ' + isl.notes : ''}` });
+    label(g, `${id} · ${fmtIn(c.width)} × ${fmtIn(c.depth)}`, c.x + c.width / 2, isl.height + isl.counterThickness + 3, c.z + c.depth / 2, 'island');
+
+    const st = isl.stools;
+    if (st?.count) {
+      const along = st.side === 'north' || st.side === 'south';
+      const len = along ? c.width : c.depth;
+      for (let i = 0; i < st.count; i++) {
+        const s = (len * (i + 0.5)) / st.count;
+        const out = st.offset ?? 4;
+        const sx = along ? c.x + s : st.side === 'east' ? c.x + c.width + out : c.x - out;
+        const sz = along ? (st.side === 'south' ? c.z + c.depth + out : c.z - out) : c.z + s;
+        F.stool(g, ctx, sx, sz, st.height ?? 25);
+      }
+    }
   }
 
   // ---------- lighting fixtures ----------
-  const L = cfg.lighting || {};
-  for (const p of L.pendants || []) {
-    const target = islandGroups[p.over];
-    if (!target) continue;
-    const { group, w, isl, ov } = target;
-    const zc = ((isl.depth / 2 + ov.front) + (-isl.depth / 2 - 0.75 - ov.back)) / 2;
+  const Lc = cfg.lighting || {};
+  for (const p of Lc.pendants || []) {
+    const c = islands[p.over];
+    if (!c) continue;
     const n = p.count ?? 2;
-    const span = p.spacing ? p.spacing * (n - 1) : w * 0.66;
+    const alongX = c.width >= c.depth;
+    const len = alongX ? c.width : c.depth;
+    const span = p.spacing ? p.spacing * (n - 1) : len * 0.6;
     const pg = new THREE.Group();
-    pg.position.copy(group.position);
-    pg.rotation.copy(group.rotation);
     root.add(pg);
     for (let i = 0; i < n; i++) {
-      const px = n === 1 ? 0 : -span / 2 + (span * i) / (n - 1);
-      F.pendant(pg, ctx, px, p.bottom ?? 68, zc, H);
+      const o = n === 1 ? 0 : -span / 2 + (span * i) / (n - 1);
+      const px = c.x + c.width / 2 + (alongX ? o : 0);
+      const pz = c.z + c.depth / 2 + (alongX ? 0 : o) + (p.offset ?? 0);
+      F.pendant(pg, ctx, px, p.bottom ?? 68, pz, H);
     }
     tag(pg, { id: 'Pendants', type: `${n} pendant lights`, bottom: p.bottom ?? 68, notes: `Spaced ${fmtIn(n > 1 ? span / (n - 1) : 0)} apart over ${p.over}.` });
   }
-  const cans = L.cans || [];
-  for (const [cx, cz] of cans) F.recessedLight(ceiling, ctx, cx, cz, H);
+  for (const [cx, cz] of Lc.cans || []) F.recessedLight(ceiling, ctx, cx, cz, H);
 
   // ---------- baseboards ----------
   if (cfg.style?.baseboard !== false) {
     const bh = cfg.style?.baseboardHeight ?? 4.5;
     for (const w of walls) {
-      for (const [a, b] of freeIntervals(frames[w.name].len, occupied[w.name])) addBox(w.group, M.trim, a, 0, 0, b - a, bh, 0.6, { cast: false });
+      const taken = occupied[w.name].map(([a, b]) => [a - w.lo, b - w.lo]);
+      for (const [a, b] of freeIntervals(w.hi - w.lo, taken)) addBox(w.group, M.trim, a + w.lo, 0, 0, b - a, bh, 0.6, { cast: false });
     }
   }
 
-  return { root, walls, ceiling, labels, bounds: { W, D, H } };
+  return { root, walls, ceiling, labels, bounds: { W, D, H, floor: floorBox } };
 }

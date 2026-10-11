@@ -203,6 +203,15 @@ export function hood(parent, ctx, w, bottom, ceiling, depth = 20) {
   if (ceiling > cTop) addBox(parent, M.steel, (w - chimney) / 2, cTop, 0, chimney, ceiling - cTop, Math.max(8, (depth * chimney) / w));
 }
 
+export function microwave(parent, ctx, w, bottom, h, d) {
+  const M = ctx.M;
+  addBox(parent, M.steel, 0, bottom, 0, w, h, d - 0.6);
+  addBox(parent, M.blackGlass, 0.3, bottom + 0.4, d - 0.6, w * 0.72, h - 0.8, 0.6);
+  addBox(parent, M.black, w * 0.72 + 0.5, bottom + 0.4, d - 0.6, w * 0.28 - 0.8, h - 0.8, 0.5);
+  handle(parent, ctx, w * 0.72 - 1.2, bottom + h / 2, d, 'v', h * 0.7);
+  addBox(parent, M.black, 1, bottom - 0.01, 2, w - 2, 0.02, d - 4, { cast: false });
+}
+
 // ---------- sink ----------
 
 export function sinkBasin(parent, ctx, x, z, w, d, topY, bowl = 9) {

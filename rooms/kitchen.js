@@ -1,29 +1,44 @@
 // ============================================================================
 //  KITCHEN — every number in this file is in INCHES.
+//  Source: Cyncly / NKBA plan, Drawing #1 (designed 3/14/2026, printed 3/17/2026).
 //
 //  How positions work
 //  ------------------
-//  • Walls are named by compass direction: north, east, south, west.
-//    (In the viewer, the north wall is the one with the sink window.)
+//  • Walls are named by compass direction as seen on the plan with its title
+//    block at the bottom: north = top of the plan (range wall),
+//    east = right side (sink wall). The west and south sides are open.
 //  • "start" on a wall = distance from that wall's LEFT corner, as you stand
-//    in the room facing the wall.
-//  • Cabinet runs list their boxes left → right; each box's width is added up,
-//    so changing one width shifts everything to its right.
-//  • Island center: x = inches from the west wall, z = inches from the north wall.
-//
-//  ⚠️  PLACEHOLDER LAYOUT — a generic L-shaped kitchen with an island.
-//      It gets replaced with the real layout from the photo + your measurements.
+//    in the kitchen facing that wall:
+//      - north wall: measured from the west reference line (left edge of the
+//        144¾″ dimension).
+//      - east wall: measured from the north-east corner.
+//  • Free-standing things (island, tall cabinet) use x = inches east of the
+//    west reference line and z = inches south of the north wall.
+//  • Items in a run are listed left → right as you face them, and their widths
+//    add up, so changing one width shifts everything to its right.
+//  • `code` is the cabinet code printed on the plan.
 // ============================================================================
+
+const RANGE_CENTER = 30 + 15 / 16 + 53.75; // 84 11/16″ from the west reference line
+const RANGE_START = RANGE_CENTER - 15;
+const FRIDGE_SPACE = RANGE_START - 21 - 36; // left edge of the 36″ fridge opening
 
 export default {
   id: 'kitchen',
   name: 'Kitchen',
 
   room: {
-    width: 180, // north & south wall length (15′)
-    depth: 168, // east & west wall length (14′)
-    height: 108, // floor to ceiling (9′)
+    width: 144.75, // north wall, west reference line → east wall
+    depth: 122.75, // east wall, north wall → end of the east wall
+    height: 96, // ⚠ not on the plan; assumed 8′ ceiling
     wallThickness: 4.5,
+    // only the north and east walls exist; the north wall carries on to the west
+    walls: {
+      north: { extendLeft: 48 },
+      east: { extendRight: 0 },
+    },
+    // floor continues past the open west and south sides
+    floorMargin: { west: 48, south: 60 },
   },
 
   palette: {
@@ -49,123 +64,149 @@ export default {
     baseboard: true,
   },
 
-  // type: 'window' | 'door' | 'opening' (cased opening with no door)
-  // bottom = height of the opening's bottom edge above the floor
+  // type: 'window' | 'door' | 'opening';  bottom = height of the opening's sill above the floor
   openings: [
-    { id: 'W1', type: 'window', wall: 'north', start: 70, width: 40, bottom: 42, height: 44, grid: [2, 1] },
-    { id: 'D1', type: 'door', wall: 'south', start: 24, width: 36, height: 80 },
-    { id: 'O1', type: 'opening', wall: 'west', start: 36, width: 72, height: 84 },
+    // 36″ from the corner, 36½″ wide (plan). Sill and head heights are not on the plan.
+    { id: 'W1', type: 'window', wall: 'east', start: 36, width: 36.5, bottom: 42, height: 40, grid: [2, 1], notes: 'Sill (42″) and height (40″) are assumptions.' },
   ],
 
-  // Base cabinets: 24″ deep, 34½″ tall + 1½″ counter = 36″ counter height by default.
-  // kind: 'cabinet' (default) | 'sink' | 'dishwasher' | 'range' | 'gap'
+  // Base cabinets: 24″ deep, 34½″ tall + 1½″ counter = 36″ counter height.
+  // kind: 'cabinet' (default) | 'sink' | 'dishwasher' | 'range' | 'panel' | 'gap'
   // fronts: 'door-drawer' | 'doors' | 'drawers2' | 'drawers3' | 'drawers4' | 'open'
   baseRuns: [
     {
       id: 'North run',
       wall: 'north',
-      start: 0,
-      backsplash: 18,
+      start: RANGE_START - 21,
+      extendRight: 1 / 16, // meet the corner countertop
       items: [
-        { id: 'B1', width: 18, fronts: 'drawers3' },
-        { id: 'B2', width: 30 },
-        { id: 'DW', kind: 'dishwasher', width: 24 },
-        { id: 'SINK', kind: 'sink', width: 36 },
-        { id: 'B3', width: 24 },
-        { id: 'B4', width: 24, fronts: 'drawers3' },
-        { id: 'B5', width: 24, fronts: 'doors', notes: 'Corner cabinet' },
+        { id: 'B1', code: 'BD21.3', width: 21, fronts: 'drawers3' },
+        { id: 'RANGE', code: 'RANGE.GAS.30', kind: 'range', width: 30 },
+        { id: 'B2', code: 'BTP9', width: 9, fronts: 'doors', notes: '9″ tray pull-out.' },
       ],
     },
     {
       id: 'East run',
       wall: 'east',
-      start: 24, // the north run's corner cabinet fills the first 24″
-      backsplash: 18,
+      start: 36, // after the 36″ diagonal corner cabinet
+      extendRight: 1.25, // countertop runs past the end panel
       items: [
-        { id: 'B6', width: 18 },
-        { id: 'RANGE', kind: 'range', width: 30 },
-        { id: 'B7', width: 18, fronts: 'drawers3' },
+        { id: 'SINK', code: 'Sink base 36', kind: 'sink', width: 36, bowlWidth: 30, bowlDepth: 18, notes: 'Centered on the window, 54″ from the north wall.' },
+        { id: 'DW', code: 'DISH-IC', kind: 'dishwasher', width: 24, notes: 'Centered 84″ from the north wall.' },
+        { id: 'B3', code: 'B24BUTT.2DXFWT', width: 24, doors: 2 },
+        { id: 'EP1', kind: 'panel', width: 0.75, notes: 'Finished end panel.' },
       ],
     },
+  ],
+
+  // Diagonal ("easy reach") corner cabinets; size = length along each wall.
+  corners: [
+    { id: 'B4', code: 'EZRD36', corner: 'north-east', kind: 'base', size: 36, depth: 24, fronts: 'doors' },
+    { id: 'U5', code: 'WA2430L', corner: 'north-east', kind: 'wall', size: 24, depth: 12, bottom: 54, height: 30 },
   ],
 
   // Wall (upper) cabinets: bottom = height above floor of the cabinet's underside.
-  // kind: 'cabinet' (default) | 'hood' | 'gap';  fronts: 'doors' | 'glass' | 'open'
+  // Uppers are 30″ tall hung at 54″, so their tops line up with the 84″ tall cabinet.
+  // kind: 'cabinet' (default) | 'microwave' | 'hood' | 'gap';  fronts: 'doors' | 'glass' | 'open'
   wallRuns: [
     {
-      id: 'North uppers left',
+      id: 'North uppers',
       wall: 'north',
-      start: 0,
+      start: FRIDGE_SPACE,
       bottom: 54,
-      height: 36,
+      height: 30,
       items: [
-        { id: 'U1', width: 18 },
-        { id: 'U2', width: 30 },
-        { id: 'U3', width: 18 },
+        { id: 'U1', code: 'WR3612BUTT', width: 36, bottom: 72, height: 12, depth: 24, doors: 2, notes: 'Over the refrigerator.' },
+        { id: 'U2', code: 'W2130L', width: 21 },
+        { id: 'U3', code: 'W3015BUTT', width: 30, bottom: 69, height: 15, notes: 'Over the microwave.' },
+        { id: 'U4', code: 'W2130R', width: 21, hinge: 'right' },
       ],
     },
     {
-      id: 'North uppers right',
+      id: 'Over-range microwave',
       wall: 'north',
-      start: 114,
-      bottom: 54,
-      height: 36,
-      items: [
-        { id: 'U4', width: 24, fronts: 'glass' },
-        { id: 'U5', width: 18 },
-        { id: 'U6', width: 24 },
-      ],
+      start: RANGE_START,
+      items: [{ id: 'MW', kind: 'microwave', width: 30, bottom: 52.5, height: 16.5, depth: 15.5, notes: 'Over-the-range microwave (model label is partly hidden on the plan).' }],
     },
     {
-      id: 'East uppers',
+      id: 'East uppers (corner side)',
       wall: 'east',
-      start: 12,
+      start: 24, // after the diagonal corner wall cabinet
       bottom: 54,
-      height: 36,
-      items: [
-        { id: 'U7', width: 30 },
-        { id: 'HOOD', kind: 'hood', width: 30, bottom: 66 },
-        { id: 'U8', width: 18 },
-      ],
+      height: 30,
+      items: [{ id: 'U6', code: 'WPP930', width: 9, notes: 'Circled on the plan; modeled as a 9″ × 30″ wall cabinet.' }],
     },
     {
-      id: 'Over fridge',
+      id: 'East uppers (past window)',
       wall: 'east',
-      start: 114,
-      bottom: 72,
-      height: 18,
-      depth: 24,
-      items: [{ id: 'U9', width: 36 }],
+      start: 122.75 - 2 - 45, // ends flush with the base run's end panel
+      bottom: 54,
+      height: 30,
+      items: [
+        { id: 'U7', code: 'W2130R', width: 21, hinge: 'right' },
+        { id: 'U8', code: 'W2430BUTT', width: 24 },
+      ],
     },
   ],
 
-  // Full-height items. type: 'fridge' | 'pantry'
+  // Tall items. On a wall (wall + start) or free-standing (x, z, facing).
+  // type: 'fridge' | 'pantry'
   tall: [
-    { id: 'PANTRY', type: 'pantry', wall: 'east', start: 90, width: 24, height: 90, depth: 24 },
-    { id: 'FRIDGE', type: 'fridge', wall: 'east', start: 114, width: 36, height: 70, depth: 30 },
+    {
+      id: 'TALL', code: 'U241284BUTT.EB.SH', type: 'pantry',
+      x: 0, z: 0, width: 24, depth: 12, height: 84, facing: 'west', doors: 2,
+      notes: '24″ wide × 12″ deep × 84″ tall utility cabinet at the west end, doors facing out of the kitchen.',
+    },
+    { id: 'FRIDGE', type: 'fridge', wall: 'north', start: FRIDGE_SPACE + 0.125, width: 35.75, height: 70, depth: 30, notes: '36″ opening. Front is 38¾″ from the island.' },
+  ],
+
+  // World-aligned boxes: x/z = north-west corner, width along x, depth along z.
+  panels: [
+    { id: 'EP-FRIDGE', x: 12, z: 0, width: FRIDGE_SPACE - 12, depth: 24.75, height: 84, notes: 'Panel between the tall cabinet and the fridge.' },
   ],
 
   islands: [
     {
       id: 'ISLAND',
-      center: { x: 84, z: 84 },
-      facing: 'north', // which way the cabinet doors face
-      overhang: { front: 1, back: 12, sides: 1 },
-      stools: 3,
-      items: [
-        { id: 'I1', width: 30, fronts: 'drawers3' },
-        { id: 'I2', width: 30, fronts: 'doors' },
+      // north-west corner of the countertop; 74″ × 54″
+      counter: { x: 7, z: 30 + 38.75, width: 74, depth: 54 },
+      rows: [
+        // faces the range; items listed left → right as you face them (east → west)
+        {
+          facing: 'north', x: 8, z: 30 + 38.75 + 1, depth: 24,
+          items: [
+            { id: 'I1', code: 'BD24.3', width: 24, fronts: 'drawers3' },
+            { id: 'I2', code: 'BD24.3', width: 24, fronts: 'drawers3' },
+            { id: 'I3', code: 'B24R.2DXFW', width: 24, hinge: 'right' },
+          ],
+        },
+        // seating side, 13″ in from each end, under the 14″ overhang
+        {
+          facing: 'south', x: 7 + 13, z: 30 + 38.75 + 1 + 24, depth: 15,
+          items: [
+            { id: 'I4', code: 'B24BUTT.FH', width: 24, fronts: 'doors', doors: 2 },
+            { id: 'I5', code: 'B24BUTT.FH', width: 24, fronts: 'doors', doors: 2 },
+          ],
+        },
       ],
+      posts: [
+        { id: 'POST-W', code: 'PSP3X3.34', x: 7, z: 30 + 38.75 + 54 - 3 },
+        { id: 'POST-E', code: 'PSP3X3.34', x: 7 + 74 - 3, z: 30 + 38.75 + 54 - 3 },
+      ],
+      stools: { side: 'south', count: 3, offset: 6 },
     },
   ],
 
   lighting: {
-    // pendants hang over an island; bottom = height of the shade's bottom edge
-    pendants: [{ over: 'ISLAND', count: 3, bottom: 68 }],
-    // recessed ceiling lights as [x from west wall, z from north wall]
+    pendants: [{ over: 'ISLAND', count: 2, bottom: 66 }], // ⚠ placeholder
+    // recessed ceiling lights as [x, z]  ⚠ placeholder
     cans: [
-      [45, 40], [135, 40],
-      [45, 135], [135, 135],
+      [40, 50], [110, 50],
+      [40, 105], [110, 105],
     ],
+  },
+
+  views: {
+    eye: { pos: [-30, 64, 160], target: [95, 40, 25] },
   },
 };

@@ -75,9 +75,9 @@ async function loadRoom(id) {
   document.title = `${cfg.name} · TuPeek`;
   $('#room-select').value = entry.id;
 
-  const { W, D, H } = built.bounds;
-  const c = new THREE.Vector3(W / 2, 0, D / 2).multiplyScalar(IN);
-  const span = Math.max(W, D) * IN;
+  const { H, floor: f } = built.bounds;
+  const c = new THREE.Vector3((f.x0 + f.x1) / 2, 0, (f.z0 + f.z1) / 2).multiplyScalar(IN);
+  const span = Math.max(f.x1 - f.x0, f.z1 - f.z0) * IN;
   sun.position.set(c.x - span * 0.4, H * IN * 3.2, c.z - span * 0.9);
   sun.target.position.copy(c);
   const sc = sun.shadow.camera;
@@ -93,15 +93,19 @@ async function loadRoom(id) {
 }
 
 // ---------- camera views ----------
+// Defaults are derived from the floor area; a room config can override any of them
+// with views: { name: { pos: [x, y, z], target: [x, y, z] } } in inches.
 function viewPresets() {
-  const { W, D, H } = room.bounds;
-  const m = Math.max(W, D);
+  const { W, D, H, floor: f } = room.bounds;
+  const fw = f.x1 - f.x0, fd = f.z1 - f.z0, m = Math.max(fw, fd);
   const v = (x, y, z) => new THREE.Vector3(x, y, z).multiplyScalar(IN);
-  return {
-    overview: { pos: v(-0.35 * W, H + 0.95 * m, D * 1.65), target: v(W * 0.55, 24, D * 0.42) },
-    eye: { pos: v(W * 0.1, 64, D - 14), target: v(W * 0.62, 40, D * 0.15) },
-    top: { pos: v(W / 2, 2.4 * m, D / 2 + 1), target: v(W / 2, 0, D / 2) },
+  const presets = {
+    overview: { pos: v(f.x0 - 0.35 * fw, H + 0.95 * m, f.z0 + fd * 1.65), target: v(f.x0 + fw * 0.55, 24, f.z0 + fd * 0.42) },
+    eye: { pos: v(f.x0 + fw * 0.1, 64, f.z1 - 14), target: v(f.x0 + fw * 0.62, 40, D * 0.15) },
+    top: { pos: v(f.x0 + fw / 2, 2.4 * m, f.z0 + fd / 2 + 1), target: v(f.x0 + fw / 2, 0, f.z0 + fd / 2) },
   };
+  for (const [name, p] of Object.entries(room.cfg.views || {})) presets[name] = { pos: v(...p.pos), target: v(...p.target) };
+  return presets;
 }
 
 let tween = null;
@@ -133,11 +137,12 @@ const walk = { on: false, yaw: 0, pitch: 0, keys: new Set(), eye: 64 };
 function enterWalk() {
   if (walk.on) return;
   tween = null;
-  const { W, D } = room.bounds;
   walk.on = true;
   controls.enabled = false;
-  camera.position.set(W * 0.1, walk.eye, D - 14).multiplyScalar(IN);
-  walk.yaw = -0.6;
+  const start = viewPresets().eye;
+  camera.position.copy(start.pos).setY(walk.eye * IN);
+  const dir = start.target.clone().sub(start.pos);
+  walk.yaw = Math.atan2(-dir.x, -dir.z);
   walk.pitch = -0.12;
   document.body.classList.add('walking');
   $('#walk-btn').classList.add('active');
@@ -164,10 +169,10 @@ function stepWalk(dt) {
   const fwd = new THREE.Vector3(-Math.sin(walk.yaw), 0, -Math.cos(walk.yaw));
   const right = new THREE.Vector3(Math.cos(walk.yaw), 0, -Math.sin(walk.yaw));
   camera.position.addScaledVector(fwd, f * speed).addScaledVector(right, s * speed);
-  const { W, D } = room.bounds;
-  const pad = 0.25;
-  camera.position.x = THREE.MathUtils.clamp(camera.position.x, pad, W * IN - pad);
-  camera.position.z = THREE.MathUtils.clamp(camera.position.z, pad, D * IN - pad);
+  const fb = room.bounds.floor;
+  const pad = 10; // inches
+  camera.position.x = THREE.MathUtils.clamp(camera.position.x, (fb.x0 + pad) * IN, (fb.x1 - pad) * IN);
+  camera.position.z = THREE.MathUtils.clamp(camera.position.z, (fb.z0 + pad) * IN, (fb.z1 - pad) * IN);
   camera.position.y = walk.eye * IN;
   camera.rotation.set(walk.pitch, walk.yaw, 0, 'YXZ');
 }
@@ -241,6 +246,7 @@ function select(obj) {
   const rows = [];
   const row = (k, v) => v !== undefined && v !== null && rows.push(`<dt>${k}</dt><dd>${v}</dd>`);
   row('Type', i.type);
+  row('Plan code', i.code);
   if (i.wall) row('On wall', `${i.wall[0].toUpperCase()}${i.wall.slice(1)}`);
   if (i.start !== undefined && i.wall) row('Starts at', `${fmtFtIn(i.start)} from the wall's left corner`);
   else if (i.start !== undefined) row('Starts at', fmtFtIn(i.start));
