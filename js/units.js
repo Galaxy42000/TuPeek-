@@ -17,3 +17,10 @@ export function fmtFtIn(v) {
   const ft = Math.floor(v / 12);
   return `${ft}′ ${fmtIn(v - ft * 12)} (${fmtIn(v)})`;
 }
+
+// Architectural style: 88 -> 7′-4″, 126.5 -> 10′-6½″
+export function fmtFt(v) {
+  const eighths = Math.round(v * 8);
+  const ft = Math.floor(eighths / 96);
+  return `${ft}′-${fmtIn((eighths - ft * 96) / 8)}`;
+}

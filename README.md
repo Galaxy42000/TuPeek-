@@ -1,6 +1,6 @@
 # TuPeek: 3D house viewer
 
-An interactive 3D model of the house that runs in the browser, built with [Three.js](https://threejs.org/). We're starting with the **kitchen**.
+An interactive 3D model of the house that runs in the browser, built with [Three.js](https://threejs.org/). Use the menu at the top left to switch between the **Whole house** (building layout from the hand-drawn plan, with the kitchen in place) and the detailed **Kitchen**.
 
 **Live site (after GitHub Pages is turned on):** https://galaxy42000.github.io/TuPeek-/
 
@@ -17,11 +17,15 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 | **Measurements** | Shows or hides the ID and width labels |
 | **Cut away walls** | Hides the walls between the camera and the room, dollhouse style |
 
+## Changing the building layout
+
+The walls, doors, windows and room sizes of the whole building live in [`rooms/house.js`](rooms/house.js), also in **inches**. Values marked ⚠ were scaled off the drawing or assumed and still need to be measured. The kitchen is built from `rooms/kitchen.js` and dropped into the house unchanged.
+
 ## Changing the kitchen
 
 All of the kitchen's measurements live in one file: [`rooms/kitchen.js`](rooms/kitchen.js). Everything in it is in **inches**.
 
-- Walls are named **north, east, south, west**. The north wall is the sink/window wall in the viewer.
+- Walls are named **north, east, south, west**. North is the range wall and east is the sink/window wall, matching the top of the plans.
 - `start` is the distance from a wall's **left corner** as you stand in the room facing that wall.
 - Cabinet runs list their boxes from left to right. Changing one width shifts everything to its right.
 - Every cabinet, appliance, window and door has an ID (B1, U3, SINK, FRIDGE, W1…). Click an object in the viewer to see its ID.
@@ -33,9 +37,12 @@ index.html          page shell + import map (no build step)
 css/style.css       UI styles
 js/main.js          renderer, cameras, walk mode, click-to-inspect
 js/roomBuilder.js   turns a room config into 3D geometry
+js/houseBuilder.js  turns the house config into walls, rooms and dimensions
 js/fixtures.js      cabinets, appliances, sink, windows, lights, stools
+js/houseFixtures.js toilet, vanity, shower, washer/dryer, mechanical boxes
 js/materials.js     materials + procedural textures (wood, tile, quartz)
-rooms/index.js      list of rooms in the house
+rooms/index.js      list of views in the menu
+rooms/house.js      building walls, doors, windows, rooms  ← edit this
 rooms/kitchen.js    kitchen layout & measurements  ← edit this
 vendor/three/       Three.js r169 (MIT), vendored so the site has no CDN dependency
 ```

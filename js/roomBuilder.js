@@ -23,7 +23,7 @@ function wallFrames(W, D) {
 }
 
 // Rotation that turns a fixture's front (+z local) toward a compass direction.
-const FACING = { south: 0, east: Math.PI / 2, north: Math.PI, west: -Math.PI / 2 };
+export const FACING = { south: 0, east: Math.PI / 2, north: Math.PI, west: -Math.PI / 2 };
 
 // Corner frames: origin at the room corner, local x and z both run along a wall away from it.
 function cornerFrames(W, D) {
@@ -36,7 +36,7 @@ function cornerFrames(W, D) {
 }
 
 // Flat shape (x, z) → horizontal slab of thickness h whose underside sits at y.
-function slab(points, h, y, mat) {
+export function slab(points, h, y, mat) {
   const shape = new THREE.Shape();
   points.forEach(([x, z], i) => (i ? shape.lineTo(x, -z) : shape.moveTo(x, -z)));
   shape.closePath();
@@ -46,6 +46,18 @@ function slab(points, h, y, mat) {
   m.position.y = y;
   m.castShadow = m.receiveShadow = true;
   return m;
+}
+
+// Group for a free-standing item whose footprint covers world x ∈ [x, x+w'], z ∈ [z, z+d']
+// (w along the fronts, d deep) with its fronts facing `facing`.
+export function placeFootprint(x, z, w, d, facing) {
+  const rot = FACING[facing] ?? 0;
+  const ux = Math.cos(rot), uz = -Math.sin(rot), nx = Math.sin(rot), nz = Math.cos(rot);
+  const pts = [[0, 0], [w, 0], [0, d], [w, d]].map(([a, b]) => [a * ux + b * nx, a * uz + b * nz]);
+  const g = new THREE.Group();
+  g.rotation.y = rot;
+  g.position.set(x - Math.min(...pts.map((p) => p[0])), 0, z - Math.min(...pts.map((p) => p[1])));
+  return g;
 }
 
 export function buildRoom(cfg) {
@@ -76,18 +88,6 @@ export function buildRoom(cfg) {
     return g;
   };
 
-  // Group for a free-standing row whose footprint covers world x ∈ [x, x+w'], z ∈ [z, z+d']
-  // (w along the fronts, d deep) with its fronts facing `facing`.
-  const placeFootprint = (x, z, w, d, facing) => {
-    const rot = FACING[facing] ?? 0;
-    const ux = Math.cos(rot), uz = -Math.sin(rot), nx = Math.sin(rot), nz = Math.cos(rot);
-    const pts = [[0, 0], [w, 0], [0, d], [w, d]].map(([a, b]) => [a * ux + b * nx, a * uz + b * nz]);
-    const g = new THREE.Group();
-    g.rotation.y = rot;
-    g.position.set(x - Math.min(...pts.map((p) => p[0])), 0, z - Math.min(...pts.map((p) => p[1])));
-    return g;
-  };
-
   const label = (parent, text, x, y, z, cls = '') => {
     const el = document.createElement('div');
     el.className = `dim-label ${cls}`;
@@ -107,10 +107,11 @@ export function buildRoom(cfg) {
   // ---------- floor & ceiling ----------
   const fw = floorBox.x1 - floorBox.x0, fd = floorBox.z1 - floorBox.z0;
   const floor = addBox(root, M.floor, floorBox.x0 - t, -1, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false });
+  floor.name = 'floor';
   tag(floor, { id: 'Floor', type: 'Floor', notes: `Kitchen is ${fmtFtIn(W)} along the north/south walls and ${fmtFtIn(D)} along the east/west walls.` });
 
   const ceiling = new THREE.Group();
-  addBox(ceiling, M.ceiling, floorBox.x0 - t, H, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false });
+  addBox(ceiling, M.ceiling, floorBox.x0 - t, H, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false }).name = 'ceiling';
   tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H });
   root.add(ceiling);
 

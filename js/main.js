@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildRoom } from './roomBuilder.js';
+import { buildHouse } from './houseBuilder.js';
 import { ROOMS } from '../rooms/index.js';
 import { IN, fmtIn, fmtFtIn } from './units.js';
 
@@ -68,7 +69,7 @@ async function loadRoom(id) {
       if (o.geometry) o.geometry.dispose();
     });
   }
-  const built = buildRoom(cfg);
+  const built = cfg.kind === 'house' ? buildHouse(cfg) : buildRoom(cfg);
   built.root.scale.setScalar(IN);
   scene.add(built.root);
   room = { ...built, cfg };

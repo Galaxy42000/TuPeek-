@@ -92,6 +92,10 @@ body.walking .orbit-hint { display: none; }
 }
 .dim-label.wall { background: rgba(47, 125, 225, 0.85); }
 .dim-label.island { background: rgba(65, 86, 107, 0.92); }
+.dim-label.room { background: rgba(255, 255, 255, 0.9); color: #26323f; text-align: center; font-weight: 500; border: 1px solid rgba(38, 50, 63, 0.18); }
+.dim-label.room b { font-weight: 700; }
+.dim-label.dimension { background: #3d4b5c; }
+.dim-label.dimension.estimate { background: rgba(61, 75, 92, 0.6); font-style: italic; }
 
 #walk-pad { display: none; }
 @media (pointer: coarse) {
