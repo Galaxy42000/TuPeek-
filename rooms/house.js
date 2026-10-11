@@ -1,9 +1,9 @@
 // ============================================================================
 //  WHOLE HOUSE — every number in this file is in INCHES.
 //  Source: hand-drawn plan view (blueprint sketch). Dimensions written on it:
-//    34′-3″  overall length, north–south
-//    24′-3″  bedroom wing length, north–south
-//    15′-5″ R.O.  main room width, east–west
+//    34′-3″  overall length (top to bottom of the plan; true east–west)
+//    24′-3″  bedroom wing length, same direction
+//    15′-5″ R.O.  main room width (left to right; true north–south)
 //    7′-0″ × 6′-0″  bathroom
 //    Takagi T-H3S-DV-P water heater, 11¼″ × 17¾″ × 24⅞″
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
@@ -11,8 +11,15 @@
 //
 //  How positions work
 //  ------------------
-//  • North is the top of the plan (bathroom end). x = inches east of the
-//    building's west outside face, z = inches south of its north outside face.
+//  • Directions in this file are PLAN directions: north is the top of the plan
+//    (bathroom end). x = inches east of the building's west outside face,
+//    z = inches south of its north outside face.
+//  • On the site the plan is turned: its top is true EAST (the kitchen sink
+//    window looks due south; see rooms/site.js). The viewer shows true
+//    directions, and the IDs and notes below are written in true directions,
+//    e.g. the wall at the top of the plan is called the east wall.
+//  • `surfaces` and `materials` record what things are made of (shown when you
+//    click them); see rooms/materials.js.
 //  • Walls are boxes: x0–x1 by z0–z1. `inside` names the side the (main) room is
 //    on, which is the face that gets the window/door trim.
 //  • A door's or window's `at` is its distance from the wall's north end (walls
@@ -65,35 +72,41 @@ export default {
   },
   style: kitchen.style,
 
+  // Default materials by kind of surface (keys from rooms/materials.js). The
+  // bathroom is drawn with a tile floor, which isn't recorded yet.
+  surfaces: {
+    floor: ['oakFloor'],
+  },
+
   // Floor/ceiling outline: bedroom wing + main building.
   footprint: [
     [0, 0, X_MAIN - OLD, WING_LENGTH],
     [X_MAIN - OLD, 0, WIDTH, LENGTH],
   ],
 
-  // door: 'swing' | 'pocket' | 'bypass';  hinge = which jamb the hinges are on (compass)
+  // door: 'swing' | 'pocket' | 'bypass';  hinge = which jamb the hinges are on (plan direction)
   walls: [
     // ---- exterior ----
-    { id: 'North wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT },
-    { id: 'Bedroom wing west wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
+    { id: 'East wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT },
+    { id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
       notes: '⚠ No windows are drawn in the bedroom wing.' },
-    { id: 'Bedroom wing south wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH },
+    { id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH },
     {
-      id: 'Main west wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
+      id: 'Main north wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
       openings: [
-        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 70, notes: 'Swings in, hinged on the south jamb. ⚠ Position scaled from the drawing.' },
-        { id: 'W2', type: 'window', at: 49, width: 20, bottom: 36, height: 48, notes: '⚠ Narrow window drawn just south of the entry door; size and height are guesses.' },
+        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 70, notes: 'Swings in, hinged on the west jamb. ⚠ Position scaled from the drawing.' },
+        { id: 'W2', type: 'window', at: 49, width: 20, bottom: 36, height: 48, notes: '⚠ Narrow window drawn just west of the entry door; size and height are guesses.' },
       ],
     },
     {
-      id: 'South wall', exterior: true, inside: 'north', x0: X_MAIN, z0: Z_SOUTH, x1: X_EAST, z1: LENGTH,
+      id: 'West wall', exterior: true, inside: 'north', x0: X_MAIN, z0: Z_SOUTH, x1: X_EAST, z1: LENGTH,
       notes: 'The 15′-5″ R.O. dimension is written along this wall.',
       openings: [
-        { id: 'W3', type: 'window', at: 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the west wall; size and height are guesses.' },
-        { id: 'W4', type: 'window', at: MAIN_WIDTH - 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the east wall; size and height are guesses.' },
+        { id: 'W3', type: 'window', at: 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the north wall; size and height are guesses.' },
+        { id: 'W4', type: 'window', at: MAIN_WIDTH - 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the south wall; size and height are guesses.' },
       ],
     },
-    { id: 'East wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH },
+    { id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH },
 
     // ---- interior ----
     {
@@ -106,11 +119,11 @@ export default {
     },
     { id: 'Bedroom divider', inside: 'south', x0: EXT, z0: DIVIDER, x1: X_MAIN - OLD, z1: DIVIDER + INT },
     {
-      id: 'Bathroom west wall', inside: 'east', x0: X_BATH - INT, z0: EXT, x1: X_BATH, z1: Z_BATH,
+      id: 'Bathroom north wall', inside: 'east', x0: X_BATH - INT, z0: EXT, x1: X_BATH, z1: Z_BATH,
       openings: [{ id: 'D-BATH', type: 'door', door: 'pocket', at: 40, width: 28, height: 80, notes: 'Pocket door from the hall. ⚠ Width and position scaled from the drawing.' }],
     },
     { id: 'Bathroom / kitchen wall', inside: 'south', x0: KX, z0: Z_BATH, x1: X_EAST, z1: KZ,
-      notes: 'The kitchen’s north wall. Ends behind the tall cabinet, leaving a walkway from the kitchen to the hall. ⚠ The kitchen plan draws this wall continuing further west.' },
+      notes: 'The kitchen’s east (range) wall. Ends behind the tall cabinet, leaving a walkway from the kitchen to the hall. ⚠ The kitchen plan draws this wall continuing further north.' },
     {
       id: 'Laundry closet front', inside: 'south', x0: X_MAIN, z0: Z_CLOSET, x1: X_BATH - INT, z1: Z_CLOSET + INT,
       openings: [{ id: 'D-LAUNDRY', type: 'door', door: 'bypass', at: 2, width: 72, height: 80, notes: 'Sliding bypass doors. ⚠ Width scaled from the drawing.' }],
@@ -130,7 +143,7 @@ export default {
       views: { eye: { pos: [X_MAIN + 8, 64, Z_BATH - 10], target: [X_BATH, 44, Z_BATH - 20] } } },
     { name: 'Walkway', x0: X_MAIN, z0: Z_BATH, x1: KX, z1: Z_KITCHEN_END, label: false, menu: false },
     { name: 'Kitchen', x0: KX, z0: KZ, x1: X_EAST, z1: Z_KITCHEN_END, notes: 'Detailed in the Kitchen view.', menu: false }, // has its own detailed view
-    { name: 'Living area', x0: X_MAIN, z0: Z_KITCHEN_END, x1: X_EAST, z1: Z_SOUTH, notes: 'Measured from the end of the kitchen’s east wall to the south wall.' },
+    { name: 'Living area', x0: X_MAIN, z0: Z_KITCHEN_END, x1: X_EAST, z1: Z_SOUTH, notes: 'Measured from the end of the kitchen’s south (sink) wall to the west wall.' },
   ],
 
   include: [{ config: kitchen, x: KX, z: KZ, labels: false }],
@@ -144,8 +157,8 @@ export default {
     { id: 'VANITY', type: 'Vanity', kind: 'vanity', x: X_EAST - 36 - 21, z: EXT, width: 21, depth: 19, height: 32.5, facing: 'south' },
     { id: 'SHOWER', type: 'Neo-angle shower', kind: 'cornerShower', corner: 'north-east', x: X_EAST, z: EXT, size: 36 },
     { id: 'LINEN', type: 'Bathroom cabinet', kind: 'cabinet', x: X_EAST - 18, z: EXT + 38, width: 32, depth: 18, height: 84, facing: 'west', doors: 2,
-      notes: '⚠ Drawn along the east wall south of the shower; what it is and how tall are unknown.' },
-    // laundry closet, on the north wall
+      notes: '⚠ Drawn along the south wall, west of the shower; what it is and how tall are unknown.' },
+    // laundry closet, against the top wall of the plan
     { id: 'W/D', type: 'Stacked washer + dryer', kind: 'laundry', x: X_MAIN + 1, z: EXT + 0.5, width: 27, depth: 30, height: 77, facing: 'south' },
     { id: 'ELEC', type: 'Electrical panel', kind: 'box', x: X_MAIN + 38, z: EXT, width: 14.25, depth: 4, height: 30, bottom: 48, color: '#a7abaf', metal: true, notes: '⚠ Size and height are typical, not measured.' },
     { id: 'H2O', type: 'Tankless water heater', code: 'Takagi T-H3S-DV-P', kind: 'box', x: X_BATH - INT - 24, z: EXT, width: 17.75, depth: 11.25, height: 24.88, bottom: 42, color: '#f1f1ee',

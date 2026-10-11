@@ -6,6 +6,8 @@ import { buildRoom } from './roomBuilder.js';
 import { buildHouse } from './houseBuilder.js';
 import { ROOMS } from '../rooms/index.js';
 import { IN, fmtIn, fmtFtIn } from './units.js';
+import { trueVec, POINTS } from './compass.js';
+import MATERIALS from '../rooms/materials.js';
 
 const $ = (s) => document.querySelector(s);
 const viewport = $('#viewport');
@@ -285,10 +287,42 @@ function select(obj) {
   row('Bottom at', i.bottom !== undefined ? `${fmtIn(i.bottom)} above floor` : undefined);
   row('Fronts', i.fronts);
   $('#info-title').textContent = i.id;
-  $('#info-body').innerHTML = `<dl>${rows.join('')}</dl>${i.notes ? `<p class="note">${i.notes}</p>` : ''}`;
+  $('#info-body').innerHTML = `<dl>${rows.join('')}</dl>${i.notes ? `<p class="note">${i.notes}</p>` : ''}${materialsHtml(i.materials)}`;
   panel.hidden = false;
 }
 $('#info-close').addEventListener('click', () => select(null));
+
+// Materials list for the info panel: keys from rooms/materials.js, or objects written in place.
+const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+function materialsHtml(list) {
+  if (!list?.length) return '';
+  const parts = list.map((m) => {
+    const mat = typeof m === 'string' ? MATERIALS[m] || { name: m, Note: 'Not found in rooms/materials.js' } : m;
+    const { name, ...attrs } = mat;
+    const rows = Object.entries(attrs).map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');
+    return `<div class="material"><h4>${esc(name || 'Material')}</h4><dl>${rows}</dl></div>`;
+  });
+  return `<section class="materials"><h3>Materials</h3>${parts.join('')}</section>`;
+}
+
+// ---------- compass (heads-up display) ----------
+// Turns so its N points at true north on screen, from any camera (orbit, top down, walk).
+const compass = { rose: $('#compass .rose'), letters: [...document.querySelectorAll('#compass .letter')], heading: $('#compass .heading'), angle: null };
+const NORTH = trueVec('north'), EAST = trueVec('east');
+function updateCompass() {
+  camera.updateMatrixWorld();
+  const e = camera.matrixWorld.elements;
+  const rx = e[0], rz = e[2]; // camera's right vector on the ground (the camera never rolls)
+  const len = Math.hypot(rx, rz) || 1;
+  const r = [rx / len, rz / len], h = [r[1], -r[0]]; // h = the way the camera faces, on the ground
+  const angle = THREE.MathUtils.radToDeg(Math.atan2(NORTH[0] * r[0] + NORTH[1] * r[1], NORTH[0] * h[0] + NORTH[1] * h[1]));
+  if (compass.angle !== null && Math.abs(angle - compass.angle) < 0.2) return;
+  compass.angle = angle;
+  compass.rose.setAttribute('transform', `rotate(${angle.toFixed(1)})`);
+  for (const l of compass.letters) l.setAttribute('transform', `rotate(${(-angle).toFixed(1)} ${l.getAttribute('x')} ${l.getAttribute('y')})`);
+  const bearing = (THREE.MathUtils.radToDeg(Math.atan2(h[0] * EAST[0] + h[1] * EAST[1], h[0] * NORTH[0] + h[1] * NORTH[1])) + 360) % 360;
+  compass.heading.textContent = `Facing ${POINTS[Math.round(bearing / 45) % 8]} · ${Math.round(bearing) % 360}°`;
+}
 
 // ---------- cutaway walls & ceiling ----------
 const camIn = new THREE.Vector3();
@@ -335,6 +369,7 @@ renderer.setAnimationLoop((now) => {
   if (walk.on) stepWalk(dt);
   else controls.update();
   updateVisibility();
+  updateCompass();
   if (selected) highlight.setFromObject(selected);
   renderer.render(scene, camera);
   labelRenderer.render(scene, camera);

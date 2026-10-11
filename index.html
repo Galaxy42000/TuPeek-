@@ -55,6 +55,26 @@
     <p class="hint">All sizes in inches. To change something, reference its ID, e.g. “make B3 30″ wide”.</p>
   </aside>
 
+  <div id="compass" aria-hidden="true">
+    <svg viewBox="-50 -50 100 100">
+      <circle class="dial" r="47"></circle>
+      <g class="rose">
+        <g class="ticks">
+          <path d="M0-44v7M44 0h-7M0 44v-7M-44 0h7"></path>
+          <path class="minor" d="M31.1-31.1l-3.5 3.5M31.1 31.1l-3.5-3.5M-31.1 31.1l3.5-3.5M-31.1-31.1l3.5 3.5"></path>
+        </g>
+        <path class="needle-n" d="M0-27 6 0H-6z"></path>
+        <path class="needle-s" d="M0 27 6 0H-6z"></path>
+        <circle class="hub" r="2.6"></circle>
+        <text class="letter n" x="0" y="-31">N</text>
+        <text class="letter" x="31" y="0">E</text>
+        <text class="letter" x="0" y="31">S</text>
+        <text class="letter" x="-31" y="0">W</text>
+      </g>
+    </svg>
+    <div class="heading"></div>
+  </div>
+
   <div id="walk-pad" aria-hidden="true">
     <button data-key="w" class="up">▲</button>
     <button data-key="a" class="left">◀</button>

@@ -111,11 +111,14 @@ export function speckleTexture(color) {
 export function createMaterials(p) {
   const std = (color, roughness = 0.6, metalness = 0, extra = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
+  // planks are drawn running along x (plan east–west); turn them for north–south
+  const floorMap = woodTexture(p.floor, p.floorPlankWidth);
+  if (p.floorBoards === 'north-south') floorMap.rotation = Math.PI / 2;
   return {
     wall: std(p.walls, 0.92),
     ceiling: std(p.ceiling, 0.95),
     trim: std(p.trim, 0.45),
-    floor: std('#ffffff', 0.55, 0, { map: woodTexture(p.floor, p.floorPlankWidth) }),
+    floor: std('#ffffff', 0.55, 0, { map: floorMap }),
     cabinet: std(p.cabinets, 0.42),
     island: std(p.island, 0.42),
     interior: std(shade(p.cabinets, -0.04), 0.8),

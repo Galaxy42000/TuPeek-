@@ -4,9 +4,13 @@
 //
 //  How positions work
 //  ------------------
-//  • Walls are named by compass direction as seen on the plan with its title
+//  • Walls are named by PLAN direction, as seen on the plan with its title
 //    block at the bottom: north = top of the plan (range wall),
 //    east = right side (sink wall). The west and south sides are open.
+//    The plan is turned on the site: its top is true EAST (the sink window
+//    looks due south; see rooms/site.js). The viewer shows true directions, so
+//    there the range wall is the east wall and the sink wall is the south wall.
+//    IDs and notes below are written in true directions.
 //  • "start" on a wall = distance from that wall's LEFT corner, as you stand
 //    in the kitchen facing that wall:
 //      - north wall: measured from the west reference line (left edge of the
@@ -17,6 +21,8 @@
 //  • Items in a run are listed left → right as you face them, and their widths
 //    add up, so changing one width shifts everything to its right.
 //  • `code` is the cabinet code printed on the plan.
+//  • `surfaces` and `materials` record what things are made of (shown when you
+//    click them); see rooms/materials.js.
 // ============================================================================
 
 const RANGE_CENTER = 30 + 15 / 16 + 53.75; // 84 11/16″ from the west reference line
@@ -46,7 +52,8 @@ export default {
     ceiling: '#f6f5f1',
     trim: '#f8f7f3',
     floor: '#b08458', // wood tone
-    floorPlankWidth: 5,
+    floorPlankWidth: 4,
+    floorBoards: 'north-south', // plan direction the boards run (true east–west)
     cabinets: '#f1efe9',
     island: '#41566b',
     counter: '#e9e7e2', // quartz-like speckle
@@ -56,6 +63,11 @@ export default {
     stoolSeat: '#8a6544',
     stoolLegs: '#1d1d1d',
     pendant: '#b08d57',
+  },
+
+  // Default materials by kind of surface (keys from rooms/materials.js).
+  surfaces: {
+    floor: ['oakFloor'],
   },
 
   style: {
@@ -75,7 +87,7 @@ export default {
   // fronts: 'door-drawer' | 'doors' | 'drawers2' | 'drawers3' | 'drawers4' | 'open'
   baseRuns: [
     {
-      id: 'North run',
+      id: 'East run', // range wall
       wall: 'north',
       start: RANGE_START - 21,
       extendRight: 1 / 16, // meet the corner countertop
@@ -86,13 +98,13 @@ export default {
       ],
     },
     {
-      id: 'East run',
+      id: 'South run', // sink wall
       wall: 'east',
       start: 36, // after the 36″ diagonal corner cabinet
       extendRight: 1.25, // countertop runs past the end panel
       items: [
-        { id: 'SINK', code: 'Sink base 36', kind: 'sink', width: 36, bowlWidth: 30, bowlDepth: 18, notes: 'Centered on the window, 54″ from the north wall.' },
-        { id: 'DW', code: 'DISH-IC', kind: 'dishwasher', width: 24, notes: 'Centered 84″ from the north wall.' },
+        { id: 'SINK', code: 'Sink base 36', kind: 'sink', width: 36, bowlWidth: 30, bowlDepth: 18, notes: 'Centered on the window, 54″ from the east wall.' },
+        { id: 'DW', code: 'DISH-IC', kind: 'dishwasher', width: 24, notes: 'Centered 84″ from the east wall.' },
         { id: 'B3', code: 'B24BUTT.2DXFWT', width: 24, doors: 2 },
         { id: 'EP1', kind: 'panel', width: 0.75, notes: 'Finished end panel.' },
       ],
@@ -110,7 +122,7 @@ export default {
   // kind: 'cabinet' (default) | 'microwave' | 'hood' | 'gap';  fronts: 'doors' | 'glass' | 'open'
   wallRuns: [
     {
-      id: 'North uppers',
+      id: 'East uppers',
       wall: 'north',
       start: FRIDGE_SPACE,
       bottom: 54,
@@ -129,7 +141,7 @@ export default {
       items: [{ id: 'MW', kind: 'microwave', width: 30, bottom: 52.5, height: 16.5, depth: 15.5, notes: 'Over-the-range microwave (model label is partly hidden on the plan).' }],
     },
     {
-      id: 'East uppers (corner side)',
+      id: 'South uppers (corner side)',
       wall: 'east',
       start: 24, // after the diagonal corner wall cabinet
       bottom: 54,
@@ -137,7 +149,7 @@ export default {
       items: [{ id: 'U6', code: 'WPP930', width: 9, notes: 'Circled on the plan; modeled as a 9″ × 30″ wall cabinet.' }],
     },
     {
-      id: 'East uppers (past window)',
+      id: 'South uppers (past window)',
       wall: 'east',
       start: 122.75 - 2 - 45, // ends flush with the base run's end panel
       bottom: 54,
@@ -155,7 +167,7 @@ export default {
     {
       id: 'TALL', code: 'U241284BUTT.EB.SH', type: 'pantry',
       x: 0, z: 0, width: 24, depth: 12, height: 84, facing: 'west', doors: 2,
-      notes: '24″ wide × 12″ deep × 84″ tall utility cabinet at the west end, doors facing out of the kitchen.',
+      notes: '24″ wide × 12″ deep × 84″ tall utility cabinet at the north end, doors facing out of the kitchen.',
     },
     { id: 'FRIDGE', type: 'fridge', wall: 'north', start: FRIDGE_SPACE + 0.125, width: 35.75, height: 70, depth: 30, notes: '36″ opening. Front is 38¾″ from the island.' },
   ],

@@ -6,6 +6,7 @@ import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
+import { trueDir, capDir } from './compass.js';
 
 // Builds the whole building from a house config (see rooms/house.js): straight wall
 // segments with doors and windows, floors, ceiling, room labels, plan dimensions and
@@ -55,6 +56,8 @@ export function buildHouse(cfg, focus) {
   const wallGroups = new Map();
   const labels = [];
   const tag = (obj, info) => ((obj.userData.info = info), obj);
+  // an element's own materials, else the config's default for that kind of surface
+  const mats = (own, surface) => own ?? cfg.surfaces?.[surface];
   const label = (parent, html, x, y, z, cls = '') => {
     const el = document.createElement('div');
     el.className = `dim-label ${cls}`;
@@ -78,17 +81,17 @@ export function buildHouse(cfg, focus) {
 
   const ceiling = new THREE.Group();
   root.add(ceiling);
-  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, notes: 'Ceiling height is an assumption until it is measured.' });
+  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling'), notes: 'Ceiling height is an assumption until it is measured.' });
   for (const [x0, z0, x1, z1] of cfg.footprint) {
     // subfloor sits a hair below the room floors so it only shows under walls and doorways
-    tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor' });
+    tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor') });
     addBox(ceiling, M.ceiling, x0, H, z0, x1 - x0, 1, z1 - z0, { cast: false });
   }
 
   for (const r of cfg.rooms || []) {
     const w = r.x1 - r.x0, d = r.z1 - r.z0;
     const f = addBox(root, r.floor === 'tile' ? M.tileFloor : M.floor, r.x0, r.floor === 'tile' ? -0.75 : -1, r.z0, w, 1, d, { cast: false });
-    tag(f, { id: r.name, type: 'Room', width: w, depth: d, notes: `${fmtFt(w)} east–west × ${fmtFt(d)} north–south, wall to wall.${r.notes ? ' ' + r.notes : ''}` });
+    tag(f, { id: r.name, type: 'Room', width: w, depth: d, materials: mats(r.materials, r.floor === 'tile' ? 'tileFloor' : 'floor'), notes: `${fmtFt(w)} ${trueDir('east–west')} × ${fmtFt(d)} ${trueDir('north–south')}, wall to wall.${r.notes ? ' ' + r.notes : ''}` });
     if (r.label !== false) label(root, `<b>${r.name}</b><br>${fmtFt(w)} × ${fmtFt(d)}`, (r.x0 + r.x1) / 2, 2, (r.z0 + r.z1) / 2, 'room');
   }
 
@@ -152,7 +155,7 @@ export function buildHouse(cfg, focus) {
 
     for (const r of panelRects(L, H, ops)) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
     const endA = fr.along === 'x' ? 'west' : 'north';
-    tag(g, { id: spec.id, type: spec.exterior ? 'Exterior wall' : 'Interior wall', width: L, height: H, depth: t, notes: spec.notes });
+    tag(g, { id: spec.id, type: spec.exterior ? 'Exterior wall' : 'Interior wall', width: L, height: H, depth: t, materials: mats(spec.materials, 'walls'), notes: spec.notes });
 
     for (const o of ops) {
       const og = new THREE.Group();
@@ -163,7 +166,8 @@ export function buildHouse(cfg, focus) {
       const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors' }[o.door] || 'Doorway';
       tag(og, {
         id: o.id, type: kind, wall: spec.id, width: o.width, height: o.height, bottom: o.bottom || undefined,
-        notes: `Starts ${fmtIn(o.at)} from the ${endA} end of the wall.${o.from ? ` (From the ${o.from} plan.)` : ''}${o.notes ? ' ' + o.notes : ''}`,
+        materials: mats(o.materials, { window: 'windows', door: 'doors' }[o.type]),
+        notes: `Starts ${fmtIn(o.at)} from the ${trueDir(endA)} end of the wall.${o.from ? ` (From the ${o.from} plan.)` : ''}${o.notes ? ' ' + o.notes : ''}`,
       });
       label(og, `${o.id} · ${fmtIn(o.width)}`, o.start + o.width / 2, o.bottom + o.height / 2, 1);
     }
@@ -209,7 +213,7 @@ export function buildHouse(cfg, focus) {
     }
     root.add(g);
     const size = it.kind === 'cornerShower' ? { width: it.size, depth: it.size } : { width: it.width, depth: it.depth, height: it.height };
-    tag(g, { id: it.id, type: it.type, code: it.code, ...size, bottom: it.bottom || undefined, notes: it.notes });
+    tag(g, { id: it.id, type: it.type, code: it.code, ...size, bottom: it.bottom || undefined, materials: it.materials, notes: it.notes });
     if (it.label !== false) {
       g.updateMatrixWorld(true);
       const c = new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());
@@ -261,8 +265,8 @@ function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
     const len = Math.hypot(x1 - x0, z1 - z0);
     const center = new THREE.Vector3((x0 + x1) / 2, H / 2, (z0 + z1) / 2);
     for (const w of found) walls.push({ name: w.id, group: wallGroups.get(w), center, normal: new THREE.Vector3(s.inward[0], 0, s.inward[1]) });
-    if (found.length) label(root, `${side[0].toUpperCase()}${side.slice(1)} wall · ${fmtFtIn(len)}`, center.x + s.inward[0] * 2, H - 6, center.z + s.inward[1] * 2, 'wall');
-    else label(root, `Open to ${side} · ${fmtFtIn(len)}`, center.x, 2, center.z, 'wall');
+    if (found.length) label(root, `${capDir(side)} wall · ${fmtFtIn(len)}`, center.x + s.inward[0] * 2, H - 6, center.z + s.inward[1] * 2, 'wall');
+    else label(root, `Open to ${trueDir(side)} · ${fmtFtIn(len)}`, center.x, 2, center.z, 'wall');
   }
   const clip = { x0: r.x0 - margin.west, x1: r.x1 + margin.east, z0: r.z0 - margin.north, z1: r.z1 + margin.south };
   // the house's camera presets are for the whole building; by default a room's eye

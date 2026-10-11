@@ -4,6 +4,7 @@ import { addBox, panelRects, freeIntervals } from './geometry.js';
 import { createMaterials } from './materials.js';
 import * as F from './fixtures.js';
 import { fmtIn, fmtFtIn } from './units.js';
+import { trueDir, capDir } from './compass.js';
 
 const WALL_NAMES = ['north', 'east', 'south', 'west'];
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
@@ -103,16 +104,19 @@ export function buildRoom(cfg) {
     obj.userData.info = info;
     return obj;
   };
+  // an element's own materials, else the config's default for that kind of surface
+  const mats = (own, surface) => own ?? cfg.surfaces?.[surface];
+  const pair = (planDirs) => trueDir(planDirs).replace('-', '/');
 
   // ---------- floor & ceiling ----------
   const fw = floorBox.x1 - floorBox.x0, fd = floorBox.z1 - floorBox.z0;
   const floor = addBox(root, M.floor, floorBox.x0 - t, -1, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false });
   floor.name = 'floor';
-  tag(floor, { id: 'Floor', type: 'Floor', notes: `Kitchen is ${fmtFtIn(W)} along the north/south walls and ${fmtFtIn(D)} along the east/west walls.` });
+  tag(floor, { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor'), notes: `Kitchen is ${fmtFtIn(W)} along the ${pair('north-south')} walls and ${fmtFtIn(D)} along the ${pair('east-west')} walls.` });
 
   const ceiling = new THREE.Group();
   addBox(ceiling, M.ceiling, floorBox.x0 - t, H, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false }).name = 'ceiling';
-  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H });
+  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling') });
   root.add(ceiling);
 
   // ---------- walls, windows, doors ----------
@@ -134,15 +138,15 @@ export function buildRoom(cfg) {
     for (const r of panelRects(hi - lo, H, ops.map((o) => ({ ...o, start: o.start - lo })))) {
       addBox(g, M.wall, r.x + lo, r.y, -t, r.w, r.h, t, { cast: false });
     }
-    tag(g, { id: `${cap(name)} wall`, type: 'Wall', width: fr.len, height: H, notes: 'Length is the kitchen section of the wall, corner to corner.' });
-    label(g, `${cap(name)} wall · ${fmtFtIn(fr.len)}`, fr.len / 2, H - 6, 1, 'wall');
+    tag(g, { id: `${capDir(name)} wall`, type: 'Wall', width: fr.len, height: H, materials: mats(spec.materials, 'walls'), notes: 'Length is the kitchen section of the wall, corner to corner.' });
+    label(g, `${capDir(name)} wall · ${fmtFtIn(fr.len)}`, fr.len / 2, H - 6, 1, 'wall');
 
     for (const o of ops) {
       const og = new THREE.Group();
       F.opening(og, ctx, o, t);
       g.add(og);
       const kind = { window: 'Window', door: 'Doorway', opening: 'Cased opening' }[o.type] || 'Opening';
-      tag(og, { id: o.id, type: kind, wall: name, start: o.start, width: o.width, height: o.height, bottom: o.bottom || undefined, notes: o.notes });
+      tag(og, { id: o.id, type: kind, wall: trueDir(name), start: o.start, width: o.width, height: o.height, bottom: o.bottom || undefined, materials: mats(o.materials, { window: 'windows', door: 'doors' }[o.type]), notes: o.notes });
       label(og, `${o.id} · ${fmtIn(o.width)}`, o.start + o.width / 2, o.bottom + o.height / 2, 1);
       if (o.bottom === 0) occupied[name].push([o.start, o.start + o.width]);
     }
@@ -194,7 +198,7 @@ export function buildRoom(cfg) {
       } else seg = null;
 
       const typeName = { cabinet: 'Base cabinet', sink: 'Sink base', dishwasher: 'Dishwasher', range: 'Range', gap: 'Open space', panel: 'End panel' }[kind];
-      tag(ig, { id, type: typeName, wall: run.wall, start: run.start + x, width: it.width, height: kind === 'range' ? run.height + run.counterThickness : run.height, depth: run.depth, fronts: kind === 'cabinet' ? it.fronts || 'door-drawer' : undefined, code: it.code, notes: it.notes });
+      tag(ig, { id, type: typeName, wall: trueDir(run.wall), start: run.start + x, width: it.width, height: kind === 'range' ? run.height + run.counterThickness : run.height, depth: run.depth, fronts: kind === 'cabinet' ? it.fronts || 'door-drawer' : undefined, code: it.code, materials: mats(it.materials, kind === 'cabinet' || kind === 'sink' || kind === 'panel' ? 'cabinets' : null), notes: it.notes });
       if (kind !== 'panel') label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, run.height * 0.5, run.depth + 2);
       x += it.width;
     }
@@ -232,14 +236,14 @@ export function buildRoom(cfg) {
       const top = new THREE.Mesh(geo, M.counter);
       top.position.y = run.height;
       top.castShadow = top.receiveShadow = true;
-      tag(top, { id: `${run.id || 'Run'} countertop`, type: 'Countertop', wall: run.wall, start: run.start + a, width: b - a, depth: dz, height: run.counterThickness, notes: `Top of counter is ${fmtIn(counterTop)} from the floor.` });
+      tag(top, { id: `${run.id || 'Run'} countertop`, type: 'Countertop', wall: trueDir(run.wall), start: run.start + a, width: b - a, depth: dz, height: run.counterThickness, materials: mats(run.counterMaterials, 'counter'), notes: `Top of counter is ${fmtIn(counterTop)} from the floor.` });
       g.add(top);
     }
 
     if (run.backsplash > 0) {
       const a = -run.extendLeft, b = total + run.extendRight;
       const bs = backsplash(g, run.wall, run.start, a, b, counterTop, run.backsplash);
-      tag(bs, { id: `${run.id || 'Run'} backsplash`, type: 'Backsplash', wall: run.wall, start: run.start + a, width: b - a, height: run.backsplash });
+      tag(bs, { id: `${run.id || 'Run'} backsplash`, type: 'Backsplash', wall: trueDir(run.wall), start: run.start + a, width: b - a, height: run.backsplash, materials: mats(run.backsplashMaterials, 'backsplash') });
     }
     occupied[run.wall].push([run.start - run.extendLeft, run.start + total + run.extendRight]);
   }
@@ -275,7 +279,7 @@ export function buildRoom(cfg) {
       g.add(slab(pent(d - 3), c.toeKick, 0, M.toeKick));
       F.fronts(front, ctx, mat, L, c.toeKick, c.height, 0, c.fronts || 'door-drawer', { doors: 1, hinge: c.hinge });
       const top = slab(pent(d + c.overhang), c.counterThickness, c.height, M.counter);
-      tag(top, { id: `${id} countertop`, type: 'Countertop (corner)', width: a, depth: a });
+      tag(top, { id: `${id} countertop`, type: 'Countertop (corner)', width: a, depth: a, materials: mats(c.counterMaterials, 'counter') });
       g.add(top);
       const ct = c.height + c.counterThickness;
       if (c.backsplash > 0) {
@@ -285,7 +289,7 @@ export function buildRoom(cfg) {
       for (const [wall, span] of Object.entries(cf.walls(a))) occupied[wall].push(span);
     }
     const yMid = upper ? c.bottom + c.height / 2 : c.height * 0.5;
-    tag(g, { id, type: upper ? 'Diagonal corner wall cabinet' : 'Diagonal corner base cabinet', code: c.code, width: a, depth: d, height: c.height, bottom: upper ? c.bottom : undefined, notes: `${spec.corner} corner. Runs ${fmtIn(a)} along each wall; the door is on the 45° face.${c.notes ? ' ' + c.notes : ''}` });
+    tag(g, { id, type: upper ? 'Diagonal corner wall cabinet' : 'Diagonal corner base cabinet', code: c.code, width: a, depth: d, height: c.height, bottom: upper ? c.bottom : undefined, materials: mats(c.materials, 'cabinets'), notes: `${cap(trueDir(spec.corner))} corner. Runs ${fmtIn(a)} along each wall; the door is on the 45° face.${c.notes ? ' ' + c.notes : ''}` });
     label(g, `${id} · ${fmtIn(a)}`, (a + d) / 2 + 2, yMid, (a + d) / 2 + 2);
   }
 
@@ -305,17 +309,17 @@ export function buildRoom(cfg) {
         const id = it.id || nextId('HOOD');
         const hb = it.bottom ?? 66;
         F.hood(ig, ctx, it.width, hb, H, it.depth ?? 20);
-        tag(ig, { id, type: 'Range hood', wall: run.wall, start: run.start + x, width: it.width, bottom: hb, depth: it.depth ?? 20 });
+        tag(ig, { id, type: 'Range hood', wall: trueDir(run.wall), start: run.start + x, width: it.width, bottom: hb, depth: it.depth ?? 20, materials: it.materials });
         label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, hb + 6, (it.depth ?? 20) + 1);
       } else if (kind === 'microwave') {
         const id = it.id || nextId('MW');
         F.microwave(ig, ctx, it.width, bottom, h, d);
-        tag(ig, { id, type: 'Over-the-range microwave', code: it.code, wall: run.wall, start: run.start + x, width: it.width, height: h, depth: d, bottom, notes: it.notes });
+        tag(ig, { id, type: 'Over-the-range microwave', code: it.code, wall: trueDir(run.wall), start: run.start + x, width: it.width, height: h, depth: d, bottom, materials: it.materials, notes: it.notes });
         label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, bottom + h / 2, d + 2);
       } else if (kind !== 'gap') {
         const id = it.id || nextId('U');
         F.upperCabinet(ig, ctx, it.width, bottom, h, d, it.fronts || 'doors', it);
-        tag(ig, { id, type: 'Wall cabinet', wall: run.wall, start: run.start + x, width: it.width, height: h, depth: d, bottom, fronts: it.fronts || 'doors', code: it.code, notes: it.notes });
+        tag(ig, { id, type: 'Wall cabinet', wall: trueDir(run.wall), start: run.start + x, width: it.width, height: h, depth: d, bottom, fronts: it.fronts || 'doors', code: it.code, materials: mats(it.materials, 'cabinets'), notes: it.notes });
         label(ig, `${id} · ${fmtIn(it.width)}`, it.width / 2, bottom + h / 2, d + 2);
       }
       x += it.width;
@@ -330,8 +334,8 @@ export function buildRoom(cfg) {
     const id = it.id || nextId(type === 'fridge' ? 'REF' : 'T');
     if (type === 'fridge') F.fridge(g, ctx, it.width, it.height, it.depth);
     else F.tallCabinet(g, ctx, it.width, it.height, it.depth, it.toeKick ?? 4, it);
-    const where = it.wall ? {} : { notes: `${it.notes ? it.notes + ' ' : ''}Doors face ${it.facing}.` };
-    tag(g, { id, type: type === 'fridge' ? 'Refrigerator' : 'Tall cabinet', code: it.code, wall: it.wall, start: it.wall ? it.start : undefined, width: it.width, height: it.height, depth: it.depth, notes: it.notes, ...where });
+    const where = it.wall ? {} : { notes: `${it.notes ? it.notes + ' ' : ''}Doors face ${trueDir(it.facing)}.` };
+    tag(g, { id, type: type === 'fridge' ? 'Refrigerator' : 'Tall cabinet', code: it.code, wall: it.wall && trueDir(it.wall), materials: mats(it.materials, type === 'fridge' ? null : 'cabinets'), start: it.wall ? it.start : undefined, width: it.width, height: it.height, depth: it.depth, notes: it.notes, ...where });
     label(g, `${id} · ${fmtIn(it.width)}`, it.width / 2, it.height * 0.6, it.depth + 2);
     if (it.wall) occupied[it.wall].push([it.start, it.start + it.width]);
   }
@@ -339,7 +343,7 @@ export function buildRoom(cfg) {
   // ---------- plain panels (end panels, fillers): world-aligned boxes ----------
   for (const p of cfg.panels || []) {
     const m = addBox(root, M[p.material || 'cabinet'], p.x, p.bottom ?? 0, p.z, p.width, p.height, p.depth);
-    tag(m, { id: p.id || 'Panel', type: 'Panel', code: p.code, width: p.width, depth: p.depth, height: p.height, notes: p.notes });
+    tag(m, { id: p.id || 'Panel', type: 'Panel', code: p.code, width: p.width, depth: p.depth, height: p.height, materials: mats(p.materials, 'cabinets'), notes: p.notes });
   }
 
   // ---------- islands ----------
@@ -364,7 +368,7 @@ export function buildRoom(cfg) {
         rg.add(ig);
         const iid = it.id || nextId('B');
         F.baseCabinet(ig, ctx, it.width, run, it.fronts || 'door-drawer', { ...it, material: 'island' });
-        tag(ig, { id: iid, type: 'Island cabinet', code: it.code, width: it.width, height: isl.height, depth: row.depth, fronts: it.fronts || 'door-drawer', notes: `${it.notes ? it.notes + ' ' : ''}Faces ${row.facing}.` });
+        tag(ig, { id: iid, type: 'Island cabinet', code: it.code, width: it.width, height: isl.height, depth: row.depth, fronts: it.fronts || 'door-drawer', materials: mats(it.materials, 'cabinets'), notes: `${it.notes ? it.notes + ' ' : ''}Faces ${trueDir(row.facing)}.` });
         label(ig, `${iid} · ${fmtIn(it.width)}`, it.width / 2, isl.height * 0.5, row.depth + 2);
         x += it.width;
       }
@@ -375,9 +379,9 @@ export function buildRoom(cfg) {
     for (const p of isl.posts || []) {
       const s = p.size ?? 3;
       const post = addBox(g, M.island, p.x, 0, p.z, s, isl.height, s);
-      tag(post, { id: p.id || 'Post', type: 'Support post', code: p.code, width: s, depth: s, height: isl.height });
+      tag(post, { id: p.id || 'Post', type: 'Support post', code: p.code, width: s, depth: s, height: isl.height, materials: p.materials });
     }
-    tag(g, { id, type: 'Island', width: c.width, depth: c.depth, height: isl.height + isl.counterThickness, notes: `Counter's north-west corner is ${fmtIn(c.x)} east of the west reference line and ${fmtIn(c.z)} from the north wall.${isl.notes ? ' ' + isl.notes : ''}` });
+    tag(g, { id, type: 'Island', width: c.width, depth: c.depth, height: isl.height + isl.counterThickness, materials: mats(isl.counterMaterials, 'counter'), notes: `Counter's ${trueDir('north-west')} corner is ${fmtIn(c.x)} ${trueDir('east')} of the ${trueDir('west')} reference line and ${fmtIn(c.z)} from the ${trueDir('north')} wall.${isl.notes ? ' ' + isl.notes : ''}` });
     label(g, `${id} · ${fmtIn(c.width)} × ${fmtIn(c.depth)}`, c.x + c.width / 2, isl.height + isl.counterThickness + 3, c.z + c.depth / 2, 'island');
 
     const st = isl.stools;
@@ -411,7 +415,7 @@ export function buildRoom(cfg) {
       const pz = c.z + c.depth / 2 + (alongX ? 0 : o) + (p.offset ?? 0);
       F.pendant(pg, ctx, px, p.bottom ?? 68, pz, H);
     }
-    tag(pg, { id: 'Pendants', type: `${n} pendant lights`, bottom: p.bottom ?? 68, notes: `Spaced ${fmtIn(n > 1 ? span / (n - 1) : 0)} apart over ${p.over}.` });
+    tag(pg, { id: 'Pendants', type: `${n} pendant lights`, bottom: p.bottom ?? 68, materials: p.materials, notes: `Spaced ${fmtIn(n > 1 ? span / (n - 1) : 0)} apart over ${p.over}.` });
   }
   for (const [cx, cz] of Lc.cans || []) F.recessedLight(ceiling, ctx, cx, cz, H);
 

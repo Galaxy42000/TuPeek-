@@ -94,6 +94,10 @@ body.walking .orbit-hint { display: none; }
 #info dt { color: var(--muted); }
 #info dd { margin: 0; }
 #info .note { margin: 8px 0 0; font-size: 13px; }
+#info .materials { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--panel-border); }
+#info .materials h3 { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
+#info .material h4 { margin: 6px 0 0; font-size: 14px; }
+#info .material dl { margin-top: 3px; }
 
 .dim-label {
   background: var(--label-bg); color: var(--label-text);
@@ -106,6 +110,30 @@ body.walking .orbit-hint { display: none; }
 .dim-label.room b { font-weight: 700; }
 .dim-label.dimension { background: #3d4b5c; }
 .dim-label.dimension.estimate { background: rgba(61, 75, 92, 0.6); font-style: italic; }
+
+/* Compass: fixed in the corner, turned so N points at true north on screen. */
+#compass {
+  position: fixed; left: 12px; bottom: 12px;
+  display: flex; flex-direction: column; align-items: center;
+  pointer-events: none;
+}
+#compass svg { display: block; width: 92px; height: 92px; filter: drop-shadow(0 3px 8px rgba(0, 0, 0, 0.18)); }
+#compass .dial { fill: var(--panel-bg); stroke: var(--panel-border); stroke-width: 1.5; }
+#compass .ticks path { stroke: var(--muted); stroke-width: 2; fill: none; }
+#compass .ticks .minor { stroke-width: 1.2; opacity: 0.6; }
+#compass .needle-n { fill: #d23f31; }
+#compass .needle-s { fill: var(--muted); opacity: 0.55; }
+#compass .hub { fill: var(--text); }
+#compass .letter {
+  fill: var(--text); font: 700 12px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-anchor: middle; dominant-baseline: central;
+}
+#compass .letter.n { fill: #d23f31; font-size: 14px; }
+#compass .heading {
+  margin-top: 4px; padding: 1px 7px; border-radius: 6px;
+  background: var(--panel-bg); border: 1px solid var(--panel-border);
+  font-size: 11.5px; font-weight: 600; white-space: nowrap;
+}
 
 #walk-pad { display: none; }
 @media (pointer: coarse) {
@@ -122,5 +150,7 @@ body.walking .orbit-hint { display: none; }
 
 @media (max-width: 640px) {
   #hud { left: 8px; right: 8px; top: 8px; width: auto; }
-  #info { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; }
+  #info { left: 8px; right: 8px; top: auto; bottom: 8px; width: auto; max-height: 55vh; overflow-y: auto; z-index: 1; }
+  #compass { left: 8px; bottom: 8px; }
+  #compass svg { width: 76px; height: 76px; }
 }
