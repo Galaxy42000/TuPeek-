@@ -208,6 +208,11 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => walk.keys.delete(keyName(e)));
 window.addEventListener('blur', () => walk.keys.clear());
 
+// no long-press menu (copy / save image) anywhere except form controls
+window.addEventListener('contextmenu', (e) => {
+  if (!e.target.closest('select, input')) e.preventDefault();
+});
+
 // on-screen movement pad for touch screens
 document.querySelectorAll('#walk-pad button').forEach((b) => {
   const key = b.dataset.key;

@@ -34,6 +34,7 @@ All of the kitchen's measurements live in one file: [`rooms/kitchen.js`](rooms/k
 
 ```
 index.html          page shell + import map (no build step)
+sw.js               service worker that turns off caching (always loads the latest version)
 css/style.css       UI styles
 js/main.js          renderer, cameras, walk mode, click-to-inspect
 js/roomBuilder.js   turns a room config into 3D geometry

@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>TuPeek · 3D House</title>
   <meta name="description" content="Interactive 3D model of the house, room by room.">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 15 16 5l12 10v12H4z' fill='%2341566b'/%3E%3Crect x='13' y='19' width='6' height='8' fill='%23f1efe9'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/style.css">
   <script type="importmap">
@@ -59,6 +62,10 @@
     <button data-key="d" class="right">▶</button>
   </div>
 
+  <script>
+    // sw.js makes every request skip the browser cache
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => {});
+  </script>
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
