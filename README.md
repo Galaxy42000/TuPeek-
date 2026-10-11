@@ -1,6 +1,6 @@
 # TuPeek: 3D house viewer
 
-An interactive 3D model of the house that runs in the browser, built with [Three.js](https://threejs.org/). Use the menu at the top left to switch between the **Whole house** (building layout from the hand-drawn plan, with the kitchen in place) and the detailed **Kitchen**.
+An interactive 3D model of the house that runs in the browser, built with [Three.js](https://threejs.org/). Use the menu at the top left to switch between the **Whole house** (building layout from the hand-drawn plan, with the kitchen in place), the detailed **Kitchen**, and each other room on its own (bedrooms, bathroom, laundry closet, hall, living area).
 
 **Live site (after GitHub Pages is turned on):** https://galaxy42000.github.io/TuPeek-/
 
@@ -19,7 +19,7 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 
 ## Changing the building layout
 
-The walls, doors, windows and room sizes of the whole building live in [`rooms/house.js`](rooms/house.js), also in **inches**. Values marked ⚠ were scaled off the drawing or assumed and still need to be measured. The kitchen is built from `rooms/kitchen.js` and dropped into the house unchanged.
+The walls, doors, windows and room sizes of the whole building live in [`rooms/house.js`](rooms/house.js), also in **inches**. Values marked ⚠ were scaled off the drawing or assumed and still need to be measured. The kitchen is built from `rooms/kitchen.js` and dropped into the house unchanged. Every room listed in `rooms` gets its own entry in the menu automatically.
 
 ## Changing the kitchen
 

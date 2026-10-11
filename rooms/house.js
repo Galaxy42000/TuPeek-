@@ -117,15 +117,19 @@ export default {
     },
   ],
 
-  // Rooms: inside faces of their walls. Labels show their size.
+  // Rooms: inside faces of their walls. Labels show their size. Each room also gets
+  // its own entry in the room menu unless it has menu: false; `views` sets its camera
+  // presets (same format as the kitchen's).
   rooms: [
     { name: 'Bedroom 1', x0: EXT, z0: EXT, x1: X_MAIN - OLD, z1: DIVIDER },
     { name: 'Bedroom 2', x0: EXT, z0: DIVIDER + INT, x1: X_MAIN - OLD, z1: WING_LENGTH - EXT },
     { name: 'Bathroom', x0: X_BATH, z0: EXT, x1: X_EAST, z1: Z_BATH, floor: 'tile' },
-    { name: 'Laundry closet', x0: X_MAIN, z0: EXT, x1: X_BATH - INT, z1: Z_CLOSET },
-    { name: 'Hall', x0: X_MAIN, z0: Z_CLOSET + INT, x1: X_BATH - INT, z1: Z_BATH },
-    { name: 'Walkway', x0: X_MAIN, z0: Z_BATH, x1: KX, z1: Z_KITCHEN_END, label: false },
-    { name: 'Kitchen', x0: KX, z0: KZ, x1: X_EAST, z1: Z_KITCHEN_END, notes: 'Detailed in the Kitchen view.' },
+    { name: 'Laundry closet', x0: X_MAIN, z0: EXT, x1: X_BATH - INT, z1: Z_CLOSET,
+      views: { eye: { pos: [X_MAIN + 48, 56, 150], target: [X_MAIN + 48, 42, EXT] } } }, // from across the hall, looking in
+    { name: 'Hall', x0: X_MAIN, z0: Z_CLOSET + INT, x1: X_BATH - INT, z1: Z_BATH,
+      views: { eye: { pos: [X_MAIN + 8, 64, Z_BATH - 10], target: [X_BATH, 44, Z_BATH - 20] } } },
+    { name: 'Walkway', x0: X_MAIN, z0: Z_BATH, x1: KX, z1: Z_KITCHEN_END, label: false, menu: false },
+    { name: 'Kitchen', x0: KX, z0: KZ, x1: X_EAST, z1: Z_KITCHEN_END, notes: 'Detailed in the Kitchen view.', menu: false }, // has its own detailed view
     { name: 'Living area', x0: X_MAIN, z0: Z_KITCHEN_END, x1: X_EAST, z1: Z_SOUTH, notes: 'Measured from the end of the kitchen’s east wall to the south wall.' },
   ],
 

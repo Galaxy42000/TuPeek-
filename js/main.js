@@ -18,6 +18,7 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.0;
+renderer.localClippingEnabled = true; // single-room views clip the house model
 viewport.appendChild(renderer.domElement);
 
 const labelRenderer = new CSS2DRenderer();
@@ -69,11 +70,12 @@ async function loadRoom(id) {
       if (o.geometry) o.geometry.dispose();
     });
   }
-  const built = cfg.kind === 'house' ? buildHouse(cfg) : buildRoom(cfg);
+  const built = cfg.kind === 'house' ? buildHouse(cfg, entry.focus) : buildRoom(cfg);
   built.root.scale.setScalar(IN);
   scene.add(built.root);
+  if (built.clip) clipTo(built);
   room = { ...built, cfg };
-  document.title = `${cfg.name} · TuPeek`;
+  document.title = `${entry.name} · TuPeek`;
   $('#room-select').value = entry.id;
 
   const { H, floor: f } = built.bounds;
@@ -93,6 +95,25 @@ async function loadRoom(id) {
   setView('overview', false);
 }
 
+// Show only what is inside a box (inches): clip every material, hide labels outside it.
+function clipTo(built) {
+  const c = built.clip;
+  const planes = [
+    new THREE.Plane(new THREE.Vector3(1, 0, 0), -c.x0 * IN),
+    new THREE.Plane(new THREE.Vector3(-1, 0, 0), c.x1 * IN),
+    new THREE.Plane(new THREE.Vector3(0, 0, 1), -c.z0 * IN),
+    new THREE.Plane(new THREE.Vector3(0, 0, -1), c.z1 * IN),
+  ];
+  built.root.updateMatrixWorld(true);
+  const p = new THREE.Vector3();
+  built.root.traverse((o) => {
+    for (const m of [o.material].flat()) if (m) { m.clippingPlanes = planes; m.clipShadows = true; }
+    if (o.isLight && !insideClip(c, o.getWorldPosition(p).divideScalar(IN), 0)) o.visible = false;
+  });
+  for (const l of built.labels) if (!insideClip(c, l.getWorldPosition(p).divideScalar(IN), 2)) l.visible = false;
+}
+const insideClip = (c, v, tol) => v.x >= c.x0 - tol && v.x <= c.x1 + tol && v.z >= c.z0 - tol && v.z <= c.z1 + tol;
+
 // ---------- camera views ----------
 // Defaults are derived from the floor area; a room config can override any of them
 // with views: { name: { pos: [x, y, z], target: [x, y, z] } } in inches.
@@ -102,10 +123,10 @@ function viewPresets() {
   const v = (x, y, z) => new THREE.Vector3(x, y, z).multiplyScalar(IN);
   const presets = {
     overview: { pos: v(f.x0 - 0.35 * fw, H + 0.95 * m, f.z0 + fd * 1.65), target: v(f.x0 + fw * 0.55, 24, f.z0 + fd * 0.42) },
-    eye: { pos: v(f.x0 + fw * 0.1, 64, f.z1 - 14), target: v(f.x0 + fw * 0.62, 40, D * 0.15) },
+    eye: { pos: v(f.x0 + fw * 0.1, 64, f.z1 - 14), target: v(f.x0 + fw * 0.62, 40, f.z0 + D * 0.15) },
     top: { pos: v(f.x0 + fw / 2, 2.4 * m, f.z0 + fd / 2 + 1), target: v(f.x0 + fw / 2, 0, f.z0 + fd / 2) },
   };
-  for (const [name, p] of Object.entries(room.cfg.views || {})) presets[name] = { pos: v(...p.pos), target: v(...p.target) };
+  for (const [name, p] of Object.entries(room.views || room.cfg.views || {})) presets[name] = { pos: v(...p.pos), target: v(...p.target) };
   return presets;
 }
 
@@ -227,7 +248,9 @@ function pick(cx, cy) {
   if (!room) return;
   const ndc = new THREE.Vector2((cx / window.innerWidth) * 2 - 1, -(cy / window.innerHeight) * 2 + 1);
   raycaster.setFromCamera(ndc, camera);
-  const hit = raycaster.intersectObject(room.root, true).find((h) => visibleInScene(h.object) && !h.object.material?.transparent);
+  const p = new THREE.Vector3();
+  const shown = (h) => !room.clip || insideClip(room.clip, p.copy(h.point).divideScalar(IN), 0);
+  const hit = raycaster.intersectObject(room.root, true).find((h) => visibleInScene(h.object) && !h.object.material?.transparent && shown(h));
   let o = hit?.object;
   while (o && !o.userData.info) o = o.parent;
   select(o || null);

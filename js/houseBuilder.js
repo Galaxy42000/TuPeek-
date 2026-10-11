@@ -5,12 +5,16 @@ import { createMaterials } from './materials.js';
 import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
-import { fmtIn, fmtFt } from './units.js';
+import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 
 // Builds the whole building from a house config (see rooms/house.js): straight wall
 // segments with doors and windows, floors, ceiling, room labels, plan dimensions and
 // fixtures. Rooms modeled in detail (the kitchen) are built with buildRoom and dropped
 // in without their own walls, floor and ceiling.
+//
+// With `focus` set to a room name, the same model is built but cut down to that one
+// room: `clip` is the box (inches) the viewer clips everything to, and the cut-away
+// walls are the ones around the room.
 
 // A wall's local frame depends on which side its room ("inside") is on. Local x runs
 // along the wall, local z = 0 is the inside face and the wall body is z ∈ [-t, 0].
@@ -24,7 +28,7 @@ const insideFace = (w) => ({ south: w.z1, north: w.z0, west: w.x0, east: w.x1 })
 
 const CORNER_ROT = { 'north-west': 0, 'north-east': -Math.PI / 2, 'south-east': Math.PI, 'south-west': Math.PI / 2 };
 
-export function buildHouse(cfg) {
+export function buildHouse(cfg, focus) {
   const H = cfg.height;
   const M = createMaterials(cfg.palette);
   const std = (color, roughness = 0.6, metalness = 0) => new THREE.MeshStandardMaterial({ color, roughness, metalness });
@@ -48,6 +52,7 @@ export function buildHouse(cfg) {
   const root = new THREE.Group();
   root.name = cfg.id;
   const walls = [];
+  const wallGroups = new Map();
   const labels = [];
   const tag = (obj, info) => ((obj.userData.info = info), obj);
   const label = (parent, html, x, y, z, cls = '') => {
@@ -128,6 +133,7 @@ export function buildHouse(cfg) {
     g.position.set(ox, 0, oz);
     g.rotation.y = fr.rot;
     root.add(g);
+    wallGroups.set(spec, g);
 
     const own = (spec.openings || []).map((o) => ({ ...o }));
     for (const o of imported) {
@@ -229,7 +235,39 @@ export function buildHouse(cfg) {
     label(g, dm.text, len / 2, 1, 0, `dimension${dm.estimate ? ' estimate' : ''}`);
   }
 
+  if (focus) return focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H });
   return { root, walls, ceiling, labels, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
+}
+
+// Cut the model down to one room: the clip box reaches through the walls around it
+// (but not past them), and those walls become the ones that cut away.
+function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
+  const r = cfg.rooms.find((rm) => rm.name === name);
+  if (!r) throw new Error(`No room named "${name}" in the house plan`);
+  const overlaps = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0) > 1;
+  const sides = {
+    north: { inward: [0, 1], edge: [r.x0, r.z0, r.x1, r.z0], find: (w) => Math.abs(w.z1 - r.z0) < 0.5 && overlaps(w.x0, w.x1, r.x0, r.x1), t: (w) => w.z1 - w.z0 },
+    south: { inward: [0, -1], edge: [r.x0, r.z1, r.x1, r.z1], find: (w) => Math.abs(w.z0 - r.z1) < 0.5 && overlaps(w.x0, w.x1, r.x0, r.x1), t: (w) => w.z1 - w.z0 },
+    west: { inward: [1, 0], edge: [r.x0, r.z0, r.x0, r.z1], find: (w) => Math.abs(w.x1 - r.x0) < 0.5 && overlaps(w.z0, w.z1, r.z0, r.z1), t: (w) => w.x1 - w.x0 },
+    east: { inward: [-1, 0], edge: [r.x1, r.z0, r.x1, r.z1], find: (w) => Math.abs(w.x0 - r.x1) < 0.5 && overlaps(w.z0, w.z1, r.z0, r.z1), t: (w) => w.x1 - w.x0 },
+  };
+  const margin = {};
+  const walls = [];
+  for (const [side, s] of Object.entries(sides)) {
+    const found = cfg.walls.filter(s.find);
+    // stop just inside the wall's far face so nothing from the next room shows; open sides are cut at the room edge
+    margin[side] = found.length ? Math.max(...found.map(s.t)) - 0.05 : 0;
+    const [x0, z0, x1, z1] = s.edge;
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const center = new THREE.Vector3((x0 + x1) / 2, H / 2, (z0 + z1) / 2);
+    for (const w of found) walls.push({ name: w.id, group: wallGroups.get(w), center, normal: new THREE.Vector3(s.inward[0], 0, s.inward[1]) });
+    if (found.length) label(root, `${side[0].toUpperCase()}${side.slice(1)} wall · ${fmtFtIn(len)}`, center.x + s.inward[0] * 2, H - 6, center.z + s.inward[1] * 2, 'wall');
+    else label(root, `Open to ${side} · ${fmtFtIn(len)}`, center.x, 2, center.z, 'wall');
+  }
+  const clip = { x0: r.x0 - margin.west, x1: r.x1 + margin.east, z0: r.z0 - margin.north, z1: r.z1 + margin.south };
+  // the house's camera presets are for the whole building; by default a room's eye
+  // view looks from its south-west corner to the far corner, and a room can set its own
+  return { root, walls, ceiling, labels, clip, views: { eye: { pos: [r.x0 + 10, 64, r.z1 - 10], target: [r.x1, 44, r.z0] }, ...r.views }, bounds: { W: r.x1 - r.x0, D: r.z1 - r.z0, H, floor: clip } };
 }
 
 // Casing on the second face of an interior wall (fixtures.opening trims the inside face).
