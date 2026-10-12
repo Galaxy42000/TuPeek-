@@ -211,7 +211,7 @@ export function roofFraming(cfg, mat) {
   };
 
   // kitchen/bathroom: scissor trusses from the old outside wall to the long outside wall.
-  // The bottom chords follow the vault (and the bathroom's sloped ceiling).
+  // The bottom chords cross under the peak, each following the vault on its own side.
   const v = cfg.vaults?.[0];
   const vx0 = v ? v.x0 : xa, vx1 = v ? v.x1 : xb, peak = v ? v.peak : H, xv = (vx0 + vx1) / 2;
   const B = (x) => Math.max(H, vaultHeight({ x0: vx0, x1: vx1, peak }, H, x)) + depth / 2;
@@ -224,18 +224,21 @@ export function roofFraming(cfg, mat) {
   blocking(zMain, xb - 3, SK);
   blocking([mn.z1 - T / 2, ...zLiving], xb - 3, SL);
   blocking([mn.z1 - T / 2, ...zLiving].filter((z) => z > wg.z1), xa + 3, NL);
+  // Each bottom chord climbs from its heel at the vault's slope, crosses the other at the
+  // vault's peak and carries on until it meets the opposite top chord (the X in the photo)
+  const chord = (top, x0, dir) => {
+    const s = (B(xv) - B(x0)) / (xv - x0), y = (x) => B(x0) + s * (x - x0);
+    let x = xv;
+    while ((x - xv) * dir < Math.abs(xb - xa) && y(x) < along(top, x) - depth) x += dir;
+    return [[x0, B(x0)], [x, y(x)]];
+  };
   for (const z of zMain) {
     const top = [[xa + T / 2, NK(xa + T / 2) - c], [xr, NK(xr) - c], [xb + O, SK(xb + O) - c]];
-    const bottom = [[xa + T / 2, B(xa)], [vx0, B(vx0)], [xv, B(xv)], [vx1, B(vx1)], [xb, B(xb)]];
-    const L = (f) => xa + (xv - xa) * f, Rt = (f) => xv + (xb - xv) * f;
-    truss(z, top, bottom, [
+    const left = vx0 > xa + T / 2 ? [[xa + T / 2, B(xa)], ...chord(top, vx0, 1)] : chord(top, xa + T / 2, 1);
+    truss(z, top, left, [
       [[xa + T / 2, B(xa)], [xa + T / 2, along(top, xa + T / 2)]], // heel post over the old wall
-      [[xv, B(xv)], [xv, along(top, xv)]], // post at the vault's peak
-      [[L(0.55), along(bottom, L(0.55))], [L(0.25), along(top, L(0.25))]],
-      [[L(0.55), along(bottom, L(0.55))], [L(0.8), along(top, L(0.8))]],
-      [[Rt(0.45), along(bottom, Rt(0.45))], [Rt(0.2), along(top, Rt(0.2))]],
-      [[Rt(0.45), along(bottom, Rt(0.45))], [Rt(0.75), along(top, Rt(0.75))]],
     ]);
+    truss(z, [], [[xb, B(xb)], ...chord(top, Math.min(vx1, xb), -1).slice(Math.min(vx1, xb) < xb ? 0 : 1)], []);
   }
 
   // living room: stick-framed hip roof (living room photo): 2×6 common rafters in pairs from
