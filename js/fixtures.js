@@ -141,13 +141,40 @@ export function dishwasher(parent, ctx, w, run) {
   handle(parent, ctx, w / 2, height - 4, depth - 0.2 + T, 'h', w - 6);
 }
 
-export function range(parent, ctx, w, run) {
+// item.cooktop: 'gas' (default; burners and grates) or 'induction' (smooth glass with
+// marked cooking zones and touch controls along the front)
+export function range(parent, ctx, w, run, item = {}) {
   const M = ctx.M;
   const top = run.height + run.counterThickness; // cooktop flush with counter
   const d = run.depth + 1; // slide-in ranges sit proud of the cabinets
   addBox(parent, M.steel, 0.2, 0, 0, w - 0.4, top - 0.4, d);
   addBox(parent, M.blackGlass, 0.2, top - 0.4, 0, w - 0.4, 0.4, d);
-  // burners + continuous grates
+  if (item.cooktop === 'induction') {
+    const ring = (x, z, r) => {
+      const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.18, r, 48).rotateX(-Math.PI / 2), M.zone);
+      m.position.set(x, top + 0.02, z);
+      parent.add(m);
+    };
+    for (const [bx, bz, r] of [[0.27, 0.3, 4], [0.73, 0.3, 3.2], [0.27, 0.66, 3.2], [0.73, 0.66, 4]]) ring(w * bx, d * bz, r);
+    addBox(parent, M.zone, w * 0.2, top, d - 3.2, w * 0.6, 0.03, 0.12, { cast: false }); // touch-control strip
+    for (let i = 0; i < 5; i++) ring(w * (0.25 + i * 0.125), d - 2.2, 0.45);
+  } else gasTop(parent, M, w, d, top);
+  // oven door with window, drawer, control panel
+  addBox(parent, M.steel, 0.4, 7, d, w - 0.8, 22, 0.9);
+  addBox(parent, M.blackGlass, 6, 12, d + 0.9, w - 12, 9, 0.05, { cast: false });
+  handle(parent, ctx, w / 2, 27.5, d + 0.9, 'h', w - 5);
+  addBox(parent, M.steel, 0.4, 0.8, d, w - 0.8, 5.6, 0.9);
+  handle(parent, ctx, w / 2, 5, d + 0.9, 'h', w * 0.5);
+  addBox(parent, M.black, 0.4, 29.6, d, w - 0.8, top - 30.4, 0.6);
+  if (item.cooktop === 'induction') return;
+  for (let i = 0; i < 5; i++) {
+    const kx = w * (0.15 + i * 0.175);
+    addMesh(parent, new THREE.CylinderGeometry(0.85, 0.85, 1.1, 20).rotateX(Math.PI / 2), M.steel, kx, (29.6 + top) / 2, d + 1.1);
+  }
+}
+
+// burners + continuous grates
+function gasTop(parent, M, w, d, top) {
   for (const bx of [0.27, 0.73]) {
     for (const bz of [0.3, 0.72]) {
       addMesh(parent, new THREE.CylinderGeometry(2.2, 2.4, 0.6, 24), M.black, w * bx, top + 0.3, d * bz);
@@ -157,17 +184,6 @@ export function range(parent, ctx, w, run) {
   const gy = top + 0.9, gh = 0.5;
   for (const gz of [d * 0.08, d * 0.5, d * 0.92]) addBox(parent, M.black, 0.8, gy, gz - 0.25, w - 1.6, gh, 0.5);
   for (const gx of [0.04, 0.5, 0.96]) addBox(parent, M.black, w * gx - 0.25, gy, d * 0.08, 0.5, gh, d * 0.84);
-  // oven door with window, drawer, knobs
-  addBox(parent, M.steel, 0.4, 7, d, w - 0.8, 22, 0.9);
-  addBox(parent, M.blackGlass, 6, 12, d + 0.9, w - 12, 9, 0.05, { cast: false });
-  handle(parent, ctx, w / 2, 27.5, d + 0.9, 'h', w - 5);
-  addBox(parent, M.steel, 0.4, 0.8, d, w - 0.8, 5.6, 0.9);
-  handle(parent, ctx, w / 2, 5, d + 0.9, 'h', w * 0.5);
-  addBox(parent, M.black, 0.4, 29.6, d, w - 0.8, top - 30.4, 0.6);
-  for (let i = 0; i < 5; i++) {
-    const kx = w * (0.15 + i * 0.175);
-    addMesh(parent, new THREE.CylinderGeometry(0.85, 0.85, 1.1, 20).rotateX(Math.PI / 2), M.steel, kx, (29.6 + top) / 2, d + 1.1);
-  }
 }
 
 export function fridge(parent, ctx, w, h, d) {

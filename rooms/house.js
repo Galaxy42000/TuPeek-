@@ -94,6 +94,9 @@ export default {
 
   palette: {
     ...kitchen.palette,
+    // bathroom vanity and linen cabinet: not known yet, kept painted white
+    cabinets: '#f1efe9',
+    cabinetGrain: false,
     doors: '#f8f7f3',
     tileFloor: '#cfccc6',
     ground: '#d3d8cf',

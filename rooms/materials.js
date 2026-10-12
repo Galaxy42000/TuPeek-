@@ -61,6 +61,19 @@ export default {
     Material: 'Pressure-treated lumber, joist hangers',
     Joists: '2× at 16″ on center ⚠ sizes estimated from the photo',
   },
+  craftmaidMaple: {
+    name: 'Cabinets',
+    Brand: 'CraftMaid',
+    Wood: 'Maple, natural',
+    'Door style': 'Shaker',
+    Finish: 'Clear',
+  },
+  electroluxRange: {
+    name: 'Range',
+    Brand: 'Electrolux',
+    Cooktop: 'Induction',
+    Width: '30″',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',

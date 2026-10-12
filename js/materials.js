@@ -67,6 +67,33 @@ export function woodTexture(base, plankWidth = 5) {
   return toTexture(c, S);
 }
 
+// Fine, seamless wood grain (no board joints) for cabinet doors and panels. Streaks run
+// along u; the material turns them vertical.
+export function grainTexture(base) {
+  const S = 24, PX = 512;
+  const [c, ctx] = canvas(PX, PX);
+  const r = rng(7);
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, PX, PX);
+  for (let i = 0; i < 140; i++) {
+    ctx.globalAlpha = 0.05 + r() * 0.1;
+    ctx.strokeStyle = shade(base, -0.06 - r() * 0.1);
+    ctx.lineWidth = 0.6 + r() * 2.2;
+    const y = r() * PX, amp = 1 + r() * 4, ph = r() * 6, fr = 0.004 + r() * 0.01;
+    for (const dy of [0, PX, -PX]) {
+      ctx.beginPath();
+      for (let x = 0; x <= PX; x += 8) {
+        // whole periods across the tile so it repeats without a seam
+        const yy = y + dy + Math.sin((x / PX) * Math.PI * 2 * Math.round(fr * PX / 6 + 1) + ph) * amp;
+        x ? ctx.lineTo(x, yy) : ctx.moveTo(x, yy);
+      }
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+  return toTexture(c, S);
+}
+
 export function tileTexture(color, grout, tileW = 6, tileH = 3) {
   const cols = 4, rows = 4, k = 24;
   const SX = tileW * cols, SY = tileH * rows;
@@ -122,6 +149,13 @@ function photoTexture(url, [w, h]) {
 export function createMaterials(p) {
   const std = (color, roughness = 0.6, metalness = 0, extra = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
+  // painted (plain color) or clear-finished wood with vertical grain
+  const wooden = (color, grain) => {
+    if (!grain) return std(color, 0.42);
+    const t = grainTexture(color);
+    t.rotation = Math.PI / 2;
+    return std('#ffffff', 0.38, 0, { map: t });
+  };
   // planks are drawn running along x (plan east–west); turn them for north–south
   const floorMap = woodTexture(p.floor, p.floorPlankWidth);
   if (p.floorBoards === 'north-south') floorMap.rotation = Math.PI / 2;
@@ -134,8 +168,8 @@ export function createMaterials(p) {
     ceiling: std(p.ceiling, 0.95),
     trim: std(p.trim, 0.45),
     floor: std('#ffffff', 0.55, 0, { map: floorMap }),
-    cabinet: std(p.cabinets, 0.42),
-    island: std(p.island, 0.42),
+    cabinet: wooden(p.cabinets, p.cabinetGrain),
+    island: wooden(p.island, p.cabinetGrain),
     interior: std(shade(p.cabinets, -0.04), 0.8),
     toeKick: std('#3a3734', 0.85),
     counter: stone,
@@ -147,6 +181,7 @@ export function createMaterials(p) {
     steel: std('#d6d9db', 0.28, 1.0),
     black: std('#1a1a1a', 0.45, 0.2),
     blackGlass: std('#0a0a0b', 0.06, 0.3),
+    zone: std('#8d8f93', 0.4, 0.2), // induction cooking-zone markings
     glass: new THREE.MeshStandardMaterial({ color: '#e3f1f7', roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.16, depthWrite: false }),
     stoolSeat: std(p.stoolSeat, 0.55),
     stoolLeg: std(p.stoolLegs, 0.35, 0.85),

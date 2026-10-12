@@ -58,8 +58,10 @@ export default {
     floor: '#b08458', // wood tone
     floorPlankWidth: 4,
     floorBoards: 'north-south', // plan direction the boards run (true east–west)
-    cabinets: '#f1efe9',
-    island: '#41566b',
+    // CraftMaid natural maple, clear finish (island too)
+    cabinets: '#dcb98a',
+    island: '#dcb98a',
+    cabinetGrain: true, // clear-finished wood: show the grain
     counter: '#e9e7e2', // speckle color, used only when there is no counterPhoto
     // Navasca granite (Antonio Grey): a photo of the slab made into a seamless tile
     // covering about 20″ × 15″
@@ -79,6 +81,7 @@ export default {
     floor: ['oakFloor'],
     windows: ['cherrySill', 'drywallReturns'],
     counter: ['navascaGranite'],
+    cabinets: ['craftmaidMaple'],
     backsplash: ['navascaGranite'],
   },
 
@@ -112,7 +115,8 @@ export default {
       extendRight: 1 / 16, // meet the corner countertop
       items: [
         { id: 'B1', code: 'BD21.3', width: 21, fronts: 'drawers3' },
-        { id: 'RANGE', code: 'RANGE.GAS.30', kind: 'range', width: 30 },
+        { id: 'RANGE', code: 'RANGE.GAS.30', kind: 'range', width: 30, cooktop: 'induction', materials: ['electroluxRange'],
+          notes: 'Electrolux induction range (the plan’s code says gas; the installed range is induction).' },
         { id: 'B2', code: 'BTP9', width: 9, fronts: 'doors', notes: '9″ tray pull-out.' },
       ],
     },

@@ -210,7 +210,7 @@ export function buildRoom(cfg, opts = {}) {
       g.add(ig);
       const id = it.id || nextId({ dishwasher: 'DW', range: 'RANGE' }[kind] || 'B');
       if (kind === 'dishwasher') F.dishwasher(ig, ctx, it.width, run);
-      else if (kind === 'range') F.range(ig, ctx, it.width, run);
+      else if (kind === 'range') F.range(ig, ctx, it.width, run, it);
       else if (kind === 'panel') addBox(ig, M.cabinet, 0, 0, 0, it.width, run.height, run.depth + 0.75);
       else if (kind === 'gap') { /* empty space, e.g. for a trash can or seating knee space */ }
       else F.baseCabinet(ig, ctx, it.width, run, kind === 'sink' ? 'sink' : it.fronts || 'door-drawer', it);
