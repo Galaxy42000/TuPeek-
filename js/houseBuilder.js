@@ -296,7 +296,7 @@ export function buildHouse(cfg, focus) {
   }
 
   // ---------- decks (framing is a separate line drawing the viewer can toggle) ----------
-  const framing = buildDecks(root, ctx, cfg.decks, tag, label);
+  const framing = buildDecks(root, ctx, cfg.decks, tag, label, grade);
 
   if (focus) return focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H });
   return { root, walls, ceiling, labels, framing, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };

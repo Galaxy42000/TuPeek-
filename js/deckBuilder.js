@@ -73,7 +73,7 @@ function member(pos, a, b, w, yTop, d) {
   for (const [i, j] of [[0, 1], [2, 3], [4, 5], [6, 7], [0, 2], [1, 3], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [3, 7]]) pos.push(...c[i], ...c[j]);
 }
 
-export function buildDecks(root, ctx, decks, tag, label) {
+export function buildDecks(root, ctx, decks, tag, label, grade = 0) {
   const framing = new THREE.Group();
   framing.name = 'deck framing';
   framing.visible = false;
@@ -96,6 +96,8 @@ export function buildDecks(root, ctx, decks, tag, label) {
   const skirtMat = new THREE.MeshStandardMaterial({ color, roughness: 0.7 });
   const shadowMat = new THREE.MeshStandardMaterial({ color: '#2a2a28', roughness: 1 });
   const lineMat = new THREE.LineBasicMaterial({ color: '#1d4f91', depthTest: false, transparent: true, opacity: 0.85 });
+  const blockMat = new THREE.MeshStandardMaterial({ color: '#9c9a94', roughness: 0.95 });
+  const postMat = new THREE.MeshStandardMaterial({ color: '#b99d6c', roughness: 0.8 });
 
   for (const dk of decks) {
     const g = new THREE.Group();
@@ -129,6 +131,19 @@ export function buildDecks(root, ctx, decks, tag, label) {
       skirt.add(slab([a, P[(i + 1) % n], skirtOut[(i + 1) % n], skirtOut[i]], dk.skirt, top - THICK - dk.skirt, skirtMat));
     });
     g.add(skirt);
+
+    // 4×4 posts on concrete deck blocks, up to the bottom of the framing
+    for (const [o, z] of dk.posts || []) {
+      const x = dk.wallX + o, bottom = top - THICK - DEPTH;
+      const post = new THREE.Group();
+      const block = new THREE.Mesh(new THREE.BoxGeometry(11, 8, 11), blockMat);
+      block.position.set(x, grade + 4, z);
+      const p = new THREE.Mesh(new THREE.BoxGeometry(3.5, bottom - grade - 8, 3.5), postMat);
+      p.position.set(x, (bottom + grade + 8) / 2, z);
+      for (const m of [block, p]) { m.castShadow = m.receiveShadow = true; post.add(m); }
+      tag(post, { id: `${dk.id} post`, type: '4×4 post on a concrete deck block', height: bottom - grade, notes: '⚠ Position estimated from the photos.' });
+      g.add(post);
+    }
 
     const zs = P.map((q) => q[1]), px = P.map((q) => q[0]);
     const along = Math.max(...zs) - Math.min(...zs), out = Math.max(...px) - Math.min(...px);

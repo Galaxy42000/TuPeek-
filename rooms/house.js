@@ -71,14 +71,14 @@ const Z_KITCHEN_END = KZ + kitchen.room.depth; // where the kitchen's east wall 
 // end of the sink-wall countertop, taken from the kitchen's own layout (204½″)
 const SINK_RUN = kitchen.baseRuns.find((r) => r.wall === 'east');
 const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a + it.width, 0) + SINK_RUN.extendRight;
-const SLIDER_MID = Z_COUNTER_END + 1.5 + 36; // middle of the 6′ sliding door
 
-// Deck outside the sliding door, from the framing photo (all ⚠ estimated from it):
-// an upper landing 10′ × 10′ centered on the door, one step down from the floor, and a
-// lower deck that wraps around its north and outer sides with a 45° corner.
+// Deck outside the sliding door, from the two framing photos (all ⚠ estimated from them):
+// an upper landing one step down from the floor, from about 20″ north of the door to
+// 40″ south of it, and a lower deck along its north and outer sides with a 45° corner,
+// ending about 2′ short of the landing's south end.
 const DECK_X = WIDTH; // outside face of the wall the deck is built against
-const UPPER = { z0: SLIDER_MID - 60, z1: SLIDER_MID + 60, out: 120 };
-const LOWER = { z0: 110, out: 144, clip: 45 };
+const UPPER = { z0: 186, z1: 318, out: 120 };
+const LOWER = { z0: 110, z1: 290, out: 144, clip: 45 };
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
@@ -157,9 +157,10 @@ export default {
     {
       id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH,
       openings: [
+        { id: 'W10', type: 'window', at: 41, width: 23, bottom: 53, height: 27, notes: 'Small bathroom window. Its top lines up with the sliding door’s. ⚠ Size, height and position estimated from the outside photo. It sits where LINEN was drawn from the sketch, so that cabinet can’t be 84″ tall there.' },
         { id: 'SLIDER', type: 'door', door: 'slider', at: Z_COUNTER_END + 1.5 - EXT, width: 72, height: 80, casing: false, materials: ['kolbeSlider'],
           notes: '6′ sliding glass door, starting 1½″ past the end of the kitchen countertop. No inside trim drawn (there is no room for casing beside the counter). ⚠ Height assumed to be the standard 6′-8″.' },
-        { id: 'W8', type: 'window', at: 340, width: 27, bottom: 21, height: 58, notes: 'Living room. ⚠ Size, height and position estimated from the photo; the sill was hidden.' },
+        { id: 'W8', type: 'window', at: 341 - EXT, width: 32, bottom: 16, height: 64, notes: 'Living room. Its top lines up with the sliding door’s. ⚠ Size, height and position estimated from the outside photos.' },
       ],
     },
 
@@ -274,23 +275,26 @@ export default {
   // Decks. outline = outside faces of the framing in plan [x, z]; edges on the house wall
   // (x = wallX) are the ledger. top = deck surface relative to the floor inside.
   // beams / blocking = lines parallel to the house, inches out from the wall.
+  // posts = [out, z] of 4×4 posts on concrete deck blocks (only the ones seen so far).
   decks: [
     {
       id: 'Upper deck', wallX: DECK_X, top: -1.5, skirt: 5.25,
       outline: [[DECK_X, UPPER.z0], [DECK_X + UPPER.out, UPPER.z0], [DECK_X + UPPER.out, UPPER.z1], [DECK_X, UPPER.z1]],
       blocking: [UPPER.out / 2],
       materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
-      notes: 'Landing outside the sliding door, centered on it. ⚠ Size and height estimated from the framing photo.',
+      posts: [[UPPER.out - 4, UPPER.z1 - 4]],
+      notes: 'Landing outside the sliding door, from about 20″ north of it to 40″ south of it. ⚠ Size and height estimated from the framing photos.',
     },
     {
       id: 'Lower deck', wallX: DECK_X, top: -1.5 - 7.25, skirt: 5.25,
       outline: [
         [DECK_X, LOWER.z0], [DECK_X + LOWER.out - LOWER.clip, LOWER.z0], [DECK_X + LOWER.out, LOWER.z0 + LOWER.clip],
-        [DECK_X + LOWER.out, UPPER.z1], [DECK_X + UPPER.out, UPPER.z1], [DECK_X + UPPER.out, UPPER.z0], [DECK_X, UPPER.z0],
+        [DECK_X + LOWER.out, LOWER.z1], [DECK_X + UPPER.out, LOWER.z1], [DECK_X + UPPER.out, UPPER.z0], [DECK_X, UPPER.z0],
       ],
       beams: [LOWER.out - LOWER.clip], blocking: [50],
+      posts: [[LOWER.out - 4, 250], [LOWER.out - 4, LOWER.z0 + LOWER.clip + 6]],
       materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
-      notes: 'One step (7¼″) below the landing, wrapping around its north and outer sides, with a 45° corner. Overall about 16′ along the house × 12′ out. ⚠ Size estimated from the framing photo.',
+      notes: 'One step (7¼″) below the landing, along its north and outer sides, with a 45° corner; it stops about 2′ short of the landing’s south end. Overall about 15′ along the house × 12′ out. ⚠ Size estimated from the framing photos.',
     },
   ],
 
