@@ -73,11 +73,11 @@ const SINK_RUN = kitchen.baseRuns.find((r) => r.wall === 'east');
 const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a + it.width, 0) + SINK_RUN.extendRight;
 
 // Deck outside the sliding door, from the two framing photos (all ⚠ estimated from them):
-// an upper landing one step down from the floor, from about 20″ north of the door to
-// 40″ south of it, and a lower deck along its north and outer sides with a 45° corner,
-// ending about 2′ short of the landing's south end.
+// an upper landing one step down from the floor, 12′ along the house × 10′ out (from
+// the owner), and a lower deck along its north and outer sides with a 45° corner,
+// ending a little short of the landing's south end.
 const DECK_X = WIDTH; // outside face of the wall the deck is built against
-const UPPER = { z0: 186, z1: 318, out: 120 };
+const UPPER = { z0: 180, z1: 180 + 144, out: 120 }; // 12′ × 10′; ⚠ where it starts along the wall is from the photos
 const LOWER = { z0: 110, z1: 290, out: 144, clip: 45 };
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
@@ -283,7 +283,7 @@ export default {
       blocking: [UPPER.out / 2],
       materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
       posts: [[UPPER.out - 4, UPPER.z1 - 4]],
-      notes: 'Landing outside the sliding door, from about 20″ north of it to 40″ south of it. ⚠ Size and height estimated from the framing photos.',
+      notes: '12′ along the house × 10′ out from the wall. Runs from about 26″ north of the sliding door to 46″ south of it. ⚠ That position and the height are estimated from the framing photos.',
     },
     {
       id: 'Lower deck', wallX: DECK_X, top: -1.5 - 7.25, skirt: 5.25,
