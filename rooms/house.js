@@ -10,7 +10,8 @@
 //    steel beam over the bedroom 1 door, bedroom wing windows); kitchen looking
 //    into the living room (vaulted kitchen ceiling on scissor trusses with a 9′
 //    peak, steel beam across the living room, its windows, the mini-split);
-//    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls).
+//    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls);
+//    outside at the bathroom end (bathroom window with the condenser under it).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -102,7 +103,13 @@ export default {
   // door: 'swing' | 'pocket' | 'bypass';  hinge = which jamb the hinges are on (plan direction)
   walls: [
     // ---- exterior ----
-    { id: 'East wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT },
+    {
+      id: 'East wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT,
+      notes: 'The gable end at the bathroom.',
+      openings: [
+        { id: 'W9', type: 'window', at: X_BATH + 2, width: 24, bottom: 48, height: 24, notes: 'Bathroom awning window, over the toilet, with the mini-split condenser below it outside. ⚠ Size, height and position estimated from the outside photo.' },
+      ],
+    },
     {
       id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
       notes: 'Windows are not on the plan; they come from the bedroom photo.',
@@ -203,8 +210,9 @@ export default {
     // beam, facing the kitchen
     { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: LIVING_CEILING + 8, color: '#f6f6f4',
       notes: 'Mounted above beam BEAM-2 under the peak of the vault, blowing into the kitchen. ⚠ Size is a typical 18,000 BTU Blueridge unit, judged from the photo.' },
-    { id: 'CONDENSER', type: 'Mini-split condenser (outside)', kind: 'box', x: WIDTH + 3, z: 291, width: 13, depth: 31, height: 22, bottom: 3, color: '#d9dbd9', notes: '⚠ Size is typical, not measured.' },
-    { id: 'PAD', type: 'Equipment pad', kind: 'box', x: WIDTH + 1, z: 289, width: 17, depth: 35, height: 3.6, bottom: -0.6, color: '#b9b8b2', label: false },
+    // outside, hung on wall brackets under the bathroom window (W9), fan facing out
+    { id: 'CONDENSER', type: 'Mini-split condenser (outside)', code: 'Blueridge', kind: 'box', x: X_BATH + 26 - 34, z: -13, width: 34, depth: 13, height: 28, bottom: 0, color: '#eeeeea', grille: 'north',
+      notes: 'On wall brackets below the bathroom window, lined up with its east edge. Hung at about floor level (the model has no crawl space, so it sits at the ground line). ⚠ Size is typical for a Blueridge outdoor unit, not measured.' },
   ],
 
   // Structural steel. from/to = ends of the beam's centerline [x, z]; the top sits at

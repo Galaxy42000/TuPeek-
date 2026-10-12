@@ -89,7 +89,8 @@ export function box(parent, ctx, w, h, d, bottom, item = {}) {
   const mat = ctx.color(item.color || '#f2f2ef', item.metal);
   addBox(parent, mat, 0, bottom, 0, w, h, d);
   if (item.grille) {
+    // on the +z face, or the -z face with grille: 'north' (plan direction)
     const r = Math.min(w, h) * 0.38;
-    addMesh(parent, new THREE.CylinderGeometry(r, r, 0.4, 32).rotateX(Math.PI / 2), ctx.M.black, w / 2, bottom + h / 2, d + 0.2, { cast: false });
+    addMesh(parent, new THREE.CylinderGeometry(r, r, 0.4, 32).rotateX(Math.PI / 2), ctx.M.black, w / 2, bottom + h / 2, item.grille === 'north' ? -0.2 : d + 0.2, { cast: false });
   }
 }
