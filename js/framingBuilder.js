@@ -62,7 +62,8 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
   const rough = ops.filter((o) => o.type !== 'opening' || o.height < H - 6).map((o) => {
     const head = Math.min(o.bottom + o.height, plateTop - 1);
     const hh = Math.min(o.width > 48 ? 11.25 : 7.25, plateTop - head); // header depth
-    return { ...o, a: Math.max(0, o.start - 2 * T), b: Math.min(L, o.start + o.width + 2 * T), head, hh };
+    const j = o.width >= 72 ? 2 : 1; // jack studs each side (doubled under a wide header, as at the slider)
+    return { ...o, j, a: Math.max(0, o.start - (1 + j) * T), b: Math.min(L, o.start + o.width + (1 + j) * T), head, hh };
   });
   // cased openings without a door get the same framing (they are rough openings too)
   const inOpening = (x) => rough.find((o) => x > o.a - T / 2 && x < o.b + T / 2);
@@ -70,8 +71,8 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
   // bottom plate, broken at doorways
   let x0 = 0;
   for (const o of [...rough].filter((o) => o.bottom === 0).sort((p, q) => p.a - q.a)) {
-    flat(x0, o.a + 2 * T, T / 2);
-    x0 = o.b - 2 * T;
+    flat(x0, o.a + (1 + o.j) * T, T / 2);
+    x0 = o.b - (1 + o.j) * T;
   }
   flat(x0, L, T / 2);
   // double top plate
@@ -86,7 +87,7 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
     if (!o) stud(x, T, plateTop);
     else {
       // cripples above the header and below the sill
-      if (x > o.a + 2 * T && x < o.b - 2 * T) {
+      if (x > o.a + (1 + o.j) * T && x < o.b - (1 + o.j) * T) {
         stud(x, o.head + o.hh, plateTop);
         if (o.bottom > 0) stud(x, T, o.bottom - T);
       }
@@ -96,11 +97,13 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
     // king studs full height, jack studs up to the header
     stud(o.a + T / 2, T, plateTop);
     stud(o.b - T / 2, T, plateTop);
-    stud(o.a + 1.5 * T, o.bottom === 0 ? 0 : T, o.head);
-    stud(o.b - 1.5 * T, o.bottom === 0 ? 0 : T, o.head);
+    for (let k = 1; k <= o.j; k++) {
+      stud(o.a + (k + 0.5) * T, o.bottom === 0 ? 0 : T, o.head);
+      stud(o.b - (k + 0.5) * T, o.bottom === 0 ? 0 : T, o.head);
+    }
     // header (on edge, the full wall thickness) and the rough sill under a window
     fm.add([o.a + T, o.head + o.hh / 2, zc], [o.b - T, o.head + o.hh / 2, zc], across, d, o.hh);
-    if (o.bottom > 0) flat(o.a + 2 * T, o.b - 2 * T, o.bottom - T / 2);
+    if (o.bottom > 0) flat(o.a + (1 + o.j) * T, o.b - (1 + o.j) * T, o.bottom - T / 2);
   }
 
   // above the top plate: gable / rake studs up to topAt, under a sloped plate
@@ -176,7 +179,17 @@ export function roofFraming(cfg, mat) {
   const v = cfg.vaults?.[0];
   const vx0 = v ? v.x0 : xa, vx1 = v ? v.x1 : xb, peak = v ? v.peak : H, xv = (vx0 + vx1) / 2;
   const B = (x) => Math.max(H, vaultHeight({ x0: vx0, x1: vx1, peak }, H, x)) + depth / 2;
-  for (const z of layout(T / 2, mn.z1 - T / 2)) {
+  // blocking between the truss heels on top of the eave walls (seen over the sink wall)
+  const blocking = (zs, xw, roofY) => {
+    const h = roofY(xw) - c - depth / 2 - H;
+    if (h < 1) return;
+    for (let i = 0; i + 1 < zs.length; i++) fm.add([xw, H + h / 2, zs[i] + T / 2], [xw, H + h / 2, zs[i + 1] - T / 2], [1, 0, 0], T, h);
+  };
+  const zMain = layout(T / 2, mn.z1 - T / 2), zLiving = layout(mn.z1 + 24, z1 - 12);
+  blocking(zMain, xb - 3, SK);
+  blocking([mn.z1 - T / 2, ...zLiving], xb - 3, SL);
+  blocking([mn.z1 - T / 2, ...zLiving].filter((z) => z > wg.z1), xa + 3, NL);
+  for (const z of zMain) {
     const top = [[xa + T / 2, NK(xa + T / 2) - c], [xr, NK(xr) - c], [xb + O, SK(xb + O) - c]];
     const bottom = [[xa + T / 2, B(xa)], [vx0, B(vx0)], [xv, B(xv)], [vx1, B(vx1)], [xb, B(xb)]];
     const L = (f) => xa + (xv - xa) * f, Rt = (f) => xv + (xb - xv) * f;
@@ -193,7 +206,7 @@ export function roofFraming(cfg, mat) {
   // living room: common trusses with a flat bottom chord at the wall plates; toward the
   // hipped end they step down (flat top) under the hip
   const xL = xa, xR = xb, yB = H + depth / 2;
-  for (const z of layout(mn.z1 + 24, z1 - 12)) {
+  for (const z of zLiving) {
     const top0 = (x) => Math.min(SL(x), NL(x), Hp(z)) - c;
     const xs = [xa - O, xL, xm, xR, xb + O];
     const flatY = Hp(z);

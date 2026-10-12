@@ -17,7 +17,8 @@
 //    Clipstone skirt, Kolbe windows, roof, entry porch); the bathroom (DreamLine
 //    shower, tile, LED mirror, sloped ceiling); the crawl space under the bathroom
 //    (drain from the toilet past the shower trap, a close-up of the shower trap, and the kitchen sink wye
-//    where the drain turns down to the septic).
+//    where the drain turns down to the septic); framing photos: the kitchen toward the bathroom
+//    end (scissor trusses, partition studs) and the sink wall (window, slider, heel blocking).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
