@@ -59,7 +59,7 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: true };
+const opts = { cutaway: true, ceiling: true, dims: true, framing: false };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
@@ -94,6 +94,8 @@ async function loadRoom(id) {
 
   select(null);
   applyLabelVisibility();
+  $('#framing-toggle').hidden = !room.framing;
+  if (room.framing) room.framing.visible = opts.framing;
   setView('overview', false);
 }
 
@@ -353,6 +355,7 @@ $('#walk-btn').addEventListener('click', () => (walk.on ? exitWalk() : enterWalk
 $('#t-dims').addEventListener('change', (e) => { opts.dims = e.target.checked; applyLabelVisibility(); });
 $('#t-cutaway').addEventListener('change', (e) => (opts.cutaway = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
+$('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; if (room?.framing) room.framing.visible = opts.framing; });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));
 
 window.addEventListener('resize', () => {

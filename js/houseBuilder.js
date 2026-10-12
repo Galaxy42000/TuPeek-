@@ -5,6 +5,8 @@ import { createMaterials } from './materials.js';
 import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
+import { buildDecks } from './deckBuilder.js';
+import { tileTexture } from './materials.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
 
@@ -43,6 +45,7 @@ export function buildHouse(cfg, focus) {
     door: std(cfg.palette.doors || cfg.palette.trim, 0.45),
     tileFloor: std(cfg.palette.tileFloor || '#c9c7c2', 0.5),
     ground: std(cfg.palette.ground || '#d3d8cf', 0.95),
+    stone: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, map: tileTexture(cfg.palette.stone || '#6f7379', '#565a60', 12, 4) }),
     dimension: new THREE.MeshBasicMaterial({ color: '#3d4b5c' }),
   });
   const colors = {};
@@ -77,7 +80,8 @@ export function buildHouse(cfg, focus) {
   // ---------- ground, floors, ceiling ----------
   const gm = 240;
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(bbox.x1 - bbox.x0 + 2 * gm, bbox.z1 - bbox.z0 + 2 * gm).rotateX(-Math.PI / 2), M.ground);
-  ground.position.set((bbox.x0 + bbox.x1) / 2, -0.6, (bbox.z0 + bbox.z1) / 2);
+  const grade = cfg.grade ?? 0; // ground level relative to the floor inside
+  ground.position.set((bbox.x0 + bbox.x1) / 2, grade - 0.6, (bbox.z0 + bbox.z1) / 2);
   ground.receiveShadow = true;
   root.add(ground);
 
@@ -88,6 +92,8 @@ export function buildHouse(cfg, focus) {
   for (const [x0, z0, x1, z1] of cfg.footprint) {
     // subfloor sits a hair below the room floors so it only shows under walls and doorways
     tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor') });
+    // foundation / stone skirt from the ground up to the floor framing
+    if (grade < -1.05) tag(addBox(root, M.stone, x0, grade - 0.6, z0, x1 - x0, -1.05 - grade + 0.6, z1 - z0), { id: 'Foundation', type: 'Foundation (stone skirt outside)', height: -grade, notes: `Floor is about ${fmtIn(-grade)} above the ground.` });
     // flat ceiling everywhere except under the vaults
     let flat = [{ x: x0, y: z0, w: x1 - x0, h: z1 - z0 }];
     for (const v of [...vaults, ...(cfg.ceilings || [])]) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
@@ -276,7 +282,7 @@ export function buildHouse(cfg, focus) {
     const [x0, z0] = dm.from, [x1, z1] = dm.to;
     const len = Math.hypot(x1 - x0, z1 - z0);
     const g = new THREE.Group();
-    g.position.set(x0, 0, z0);
+    g.position.set(x0, grade, z0);
     g.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
     root.add(g);
     addBox(g, M.dimension, 0, -0.4, -0.4, len, 0.3, 0.8, { cast: false, receive: false });
@@ -289,8 +295,11 @@ export function buildHouse(cfg, focus) {
     label(g, dm.text, len / 2, 1, 0, `dimension${dm.estimate ? ' estimate' : ''}`);
   }
 
+  // ---------- decks (framing is a separate line drawing the viewer can toggle) ----------
+  const framing = buildDecks(root, ctx, cfg.decks, tag, label);
+
   if (focus) return focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H });
-  return { root, walls, ceiling, labels, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
+  return { root, walls, ceiling, labels, framing, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
 }
 
 // Cut the model down to one room (plus any rooms listed in its `with`): the clip box reaches through the walls around it

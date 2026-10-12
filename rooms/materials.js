@@ -45,6 +45,22 @@ export default {
     Material: 'Sheetrock, painted',
     Casing: 'None',
   },
+  timbertechSeaSalt: {
+    name: 'Composite decking',
+    Brand: 'TimberTech',
+    Color: 'Sea Salt Gray',
+    Layout: 'Picture-frame border board around the field; field boards run parallel to the house',
+  },
+  deckSkirt: {
+    name: 'Deck skirt',
+    Material: 'TimberTech composite, Sea Salt Gray (same as the decking)',
+    Height: '5¼″',
+  },
+  deckFraming: {
+    name: 'Deck framing',
+    Material: 'Pressure-treated lumber, joist hangers',
+    Joists: '2× at 16″ on center ⚠ sizes estimated from the photo',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',

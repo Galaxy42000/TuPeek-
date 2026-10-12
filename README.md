@@ -16,6 +16,7 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 | **Walk** | First-person mode: drag to look, W A S D or arrow keys to move (Shift moves faster), Esc to leave. Touch screens get an on-screen pad. |
 | **Measurements** | Shows or hides the ID and width labels |
 | **Cut away walls** | Hides the walls between the camera and the room, dollhouse style |
+| **Deck framing** | (Whole house) Shows the deck's framing as a blue line drawing over the decking |
 | Compass (bottom left) | Always points to true north and shows which way you're facing, in every view and in walk mode |
 
 ## Directions
@@ -38,7 +39,7 @@ oakFloor: { name: 'Hardwood flooring', Species: 'Brazilian oak', 'Board width': 
 
 ## Changing the building layout
 
-The walls, doors, windows and room sizes of the whole building live in [`rooms/house.js`](rooms/house.js), also in **inches**. Values marked ⚠ were scaled off the drawing or assumed and still need to be measured. The kitchen is built from `rooms/kitchen.js` and dropped into the house unchanged. Every room listed in `rooms` gets its own entry in the menu automatically. Rooms with no wall between them list each other under `with`, so each one's view shows both. Exposed structural steel goes in `beams`; walls it runs through are cut away around it. Vaulted ceilings go in `vaults` (peak height, plus the end walls that close them off).
+The walls, doors, windows and room sizes of the whole building live in [`rooms/house.js`](rooms/house.js), also in **inches**. Values marked ⚠ were scaled off the drawing or assumed and still need to be measured. The kitchen is built from `rooms/kitchen.js` and dropped into the house unchanged. Every room listed in `rooms` gets its own entry in the menu automatically. Rooms with no wall between them list each other under `with`, so each one's view shows both. Exposed structural steel goes in `beams`; walls it runs through are cut away around it. Vaulted ceilings go in `vaults` (peak height, plus the end walls that close them off). Decks go in `decks`: an outline of the framing for each level, its height, and beam/blocking lines; the decking (picture-frame border, field boards, skirt) is built from that.
 
 ## Changing the kitchen
 
@@ -60,6 +61,7 @@ js/roomBuilder.js   turns a room config into 3D geometry
 js/houseBuilder.js  turns the house config into walls, rooms and dimensions
 js/fixtures.js      cabinets, appliances, sink, windows, lights, stools
 js/houseFixtures.js toilet, vanity, shower, washer/dryer, mechanical boxes
+js/deckBuilder.js   deck boards, border, skirt and the framing line drawing
 js/materials.js     materials + procedural textures (wood, tile, quartz)
 js/compass.js       plan → true directions
 rooms/index.js      list of views in the menu

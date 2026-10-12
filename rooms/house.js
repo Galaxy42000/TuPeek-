@@ -11,7 +11,8 @@
 //    into the living room (vaulted kitchen ceiling on scissor trusses with a 9′
 //    peak, steel beam across the living room, its windows, the mini-split);
 //    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls);
-//    outside at the bathroom end (bathroom window with the condenser under it).
+//    outside at the bathroom end (bathroom window with the condenser under it);
+//    the deck framing outside the sliding door.
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -70,6 +71,14 @@ const Z_KITCHEN_END = KZ + kitchen.room.depth; // where the kitchen's east wall 
 // end of the sink-wall countertop, taken from the kitchen's own layout (204½″)
 const SINK_RUN = kitchen.baseRuns.find((r) => r.wall === 'east');
 const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a + it.width, 0) + SINK_RUN.extendRight;
+const SLIDER_MID = Z_COUNTER_END + 1.5 + 36; // middle of the 6′ sliding door
+
+// Deck outside the sliding door, from the framing photo (all ⚠ estimated from it):
+// an upper landing 10′ × 10′ centered on the door, one step down from the floor, and a
+// lower deck that wraps around its north and outer sides with a 45° corner.
+const DECK_X = WIDTH; // outside face of the wall the deck is built against
+const UPPER = { z0: SLIDER_MID - 60, z1: SLIDER_MID + 60, out: 120 };
+const LOWER = { z0: 110, out: 144, clip: 45 };
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
@@ -79,6 +88,9 @@ export default {
   kind: 'house',
   name: 'Whole house',
   height: HEIGHT, // ⚠ not on the plan; estimated from the photos (rooms can have a lower ceiling, see `ceilings`)
+
+  // ⚠ ground level outside, relative to the floor inside (the stone skirt), estimated
+  grade: -28,
 
   palette: {
     ...kitchen.palette,
@@ -213,7 +225,7 @@ export default {
       notes: 'Mounted above beam BEAM-2 under the peak of the vault, blowing into the kitchen. ⚠ Size is a typical 18,000 BTU Blueridge unit, judged from the photo.' },
     // outside, hung on wall brackets under the bathroom window (W9), fan facing out
     { id: 'CONDENSER', type: 'Mini-split condenser (outside)', code: 'Blueridge', kind: 'box', x: X_BATH + 26 - 34, z: -13, width: 34, depth: 13, height: 28, bottom: 0, color: '#eeeeea', grille: 'north',
-      notes: 'On wall brackets below the bathroom window, lined up with its east edge. Hung at about floor level (the model has no crawl space, so it sits at the ground line). ⚠ Size is typical for a Blueridge outdoor unit, not measured.' },
+      notes: 'On wall brackets below the bathroom window, lined up with its east edge, at about floor level. ⚠ Size is typical for a Blueridge outdoor unit, not measured.' },
   ],
 
   // Structural steel. from/to = ends of the beam's centerline [x, z]; the top sits at
@@ -254,6 +266,29 @@ export default {
     { from: [X_BATH, -30], to: [X_EAST, -30], text: '7′-0″', notes: 'Bathroom width. ⚠ The drawing itself scales closer to 8′-5″.' },
     { from: [WIDTH + 30, EXT], to: [WIDTH + 30, Z_BATH], text: '6′-0″', notes: 'Bathroom depth.' },
     { from: [0, -60], to: [WIDTH, -60], text: `≈ ${fmtFt(WIDTH)} (est.)`, estimate: true, notes: '⚠ Not on the plan: adds the measured 15′-5″ to the bedroom wing width estimated from a photo and assumed wall thicknesses.' },
+  ],
+
+  // Decks. outline = outside faces of the framing in plan [x, z]; edges on the house wall
+  // (x = wallX) are the ledger. top = deck surface relative to the floor inside.
+  // beams / blocking = lines parallel to the house, inches out from the wall.
+  decks: [
+    {
+      id: 'Upper deck', wallX: DECK_X, top: -1.5, skirt: 5.25,
+      outline: [[DECK_X, UPPER.z0], [DECK_X + UPPER.out, UPPER.z0], [DECK_X + UPPER.out, UPPER.z1], [DECK_X, UPPER.z1]],
+      blocking: [UPPER.out / 2],
+      materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
+      notes: 'Landing outside the sliding door, centered on it. ⚠ Size and height estimated from the framing photo.',
+    },
+    {
+      id: 'Lower deck', wallX: DECK_X, top: -1.5 - 7.25, skirt: 5.25,
+      outline: [
+        [DECK_X, LOWER.z0], [DECK_X + LOWER.out - LOWER.clip, LOWER.z0], [DECK_X + LOWER.out, LOWER.z0 + LOWER.clip],
+        [DECK_X + LOWER.out, UPPER.z1], [DECK_X + UPPER.out, UPPER.z1], [DECK_X + UPPER.out, UPPER.z0], [DECK_X, UPPER.z0],
+      ],
+      beams: [LOWER.out - LOWER.clip], blocking: [50],
+      materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
+      notes: 'One step (7¼″) below the landing, wrapping around its north and outer sides, with a 45° corner. Overall about 16′ along the house × 12′ out. ⚠ Size estimated from the framing photo.',
+    },
   ],
 
   views: {
