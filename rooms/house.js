@@ -81,6 +81,11 @@ const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a +
 const DECK_X = WIDTH + 3; // the deck's ledger, against the stone skirt's cap
 const UPPER = { z0: 180, z1: 180 + 144, out: 120 }; // 12′ × 10′; ⚠ where it starts along the wall is from the photos
 const LOWER = { z0: 110, z1: 290, out: 144, clip: 45 };
+
+// Entry porch (in the recess by the front door): a landing one board below the door
+// sill, and a narrower step in front that stops short of the landing's far end.
+// ⚠ Sizes estimated from the photos.
+const PORCH = { width: 72, out: 48, step: 12, stepWidth: 58 };
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
@@ -301,8 +306,8 @@ export default {
     lights: [[120, LENGTH + 7], [265, LENGTH + 7], [WIDTH + 7, LENGTH - 16], [WIDTH + 7, 215], [X_MAIN - OLD - 7, LENGTH - 16]],
     // small gable roof over the entry door; the porch floor is one board below the door sill
     porch: {
-      wall: X_MAIN - OLD, z0: WING_LENGTH + 6, z1: WING_LENGTH + 72, floorZ: [WING_LENGTH, WING_LENGTH + 72], depth: 40, overhang: 6, eave: 88, pitch: 7 / 12, floor: -1.5,
-      notes: 'Wood floor one step below the door, with a second step across the front; still being built in the photos. ⚠ Size estimated from the photos.',
+      wall: X_MAIN - OLD, z0: WING_LENGTH + 6, z1: WING_LENGTH + 72, depth: 40, overhang: 6, eave: 88, pitch: 7 / 12,
+      notes: 'Open gable with no tie beam across the front. The porch floor and steps are in `decks` and `stoneSteps`.',
     },
     notes: 'Gable at the bathroom end, hipped at the living room end; a lower shed roof over the bedroom wing. ⚠ Pitches and overhangs estimated from the photos.',
   },
@@ -341,6 +346,24 @@ export default {
       materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
       notes: 'One step (7¼″) below the landing, along its north and outer sides, with a 45° corner; it stops about 2′ short of the landing’s south end. Overall about 15′ along the house × 12′ out. ⚠ Size estimated from the framing photos.',
     },
+    {
+      id: 'Entry porch', wallX: X_MAIN - OLD, top: -1.5, skirt: 5.25,
+      outline: [[X_MAIN - OLD, WING_LENGTH], [X_MAIN - OLD, WING_LENGTH + PORCH.width], [X_MAIN - OLD - PORCH.out, WING_LENGTH + PORCH.width], [X_MAIN - OLD - PORCH.out, WING_LENGTH]],
+      materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
+      notes: 'Landing at the front door, one board below the sill, in the same TimberTech Sea Salt Gray as the back deck. It reaches out further than the step below it. ⚠ Size estimated from the photos.',
+    },
+    {
+      id: 'Entry step', wallX: X_MAIN - OLD - PORCH.out, top: -1.5 - 7.25, skirt: 5.25,
+      outline: [[X_MAIN - OLD - PORCH.out, WING_LENGTH], [X_MAIN - OLD - PORCH.out, WING_LENGTH + PORCH.stepWidth], [X_MAIN - OLD - PORCH.out - PORCH.step, WING_LENGTH + PORCH.stepWidth], [X_MAIN - OLD - PORCH.out - PORCH.step, WING_LENGTH]],
+      materials: ['timbertechSeaSalt', 'deckFraming'], skirtMaterials: ['deckSkirt'],
+      notes: 'Step in front of the landing, flush with it at the bedroom wing side and stopping short of the far side. ⚠ Size estimated from the photos.',
+    },
+  ],
+
+  // decorative stone steps on the ground, as the last step down
+  stoneSteps: [
+    { id: 'Entry stone step', box: [X_MAIN - OLD - PORCH.out - PORCH.step - 15, WING_LENGTH + 8, X_MAIN - OLD - PORCH.out - PORCH.step, WING_LENGTH + 8 + 40], top: -16,
+      materials: ['entryStoneStep'], notes: 'Last step down from the entry porch to the ground. ⚠ Size and stone not known; drawn as a 40″ × 15″ natural stone slab.' },
   ],
 
   views: {

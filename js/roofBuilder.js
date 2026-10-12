@@ -134,8 +134,6 @@ export function buildRoof(cfg, M) {
       board(pg, fas, [xOut, pr.eave, ze], [pr.wall, pr.eave, ze], 5, [0, side]);
       board(pg, fas, [xOut, ps(ze), ze], [xOut, peak, zc], 5, [-1, 0]);
     }
-    // wood beam across the front of the porch
-    addBox(pg, M.wood, xOut + pr.overhang, pr.eave - 9, pr.z0, 3.5, 9, pr.z1 - pr.z0 + pr.overhang);
     group.add(pg);
   }
 

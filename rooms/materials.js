@@ -123,6 +123,10 @@ export default {
     name: 'Mirror',
     Type: 'LED-backlit, with touch controls',
   },
+  entryStoneStep: {
+    name: 'Stone step',
+    Type: 'Decorative natural stone slab ⚠ stone and size not recorded',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',

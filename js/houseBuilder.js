@@ -6,7 +6,7 @@ import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
 import { buildDecks } from './deckBuilder.js';
-import { sidingTexture, shingleTexture, stoneTexture, tileTexture } from './materials.js';
+import { sidingTexture, shingleTexture, stoneTexture, tileTexture, speckleTexture } from './materials.js';
 import { buildRoof } from './roofBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
@@ -60,6 +60,7 @@ export function buildHouse(cfg, focus) {
     soffit: std(cfg.palette.soffit || '#f2f0e8', 0.6),
     fascia: new THREE.MeshStandardMaterial({ color: cfg.palette.fascia || '#f4f2ea', roughness: 0.5, side: THREE.DoubleSide }),
     wood: std('#b48a5a', 0.8),
+    stoneStep: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.85, map: speckleTexture(cfg.palette.stoneStep || '#8c8f93') }),
     obscureGlass: new THREE.MeshStandardMaterial({ color: '#e9eef0', roughness: 0.35, transparent: true, opacity: 0.7 }),
     dimension: new THREE.MeshBasicMaterial({ color: '#3d4b5c' }),
   });
@@ -309,18 +310,12 @@ export function buildHouse(cfg, focus) {
       root.add(cg);
       walls.push({ name: 'corner', group: cg, center: new THREE.Vector3(cx, H / 2, cz), normal: new THREE.Vector3(-sx, 0, -sz).normalize() });
     }
-    // entry porch floor and step
-    const pr = cfg.roof.porch;
-    if (pr?.floor) {
-      const pf = new THREE.Group();
-      const [f0, f1] = pr.floorZ || [pr.z0, pr.z1];
-      addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 1.5, f0, pr.depth, 1.5, f1 - f0);
-      addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 7.25, f0, 1.5, 5.75, f1 - f0);
-      addBox(pf, M.wood, pr.wall - pr.depth - 14, pr.floor - 8.75, f0 + 6, 14, 1.5, f1 - f0 - 6); // step across the front
-      addBox(pf, M.wood, pr.wall - pr.depth - 14, pr.floor - 14.5, f0 + 6, 1.5, 5.75, f1 - f0 - 6);
-      tag(pf, { id: 'Entry porch', type: 'Porch', width: f1 - f0, depth: pr.depth, notes: pr.notes });
-      root.add(pf);
-    }
+  }
+
+  // stone steps on the ground: [x0, z0, x1, z1, top] (plan inches, top relative to the floor)
+  for (const s of cfg.stoneSteps || []) {
+    const [x0, z0, x1, z1] = s.box;
+    tag(addBox(root, M.stoneStep, x0, grade - 0.6, z0, x1 - x0, s.top - grade + 0.6, z1 - z0), { id: s.id, type: 'Stone step', width: z1 - z0, depth: x1 - x0, height: s.top - grade, materials: s.materials, notes: s.notes });
   }
 
   // ---------- fixtures ----------
