@@ -255,6 +255,7 @@ export function faucet(parent, ctx, x, z, counterTop) {
 // ---------- furniture & lighting ----------
 
 // opts.back = 'low': wooden counter stool with an upholstered seat and a low backrest;
+// opts.back = 'curve': bent-tube metal stool with curved legs and back and a thick cushion;
 // opts.rot turns it so the back is away from the counter (back on local +z).
 export function stool(parent, ctx, x, z, seat = 25, opts = {}) {
   const M = ctx.M;
@@ -274,6 +275,7 @@ export function stool(parent, ctx, x, z, seat = 25, opts = {}) {
     for (const sx of [-W / 2, W / 2 - leg]) addBox(g, F, sx, 10, -D / 2 + leg, leg, 1, D - 2 * leg); // side stretchers
     return;
   }
+  if (opts.back === 'curve') return curvedStool(parent, ctx, x, z, seat, opts.rot ?? 0);
   addMesh(parent, new THREE.CylinderGeometry(7, 6.6, 1.6, 32), M.stoolSeat, x, seat - 0.8, z);
   const legGeo = new THREE.CylinderGeometry(0.45, 0.45, seat - 1.6, 10);
   for (let i = 0; i < 4; i++) {
@@ -282,6 +284,57 @@ export function stool(parent, ctx, x, z, seat = 25, opts = {}) {
   }
   const ring = addMesh(parent, new THREE.TorusGeometry(5, 0.35, 8, 32), M.stoolLeg, x, 9, z);
   ring.rotation.x = Math.PI / 2;
+}
+
+// Designer counter stool: a bent-tube metal frame with four legs that flare out in a soft
+// S-curve, a footrest ring, a curved wrap-around back on two swept arms, and a thick
+// round seat cushion with a rolled edge. Back on local +z, like the 'low' stool.
+function curvedStool(parent, ctx, x, z, seat, rot) {
+  const M = ctx.M, F = M.stoolLeg, r = 0.5; // 1″ tube
+  const g = new THREE.Group();
+  g.position.set(x, 0, z);
+  g.rotation.y = rot;
+  parent.add(g);
+  const tube = (pts, rad = r) => {
+    const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+    return addMesh(g, new THREE.TubeGeometry(curve, 48, rad, 12, false), F, 0, 0, 0);
+  };
+  const ring = (R, y, rad = r, arc = Math.PI * 2, start = 0) => {
+    const m = addMesh(g, new THREE.TorusGeometry(R, rad, 10, 64, arc), F, 0, y, 0);
+    m.rotation.set(Math.PI / 2, 0, start);
+    return m;
+  };
+  const pan = seat - 4.5; // seat pan under the cushion
+  // legs: from under the seat, pinching in a little, then flaring out to the floor
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + (i * Math.PI) / 2, c = Math.cos(a), s = Math.sin(a);
+    const at = (R, y) => [R * c, y, R * s];
+    tube([at(5.5, pan), at(5.2, pan - 6), at(6.2, 12), at(8.4, 4), at(9.4, 0.5)]);
+    addMesh(g, new THREE.CylinderGeometry(0.6, 0.6, 0.5, 12), M.stoolSeat, ...at(9.4, 0.25)); // floor glide
+  }
+  ring(5.6, pan, 0.55); // ring the legs hang from
+  ring(6.9, 11, 0.45); // footrest
+  addMesh(g, new THREE.CylinderGeometry(8, 7.6, 0.5, 48), F, 0, pan + 0.5, 0); // seat pan
+  // cushion: about 4″ thick, with a rolled edge and a gently domed top
+  const y0 = pan + 0.75, y1 = seat - 1;
+  addMesh(g, new THREE.CylinderGeometry(7.4, 7.4, y1 - y0, 48), M.stoolSeat, 0, (y0 + y1) / 2, 0);
+  const roll = addMesh(g, new THREE.TorusGeometry(7.0, 0.95, 16, 64), M.stoolSeat, 0, y1 - 0.2, 0);
+  roll.rotation.x = Math.PI / 2;
+  addMesh(g, new THREE.SphereGeometry(7.4, 48, 12, 0, Math.PI * 2, 0, Math.PI / 2), M.stoolSeat, 0, y1, 0).scale.set(1, 1 / 7.4, 1);
+  // back: two arms sweep up and back from the seat pan into a curved top rail
+  const by = seat + 9, bR = 8.6, half = 1.05; // rail spans ±60° behind the seat
+  for (const sd of [-1, 1]) {
+    const a = Math.PI / 2 + sd * half * 0.8, p = (R, y) => [R * Math.cos(a), y, R * Math.sin(a)];
+    tube([p(7.6, pan + 0.3), p(8.4, seat + 0.5), p(bR, seat + 5), p(bR, by)]);
+  }
+  ring(bR, by, 0.55, 2 * half, Math.PI / 2 - half);
+  // padded back: a curved upholstered band hung inside the rail
+  const shape = new THREE.Shape(), a0 = -Math.PI / 2 - half * 0.9, a1 = -Math.PI / 2 + half * 0.9, ri = bR - 1.6, ro = bR - 0.4;
+  shape.absarc(0, 0, ro, a0, a1, false);
+  shape.absarc(0, 0, ri, a1, a0, true);
+  const pad = new THREE.ExtrudeGeometry(shape, { depth: 4.5, bevelEnabled: true, bevelThickness: 0.4, bevelSize: 0.35, bevelSegments: 3, curveSegments: 48 });
+  pad.rotateX(-Math.PI / 2);
+  addMesh(g, pad, M.stoolSeat, 0, by - 5.8, 0);
 }
 
 export function pendant(parent, ctx, x, bottom, z, ceiling) {

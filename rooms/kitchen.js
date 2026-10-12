@@ -70,9 +70,9 @@ export default {
     backsplash: 'counter', // granite slab backsplash, like the countertops (or a tile color)
     grout: '#d2cfc7',
     hardware: '#2a2a2a',
-    stoolSeat: '#cfc9bf', // light upholstered seats
-    stoolFrame: '#d8c3a0', // light natural wood frames
-    stoolLegs: '#1d1d1d',
+    stoolSeat: '#cfc9bf', // light upholstered seat and back cushions
+    stoolFrame: '#d8c3a0', // light natural wood frames (the 'low' stool)
+    stoolLegs: '#a8824f', // satin brass bent-tube frames, to go with the pendants
     pendant: '#b08d57',
     cherry: '#8a4a2c', // varnished cherry window sills (the granite sill uses the countertop stone)
   },
@@ -229,7 +229,7 @@ export default {
         { id: 'POST-W', code: 'PSP3X3.34', x: 7, z: 30 + 38.75 + 54 - 3 },
         { id: 'POST-E', code: 'PSP3X3.34', x: 7 + 74 - 3, z: 30 + 38.75 + 54 - 3 },
       ],
-      stools: { side: 'south', count: 3, offset: 9, back: 'low', height: 25 }, // counter-height, low backrest
+      stools: { side: 'south', count: 3, offset: 9, back: 'curve', height: 25 }, // counter-height, curved metal frame with a padded back
     },
   ],
 
