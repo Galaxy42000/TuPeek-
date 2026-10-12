@@ -230,15 +230,22 @@ export function roofFraming(cfg, mat) {
     const s = (B(xv) - B(x0)) / (xv - x0), y = (x) => B(x0) + s * (x - x0);
     let x = xv;
     while ((x - xv) * dir < Math.abs(xb - xa) && y(x) < along(top, x) - depth) x += dir;
-    return [[x0, B(x0)], [x, y(x)]];
+    return { pts: [[x0, B(x0)], [x, y(x)]], y };
   };
   for (const z of zMain) {
     const top = [[xa + T / 2, NK(xa + T / 2) - c], [xr, NK(xr) - c], [xb + O, SK(xb + O) - c]];
-    const left = vx0 > xa + T / 2 ? [[xa + T / 2, B(xa)], ...chord(top, vx0, 1)] : chord(top, xa + T / 2, 1);
+    const L = chord(top, Math.max(vx0, xa + T / 2), 1), R = chord(top, Math.min(vx1, xb), -1);
+    const left = vx0 > xa + T / 2 ? [[xa + T / 2, B(xa)], ...L.pts] : L.pts;
+    const right = vx1 < xb ? [[xb, B(xb)], ...R.pts] : R.pts;
+    // verticals: up from the crossing, and one in each half from its own bottom chord
+    const xl = (xa + xv) / 2, xq = (xv + xb) / 2;
     truss(z, top, left, [
       [[xa + T / 2, B(xa)], [xa + T / 2, along(top, xa + T / 2)]], // heel post over the old wall
+      [[xv, B(xv)], [xv, along(top, xv) - depth / 2]],
+      [[xl, L.y(xl)], [xl, along(top, xl) - depth / 2]],
+      [[xq, R.y(xq)], [xq, along(top, xq) - depth / 2]],
     ]);
-    truss(z, [], [[xb, B(xb)], ...chord(top, Math.min(vx1, xb), -1).slice(Math.min(vx1, xb) < xb ? 0 : 1)], []);
+    truss(z, [], right, []);
   }
 
   // living room: stick-framed hip roof (living room photo): 2×6 common rafters in pairs from
