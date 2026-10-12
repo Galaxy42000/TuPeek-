@@ -212,6 +212,8 @@ export default {
       openings: [
         { id: 'D-BR1', type: 'door', door: 'pocket', at: D_BR1 - EXT, width: 30, height: HEIGHT - 8, casing: false,
           notes: 'Into bedroom 1. The opening goes up to the underside of the steel beam; jambs are bare wood in the photo. ⚠ Position scaled from the drawing; door type from the plan.' },
+        { id: 'D-UTIL-BR1', type: 'door', at: 3, width: 24, height: 80, casing: false,
+          notes: 'Doorway from bedroom 1 into the utility room, newly framed under the end of beam BEAM-1 (king and jack studs, header under the beam); the electrical panel shows through it. No door hung yet. ⚠ Width, height and position estimated from the photo.' },
         { id: 'D-BR2', type: 'door', door: 'pocket', at: 245 - EXT, width: 30, height: 80, notes: 'Pocket door into bedroom 2. ⚠ Position scaled from the drawing.' },
       ],
     },
