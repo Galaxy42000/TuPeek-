@@ -36,7 +36,11 @@ export default {
   room: {
     width: 144.75, // north wall, west reference line → east wall
     depth: 122.75, // east wall, north wall → end of the east wall
-    height: 96, // ⚠ not on the plan; assumed 8′ ceiling
+    height: 84, // ⚠ not on the plan; 7′ walls, estimated from the living room photo
+    // Vaulted ceiling on scissor trusses, 9′ at the peak. It spans the whole main room
+    // (15′-5″), whose east wall is the kitchen's sink wall, so it starts 40¼″ west of the
+    // kitchen's west reference line. Keep in step with the vault in rooms/house.js.
+    vault: { x0: 144.75 - 185, x1: 144.75, peak: 108 },
     wallThickness: 4.5,
     // only the north and east walls exist; the north wall carries on to the west
     walls: {

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { addBox, panelRects, freeIntervals } from './geometry.js';
+import { addBox, panelRects, freeIntervals, vaultHeight, vaultCeiling, vaultEnd } from './geometry.js';
 import { createMaterials } from './materials.js';
 import * as F from './fixtures.js';
 import { fmtIn, fmtFtIn } from './units.js';
@@ -65,7 +65,9 @@ export function placeFootprint(x, z, w, d, facing) {
 // sits under a sloped ceiling in the house; pendants and ceiling lights follow it.
 export function buildRoom(cfg, opts = {}) {
   const { width: W, depth: D, height: H, wallThickness: t = 4.5 } = cfg.room;
-  const ceilingAt = opts.ceilingAt || (() => H);
+  // room.vault { x0, x1, peak }: vaulted ceiling rising from H at x0 and x1 to the peak (ridge along z)
+  const vault = cfg.room.vault;
+  const ceilingAt = opts.ceilingAt || ((x) => (vault && x >= vault.x0 && x <= vault.x1 ? vaultHeight(vault, H, x) : H));
   const M = createMaterials(cfg.palette);
   const ctx = { M, style: cfg.style?.doorStyle || 'shaker', handle: cfg.style?.handle || 'bar', room: cfg.room };
   const frames = wallFrames(W, D);
@@ -118,8 +120,20 @@ export function buildRoom(cfg, opts = {}) {
   tag(floor, { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor'), notes: `Kitchen is ${fmtFtIn(W)} along the ${pair('north-south')} walls and ${fmtFtIn(D)} along the ${pair('east-west')} walls.` });
 
   const ceiling = new THREE.Group();
-  addBox(ceiling, M.ceiling, floorBox.x0 - t, H, floorBox.z0 - t, fw + 2 * t, 1, fd + 2 * t, { cast: false }).name = 'ceiling';
-  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling') });
+  const surface = new THREE.Group(); // the ceiling itself (the house view drops it and uses its own)
+  surface.name = 'ceiling';
+  ceiling.add(surface);
+  const cx0 = floorBox.x0 - t, cx1 = floorBox.x1 + t, cz0 = floorBox.z0 - t, cd = fd + 2 * t;
+  if (!vault) addBox(surface, M.ceiling, cx0, H, cz0, cx1 - cx0, 1, cd, { cast: false });
+  else {
+    // flat beyond the vault's sides, sloped in between
+    if (vault.x0 > cx0) addBox(surface, M.ceiling, cx0, H, cz0, vault.x0 - cx0, 1, cd, { cast: false });
+    if (vault.x1 < cx1) addBox(surface, M.ceiling, vault.x1, H, cz0, cx1 - vault.x1, 1, cd, { cast: false });
+    vaultCeiling(surface, M.ceiling, vault, H, cz0, cd);
+  }
+  tag(ceiling, vault
+    ? { id: 'Ceiling', type: 'Vaulted ceiling', height: vault.peak, materials: mats(undefined, 'ceiling'), notes: `Rises from ${fmtIn(H)} at the walls to ${fmtFtIn(vault.peak)} at the peak.${vault.notes ? ' ' + vault.notes : ''}` }
+    : { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling') });
   root.add(ceiling);
 
   // ---------- walls, windows, doors ----------
@@ -140,6 +154,11 @@ export function buildRoom(cfg, opts = {}) {
     const ops = openings.filter((o) => o.wall === name);
     for (const r of panelRects(hi - lo, H, ops.map((o) => ({ ...o, start: o.start - lo })))) {
       addBox(g, M.wall, r.x + lo, r.y, -t, r.w, r.h, t, { cast: false });
+    }
+    // a wall across the ridge of a vaulted ceiling closes it off up to the slope
+    if (vault && (name === 'north' || name === 'south')) {
+      const local = name === 'north' ? vault : { ...vault, x0: W - vault.x1, x1: W - vault.x0 };
+      g.add(vaultEnd(M.wall, local, H, H, -t, t));
     }
     tag(g, { id: `${capDir(name)} wall`, type: 'Wall', width: fr.len, height: H, materials: mats(spec.materials, 'walls'), notes: 'Length is the kitchen section of the wall, corner to corner.' });
     label(g, `${capDir(name)} wall · ${fmtFtIn(fr.len)}`, fr.len / 2, H - 6, 1, 'wall');

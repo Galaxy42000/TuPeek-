@@ -72,3 +72,38 @@ export function freeIntervals(len, taken) {
   if (cursor < len) out.push([cursor, len]);
   return out;
 }
+
+// ---------- vaulted ceilings ----------
+// A vault { x0, x1, peak } rises from height h at x0 and x1 to `peak` midway between
+// them; the ridge runs along z.
+export function vaultHeight({ x0, x1, peak }, h, x) {
+  const half = (x1 - x0) / 2;
+  return peak - ((peak - h) * Math.abs(x - (x0 + half))) / half;
+}
+
+// The two sloped ceiling surfaces, from z0 for a depth of d.
+export function vaultCeiling(parent, mat, { x0, x1, peak }, h, z0, d) {
+  const half = (x1 - x0) / 2, rise = peak - h;
+  const len = Math.hypot(half, rise), ang = Math.atan2(rise, half);
+  for (const side of [1, -1]) {
+    const g = new THREE.Group();
+    g.position.set(side > 0 ? x0 : x1, h, z0);
+    g.rotation.z = side * ang;
+    addBox(g, mat, side > 0 ? 0 : -len, 0, 0, len, 1, d, { cast: false });
+    parent.add(g);
+  }
+}
+
+// Triangular wall closing the end of a vault: from `base` (the wall top, or a beam's
+// top) up to the sloped ceiling, t thick starting at z.
+export function vaultEnd(mat, { x0, x1, peak }, h, base, z, t) {
+  const half = (x1 - x0) / 2;
+  const inset = ((base - h) * half) / (peak - h);
+  const shape = new THREE.Shape([
+    new THREE.Vector2(x0 + inset, base), new THREE.Vector2(x1 - inset, base), new THREE.Vector2(x0 + half, peak + 1),
+  ]);
+  const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: t, bevelEnabled: false }), mat);
+  m.position.z = z;
+  m.castShadow = m.receiveShadow = true;
+  return m;
+}

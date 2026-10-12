@@ -36,7 +36,7 @@ import kitchen from './kitchen.js';
 import { fmtFt } from '../js/units.js';
 
 const HEIGHT = 84; // ⚠ flat ceiling height, estimated from the living room photo (not measured)
-const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling
+const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling (keep HEIGHT and PEAK in step with rooms/kitchen.js)
 const EXT = 6; // ⚠ exterior wall thickness
 const INT = 4.5; // interior partition thickness
 const OLD = 6; // ⚠ wall between the bedroom wing and the main room

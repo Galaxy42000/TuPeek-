@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
-import { addBox, panelRects, freeIntervals } from './geometry.js';
+import { addBox, panelRects, freeIntervals, vaultHeight, vaultCeiling, vaultEnd } from './geometry.js';
 import { createMaterials } from './materials.js';
 import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
@@ -96,33 +96,14 @@ export function buildHouse(cfg, focus) {
   // vaulted ceilings: rise from H at x0 and x1 to the peak over the middle (ridge along z)
   const ceilingAt = (x, z) => {
     const v = vaults.find((a) => x >= a.x0 && x <= a.x1 && z >= a.z0 && z <= a.z1);
-    if (!v) return H;
-    const half = (v.x1 - v.x0) / 2;
-    return v.peak - ((v.peak - H) * Math.abs(x - (v.x0 + half))) / half;
+    return v ? vaultHeight(v, H, x) : H;
   };
   for (const v of vaults) {
-    const half = (v.x1 - v.x0) / 2, rise = v.peak - H, d = v.z1 - v.z0;
-    const len = Math.hypot(half, rise), ang = Math.atan2(rise, half);
     const vg = new THREE.Group();
     ceiling.add(vg);
-    for (const side of [1, -1]) {
-      const g = new THREE.Group();
-      g.position.set(side > 0 ? v.x0 : v.x1, H, v.z0);
-      g.rotation.z = side * ang;
-      addBox(g, M.ceiling, side > 0 ? 0 : -len, 0, 0, len, 1, d, { cast: false });
-      vg.add(g);
-    }
+    vaultCeiling(vg, M.ceiling, v, H, v.z0, v.z1 - v.z0);
     // end walls above the plate (or above a beam), up to the sloped ceiling
-    for (const e of v.ends || []) {
-      const inset = ((e.base - H) * half) / rise;
-      const shape = new THREE.Shape([
-        new THREE.Vector2(v.x0 + inset, e.base), new THREE.Vector2(v.x1 - inset, e.base), new THREE.Vector2(v.x0 + half, v.peak + 1),
-      ]);
-      const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: e.t, bevelEnabled: false }), M.wall);
-      m.position.z = e.z;
-      m.castShadow = m.receiveShadow = true;
-      vg.add(m);
-    }
+    for (const e of v.ends || []) vg.add(vaultEnd(M.wall, v, H, e.base, e.z, e.t));
     tag(vg, { id: v.id, type: v.type || 'Vaulted ceiling', width: v.x1 - v.x0, height: v.peak, materials: mats(v.materials, 'ceiling'), notes: v.notes });
   }
 
