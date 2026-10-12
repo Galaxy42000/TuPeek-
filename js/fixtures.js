@@ -277,14 +277,37 @@ export function recessedLight(parent, ctx, x, z, ceiling, tilt = 0) {
 
 // ---------- wall openings (built in the wall's frame; wall occupies z ∈ [-t, 0]) ----------
 
+// sash frame, glass and grid
+function windowSash(parent, M, o, t) {
+  const { start: x, width: w, bottom: y, height: h } = o;
+  const fz = -t / 2 - 0.75, fw = 1.75;
+  addBox(parent, M.trim, x + 0.75, y, fz, fw, h - 0.75, 1.5);
+  addBox(parent, M.trim, x + w - 0.75 - fw, y, fz, fw, h - 0.75, 1.5);
+  addBox(parent, M.trim, x + 0.75, y, fz, w - 1.5, fw, 1.5);
+  addBox(parent, M.trim, x + 0.75, y + h - 0.75 - fw, fz, w - 1.5, fw, 1.5);
+  const [cols, rows] = o.grid || [1, 1];
+  for (let c = 1; c < cols; c++) addBox(parent, M.trim, x + (w * c) / cols - 0.6, y, fz + 0.2, 1.2, h - 0.75, 1.1);
+  for (let r = 1; r < rows; r++) addBox(parent, M.trim, x + 0.75, y + (h * r) / rows - 0.6, fz + 0.2, w - 1.5, 1.2, 1.1);
+  addBox(parent, M.glass, x + 0.75, y, -t / 2, w - 1.5, h - 0.75, 0.1, { cast: false });
+}
+
 export function opening(parent, ctx, o, t) {
   const M = ctx.M;
   const { start: x, width: w, bottom: y, height: h } = o;
-  const jamb = o.type === 'opening' ? M.wall : M.trim;
+  // windows can be trimmed with drywall returns (painted like the wall) and only a sill:
+  // o.trim / ctx.windowTrim = 'returns', sill material o.sill / ctx.windowSill
+  const returns = o.type === 'window' && (o.trim ?? ctx.windowTrim) === 'returns';
+  const jamb = o.type === 'opening' || returns ? M.wall : M.trim;
   // jamb liners through the wall thickness
   addBox(parent, jamb, x, y + h - 0.75, -t, w, 0.75, t, { cast: false });
   addBox(parent, jamb, x, y, -t, 0.75, h, t, { cast: false });
   addBox(parent, jamb, x + w - 0.75, y, -t, 0.75, h, t, { cast: false });
+  if (returns) {
+    // sill the width of the opening, sticking out 1″ past the wall
+    addBox(parent, M[o.sill ?? ctx.windowSill] || M.trim, x, y - 0.75, -t + 0.5, w, 0.75, t + 0.5);
+    windowSash(parent, M, o, t);
+    return;
+  }
   if (o.type === 'opening' || o.casing === false) return;
 
   const cw = 3.5; // casing width
@@ -296,16 +319,7 @@ export function opening(parent, ctx, o, t) {
     // stool (interior sill) + apron
     addBox(parent, M.trim, x - cw - 1, y - 0.75, -t + 0.5, w + 2 * cw + 2, 0.75, t + 1);
     addBox(parent, M.trim, x - cw, y - 3.75, 0, w + 2 * cw, 3, 0.75);
-    // sash frame, glass and grid
-    const fz = -t / 2 - 0.75, fw = 1.75;
-    addBox(parent, M.trim, x + 0.75, y, fz, fw, h - 0.75, 1.5);
-    addBox(parent, M.trim, x + w - 0.75 - fw, y, fz, fw, h - 0.75, 1.5);
-    addBox(parent, M.trim, x + 0.75, y, fz, w - 1.5, fw, 1.5);
-    addBox(parent, M.trim, x + 0.75, y + h - 0.75 - fw, fz, w - 1.5, fw, 1.5);
-    const [cols, rows] = o.grid || [1, 1];
-    for (let c = 1; c < cols; c++) addBox(parent, M.trim, x + (w * c) / cols - 0.6, y, fz + 0.2, 1.2, h - 0.75, 1.1);
-    for (let r = 1; r < rows; r++) addBox(parent, M.trim, x + 0.75, y + (h * r) / rows - 0.6, fz + 0.2, w - 1.5, 1.2, 1.1);
-    addBox(parent, M.glass, x + 0.75, y, -t / 2, w - 1.5, h - 0.75, 0.1, { cast: false });
+    windowSash(parent, M, o, t);
   } else if (o.type === 'door' && o.slab) {
     // closed door slab, hinged on the left by default
     addBox(parent, M.trim, x + 0.75, y, -t / 2 - 0.875, w - 1.5, h - 0.875, 1.75);

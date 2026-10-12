@@ -48,6 +48,7 @@ export function buildHouse(cfg, focus) {
   const colors = {};
   const ctx = {
     M, style: cfg.style?.doorStyle || 'shaker', handle: cfg.style?.handle || 'bar', room: { height: H },
+    windowTrim: cfg.style?.windowTrim, windowSill: cfg.style?.windowSill,
     color: (c, metal) => (colors[c + metal] ??= std(c, metal ? 0.35 : 0.5, metal ? 0.7 : 0)),
   };
 

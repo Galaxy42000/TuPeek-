@@ -69,7 +69,7 @@ export function buildRoom(cfg, opts = {}) {
   const vault = cfg.room.vault;
   const ceilingAt = opts.ceilingAt || ((x) => (vault && x >= vault.x0 && x <= vault.x1 ? vaultHeight(vault, H, x) : H));
   const M = createMaterials(cfg.palette);
-  const ctx = { M, style: cfg.style?.doorStyle || 'shaker', handle: cfg.style?.handle || 'bar', room: cfg.room };
+  const ctx = { M, style: cfg.style?.doorStyle || 'shaker', handle: cfg.style?.handle || 'bar', room: cfg.room, windowTrim: cfg.style?.windowTrim, windowSill: cfg.style?.windowSill };
   const frames = wallFrames(W, D);
   const root = new THREE.Group();
   root.name = cfg.id;
@@ -182,8 +182,11 @@ export function buildRoom(cfg, opts = {}) {
     const rel = openings
       .filter((o) => o.wall === wall)
       .map((o) => {
-        const trim = o.type === 'opening' ? 0 : 3.5; // stop tile at the casing
-        return { start: o.start - trim - runStart - a, width: o.width + 2 * trim, bottom: o.bottom - counterTop - (o.type === 'window' ? 3.75 : 0), height: o.height + 2 * trim + 3.75 };
+        // stop tile at the casing, or right at the opening when the window has drywall returns
+        const returns = o.type === 'window' && (o.trim ?? ctx.windowTrim) === 'returns';
+        const trim = o.type === 'opening' || returns ? 0 : 3.5;
+        const under = o.type !== 'window' ? 0 : returns ? 0.75 : 3.75; // sill (and apron) below the window
+        return { start: o.start - trim - runStart - a, width: o.width + 2 * trim, bottom: o.bottom - counterTop - under, height: o.height + 2 * trim + under };
       });
     const bs = new THREE.Group();
     for (const r of panelRects(b - a, height, rel)) addBox(bs, M.backsplash, a + r.x, counterTop + r.y, 0, r.w, r.h, 0.375, { cast: false });
@@ -304,9 +307,13 @@ export function buildRoom(cfg, opts = {}) {
       tag(top, { id: `${id} countertop`, type: 'Countertop (corner)', width: a, depth: a, materials: mats(c.counterMaterials, 'counter') });
       g.add(top);
       const ct = c.height + c.counterThickness;
+      // tile on both walls of the corner, cut around windows like the runs' backsplash
       if (c.backsplash > 0) {
-        addBox(g, M.backsplash, 0, ct, 0, a, c.backsplash, 0.375, { cast: false });
-        addBox(g, M.backsplash, 0, ct, 0.375, 0.375, c.backsplash, a - 0.375, { cast: false });
+        for (const [wall, [s0, s1]] of Object.entries(cf.walls(a))) {
+          const bg = wallGroup(wall, s0);
+          root.add(bg);
+          tag(backsplash(bg, wall, s0, 0, s1 - s0, ct, c.backsplash), { id: `${id} backsplash`, type: 'Backsplash', wall: trueDir(wall), start: s0, width: s1 - s0, height: c.backsplash, materials: mats(c.backsplashMaterials, 'backsplash') });
+        }
       }
       for (const [wall, span] of Object.entries(cf.walls(a))) occupied[wall].push(span);
     }

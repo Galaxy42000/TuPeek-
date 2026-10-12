@@ -124,6 +124,8 @@ export function createMaterials(p) {
     interior: std(shade(p.cabinets, -0.04), 0.8),
     toeKick: std('#3a3734', 0.85),
     counter: std('#ffffff', 0.22, 0, { map: speckleTexture(p.counter) }),
+    cherry: std('#ffffff', 0.3, 0, { map: woodTexture(p.cherry || '#8a4a2c', 6) }), // varnished cherry
+    granite: std('#ffffff', 0.2, 0, { map: speckleTexture(p.granite || p.counter) }),
     backsplash: std('#ffffff', 0.18, 0, { map: tileTexture(p.backsplash, p.grout) }),
     hardware: std(p.hardware, 0.3, 0.85),
     steel: std('#d6d9db', 0.28, 1.0),

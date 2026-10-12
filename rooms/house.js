@@ -92,6 +92,7 @@ export default {
   // bathroom is drawn with a tile floor, which isn't recorded yet.
   surfaces: {
     floor: ['oakFloor'],
+    windows: ['cherrySill', 'drywallReturns'],
   },
 
   // Floor/ceiling outline: bedroom wing + main building.
@@ -134,8 +135,8 @@ export default {
       id: 'West wall', exterior: true, inside: 'north', x0: X_MAIN, z0: Z_SOUTH, x1: X_EAST, z1: LENGTH,
       notes: 'The 15′-5″ R.O. dimension is written along this wall.',
       openings: [
-        { id: 'W3', type: 'window', at: 30, width: 33, bottom: 19, height: 60, materials: ['kolbeWindow'], notes: 'Tall window, north side. ⚠ Size, height and position estimated from the living room photo.' },
-        { id: 'W4', type: 'window', at: 137, width: 28, bottom: 23, height: 56, materials: ['kolbeWindow'], notes: 'Tall window, south side. ⚠ Size, height and position estimated from the living room photo.' },
+        { id: 'W3', type: 'window', at: 30, width: 33, bottom: 19, height: 60, materials: ['kolbeWindow', 'cherrySill', 'drywallReturns'], notes: 'Tall window, north side. ⚠ Size, height and position estimated from the living room photo.' },
+        { id: 'W4', type: 'window', at: 137, width: 28, bottom: 23, height: 56, materials: ['kolbeWindow', 'cherrySill', 'drywallReturns'], notes: 'Tall window, south side. ⚠ Size, height and position estimated from the living room photo.' },
       ],
     },
     {

@@ -25,6 +25,20 @@ export default {
     Maker: 'Kolbe Windows & Doors (label on the glass in the photo)',
     Width: '6′',
   },
+  cherrySill: {
+    name: 'Window sill',
+    Wood: 'Cherry',
+    Finish: 'Varnished',
+  },
+  graniteSill: {
+    name: 'Window sill',
+    Material: 'Granite',
+  },
+  drywallReturns: {
+    name: 'Window returns (top and sides)',
+    Material: 'Sheetrock, painted',
+    Casing: 'None',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',
