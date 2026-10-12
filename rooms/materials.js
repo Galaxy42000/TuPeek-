@@ -21,6 +21,14 @@ export default {
     Maker: 'Kolbe Windows & Doors',
     Outside: 'Black frames, white trim',
   },
+  reebEntryDoor: {
+    name: 'Entry door',
+    Brand: 'Reeb',
+    Material: 'Fiberglass',
+    Style: '5-lite (five stacked glass panes)',
+    Size: '36″ × 80″',
+    Color: 'Red',
+  },
   vinylSiding: {
     name: 'Siding',
     Material: 'Vinyl',

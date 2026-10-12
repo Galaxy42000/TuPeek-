@@ -151,7 +151,8 @@ export default {
     {
       id: 'Main north wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
       openings: [
-        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 70, notes: 'Swings in, hinged on the west jamb. ⚠ Position scaled from the drawing.' },
+        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 0, lites: 5, color: '#c4212b', materials: ['reebEntryDoor'],
+          notes: 'Red 5-lite fiberglass entry door, 36″ × 80″. Swings in, hinged on the west jamb; shown closed. ⚠ Position scaled from the drawing.' },
       ],
     },
     {
@@ -287,7 +288,7 @@ export default {
     // small gable roof over the entry door; the porch floor is one board below the door sill
     porch: {
       wall: X_MAIN - OLD, z0: WING_LENGTH + 6, z1: WING_LENGTH + 72, floorZ: [WING_LENGTH, WING_LENGTH + 72], depth: 40, overhang: 6, eave: 88, pitch: 7 / 12, floor: -1.5,
-      notes: 'Wood floor with a step; still being built in the photos. ⚠ Size estimated from the photos.',
+      notes: 'Wood floor one step below the door, with a second step across the front; still being built in the photos. ⚠ Size estimated from the photos.',
     },
     notes: 'Gable at the bathroom end, hipped at the living room end; a lower shed roof over the bedroom wing. ⚠ Pitches and overhangs estimated from the photos.',
   },

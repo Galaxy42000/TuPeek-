@@ -56,6 +56,7 @@ export function buildHouse(cfg, focus) {
     soffit: std(cfg.palette.soffit || '#f2f0e8', 0.6),
     fascia: new THREE.MeshStandardMaterial({ color: cfg.palette.fascia || '#f4f2ea', roughness: 0.5, side: THREE.DoubleSide }),
     wood: std('#b48a5a', 0.8),
+    obscureGlass: new THREE.MeshStandardMaterial({ color: '#e9eef0', roughness: 0.35, transparent: true, opacity: 0.7 }),
     dimension: new THREE.MeshBasicMaterial({ color: '#3d4b5c' }),
   });
   const colors = {};
@@ -286,7 +287,8 @@ export function buildHouse(cfg, focus) {
       const [f0, f1] = pr.floorZ || [pr.z0, pr.z1];
       addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 1.5, f0, pr.depth, 1.5, f1 - f0);
       addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 7.25, f0, 1.5, 5.75, f1 - f0);
-      addBox(pf, M.wood, pr.wall - pr.depth - 12, pr.floor - 8.75, f0 + 12, 12, 1.5, 36);
+      addBox(pf, M.wood, pr.wall - pr.depth - 14, pr.floor - 8.75, f0 + 6, 14, 1.5, f1 - f0 - 6); // step across the front
+      addBox(pf, M.wood, pr.wall - pr.depth - 14, pr.floor - 14.5, f0 + 6, 1.5, 5.75, f1 - f0 - 6);
       tag(pf, { id: 'Entry porch', type: 'Porch', width: f1 - f0, depth: pr.depth, notes: pr.notes });
       root.add(pf);
     }
@@ -469,7 +471,20 @@ function doorLeaf(parent, ctx, o, t) {
     const ang = THREE.MathUtils.degToRad(o.open ?? 80);
     pivot.rotation.y = (right ? 1 : -1) * (out ? -1 : 1) * ang;
     const zf = out ? 0 : -th;
-    addBox(pivot, M.door, right ? -lw : 0, 0, zf, lw, lh, th);
+    const x0 = right ? -lw : 0;
+    if (o.lites) {
+      // glass door: a frame in the door's color around `lites` stacked panes of obscure glass
+      const mat = o.color ? ctx.color(o.color) : M.door;
+      const stile = 4.75, top = 4.75, bottom = 9, rail = 2.75;
+      const lite = (lh - top - bottom - rail * (o.lites - 1)) / o.lites;
+      addBox(pivot, mat, x0, 0, zf, stile, lh, th);
+      addBox(pivot, mat, x0 + lw - stile, 0, zf, stile, lh, th);
+      for (let i = 0; i <= o.lites; i++) {
+        const y = i === 0 ? 0 : bottom + i * lite + (i - 1) * rail;
+        addBox(pivot, mat, x0 + stile, y, zf, lw - 2 * stile, i === 0 ? bottom : i === o.lites ? top : rail, th);
+        if (i < o.lites) addBox(pivot, M.obscureGlass, x0 + stile, bottom + i * (lite + rail), zf + th / 2 - 0.1, lw - 2 * stile, lite, 0.2, { cast: false });
+      }
+    } else addBox(pivot, M.door, x0, 0, zf, lw, lh, th);
     const kx = right ? -lw + 2.75 : lw - 2.75;
     knob(pivot, kx, zf - 1);
     knob(pivot, kx, zf + th + 1);
