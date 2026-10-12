@@ -353,16 +353,16 @@ export default {
     { id: 'Shower trap', kind: 'drain', materials: ['pvcDwv'],
       notes: '2″ PVC (Charlotte Pipe Sch 40) P-trap under the shower drain; from its outlet a 2″ trap arm about 2½′ long runs alongside the main, falling gently, into a wye on it (close-up crawl space photo). ⚠ Positions estimated.',
       path: [[P_SHOWER, 0, Z_DRAIN + 7], [P_SHOWER, -19, Z_DRAIN + 7], [P_SHOWER + 4, -19, Z_DRAIN + 7], [P_SHOWER + 4, -13, Z_DRAIN + 7], [P_SHOWER + 4, -13.6, Z_DRAIN + 37], [X_DRAIN, -13.6, Z_DRAIN + 40]] },
-    { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -6, CAV], [P_VANITY, -6, Z_DRAIN - 6], [P_VANITY - 6, -11.6, Z_DRAIN]],
-      notes: 'Down through the floor and into the main drain at a 45° wye (crawl space photo).' },
+    { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -8, CAV], [P_VANITY + 15, -12.3, Z_DRAIN]],
+      notes: '2″ drain down through the floor, then at an angle under the joists into a wye on the main drain, pointing downstream (crawl space photo). ⚠ Angle and length estimated.' },
     // kitchen sink, from the kitchen plumbing photo: drain up the outside wall to a tee at the
     // sink, the vent jogging left over the corner cabinet and up through the top plate
     { id: 'Kitchen sink drain', kind: 'drain', materials: ['pvcDwv'], notes: '1½″ PVC drain up the wall behind the sink to a sanitary tee for the trap arm, then down through the floor and in at a 45° into a wye on the main drain, pointing downstream (crawl space photo).',
       path: [[X_EAST - 3, 22, KZ + 53.5], [X_EAST + EXT / 2, 22, KZ + 53.5], [X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, -6, KZ + 53.5], [X_DRAIN, -14.5, KZ + 53.5 + 9]], d: 1.9 },
     { id: 'Kitchen sink vent', kind: 'vent', materials: ['pvcDwv'], notes: 'Vent from the sink tee: up to about 37″, over toward the bathroom corner, then up through the top plate and out the roof.',
       path: [[X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 17.5], [X_EAST + EXT / 2, 112, KZ + 17.5]] },
-    { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it; at the bottom it drops into the main drain. ⚠ Tie-in assumed.',
-      path: [[P_STACK, -12, Z_DRAIN], [P_STACK, -6, CAV], [P_STACK, 126, CAV]] },
+    { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it. Under the floor it runs at an angle beside the vanity branch and into the top of the main drain (crawl space photo). ⚠ Angle and length estimated.',
+      path: [[P_STACK + 13, -10.5, Z_DRAIN], [P_STACK, -6, CAV], [P_STACK, 126, CAV]] },
     { id: 'Vanity vent', kind: 'vent', materials: ['pvcDwv'], path: [[P_VANITY, 20, CAV], [P_VANITY, 37, CAV], [P_STACK, 37, CAV]], notes: 'Vent from the vanity drain over to the stack.' },
   ],
 
