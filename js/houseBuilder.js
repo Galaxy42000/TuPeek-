@@ -274,7 +274,7 @@ export function buildHouse(cfg, focus) {
       if (!spec.exterior && o.type !== 'opening' && o.casing !== false) backCasing(og, M, o, t);
       if (o.type === 'door') doorLeaf(og, ctx, o, t);
       if (spec.exterior && roof && o.type !== 'opening') exteriorTrim(og, M, o, t);
-      const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors', slider: 'Sliding glass door' }[o.door] || 'Doorway';
+      const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors', slider: 'Sliding glass door', bifold: 'Bifold doors' }[o.door] || 'Doorway';
       tag(og, {
         id: o.id, type: kind, wall: spec.id, width: o.width, height: o.height, bottom: o.bottom || undefined,
         materials: mats(o.materials, { window: 'windows', door: 'doors' }[o.type]),
@@ -518,6 +518,39 @@ function doorLeaf(parent, ctx, o, t) {
     knob(pivot, kx, zf - 1);
     knob(pivot, kx, zf + th + 1);
     parent.add(pivot);
+  } else if (o.door === 'bifold') {
+    // two pairs of bifold leaves meeting in the middle, each pair folded open `open`
+    // degrees toward the room side (local +z); louvered leaves get horizontal slats
+    const leaf = (g) => {
+      const lw2 = (w - 1.5) / 4 - 0.125, h2 = lh, th2 = 1.125;
+      if (!o.louvered) { addBox(g, M.door, 0, 0, -th2 / 2, lw2, h2, th2); return; }
+      addBox(g, M.door, 0, 0, -th2 / 2, 2.25, h2, th2);
+      addBox(g, M.door, lw2 - 2.25, 0, -th2 / 2, 2.25, h2, th2);
+      addBox(g, M.door, 2.25, 0, -th2 / 2, lw2 - 4.5, 3.5, th2);
+      addBox(g, M.door, 2.25, h2 - 3, -th2 / 2, lw2 - 4.5, 3, th2);
+      addBox(g, M.door, 2.25, h2 / 2 - 1.5, -th2 / 2, lw2 - 4.5, 3, th2); // lock rail
+      for (let y = 4.25; y < h2 - 3.5; y += 1.6) if (Math.abs(y - h2 / 2) > 2.2) {
+        const s = addBox(g, M.door, 2.25, y, -0.6, lw2 - 4.5, 0.25, 1.2, { cast: false });
+        s.rotation.x = -0.5;
+      }
+      return lw2;
+    };
+    const lw2 = (w - 1.5) / 4 - 0.125, ang = THREE.MathUtils.degToRad(o.open ?? 0);
+    for (const side of [1, -1]) {
+      const pair = new THREE.Group();
+      pair.position.set(side > 0 ? x + 0.75 : x + w - 0.75, 0, -1);
+      pair.scale.x = side;
+      const a = new THREE.Group();
+      a.rotation.y = -ang;
+      leaf(a);
+      const b = new THREE.Group();
+      b.position.set(lw2 * Math.cos(ang), 0, lw2 * Math.sin(ang));
+      b.rotation.y = ang;
+      leaf(b);
+      knob(b, lw2 - 1.5, 0.9);
+      pair.add(a, b);
+      parent.add(pair);
+    }
   } else if (o.door === 'bypass') {
     const pw = lw / 2 + 1;
     addBox(parent, M.door, x + 0.75, 0, -t / 2 - 1.5, pw, lh, 1.25);

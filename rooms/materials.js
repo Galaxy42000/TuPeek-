@@ -127,6 +127,12 @@ export default {
     name: 'Stone step',
     Type: 'Decorative natural stone slab ⚠ stone and size not recorded',
   },
+  louveredBifold: {
+    name: 'Closet doors (proposed)',
+    Type: 'Louvered bifold, two pairs (4 leaves)',
+    Opening: '88″ wide × 80″ tall',
+    Finish: 'Painted to match the trim',
+  },
   squareDPanel: {
     name: 'Electrical panel',
     Brand: 'Square D',

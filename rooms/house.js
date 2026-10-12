@@ -199,7 +199,10 @@ export default {
       notes: 'The kitchen’s east (range) wall. Ends behind the tall cabinet, leaving a walkway from the kitchen to the hall. ⚠ The kitchen plan draws this wall continuing further north.' },
     {
       id: 'Utility room front', inside: 'south', x0: X_MAIN, z0: Z_CLOSET, x1: X_BATH - INT, z1: Z_CLOSET + INT,
-      openings: [{ id: 'D-LAUNDRY', type: 'door', door: 'bypass', at: 2, width: 72, height: 80, notes: 'Sliding bypass doors. ⚠ Width scaled from the drawing.' }],
+      // not built yet: full-width louvered bifolds open up the whole closet (panel, tank,
+      // washer/dryer) at once, and the louvers let the washer/dryer and heater breathe
+      openings: [{ id: 'D-UTILITY', type: 'door', door: 'bifold', at: 4, width: 88, height: 80, leaves: 4, louvered: true, open: 70, materials: ['louveredBifold'],
+        notes: 'Proposed (not built yet): two pairs of 22″ louvered bifold doors in an 88″ opening, folding to each side, shown open. Opening the whole front gives clear access to the washer/dryer and the 30″-wide working space code requires in front of the electrical panel; the louvers vent the washer/dryer.' }],
     },
   ],
 
