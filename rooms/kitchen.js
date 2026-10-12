@@ -235,11 +235,11 @@ export default {
 
   lighting: {
     pendants: [{ over: 'ISLAND', count: 2, bottom: 66 }], // ⚠ placeholder
-    // recessed ceiling lights as [x, z]  ⚠ placeholder
-    cans: [
-      [40, 50], [110, 50],
-      [40, 105], [110, 105],
-    ],
+    // recessed ceiling lights as [x, z], from the photo of the trusses with the cans hung
+    // on them: about 12, in four rows running the length of the vault (two on each side
+    // of its peak), three to a row. ⚠ Spacing estimated; the vault peak is at x = 52.5,
+    // so the first row is over the walkway, outside the kitchen.
+    cans: [-7.5, 32.5, 72.5, 112.5].flatMap((x) => [24, 60, 96].map((z) => [x, z])),
   },
 
   views: {
