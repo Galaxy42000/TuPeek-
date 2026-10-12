@@ -6,7 +6,7 @@ import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
 import { buildDecks } from './deckBuilder.js';
-import { sidingTexture, shingleTexture, stoneTexture } from './materials.js';
+import { sidingTexture, shingleTexture, stoneTexture, tileTexture } from './materials.js';
 import { buildRoof } from './roofBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
@@ -44,7 +44,11 @@ export function buildHouse(cfg, focus) {
     mirror: std('#dfe6ea', 0.04, 1),
     beam: std('#3a302b', 0.6, 0.5),
     door: std(cfg.palette.doors || cfg.palette.trim, 0.45),
-    tileFloor: std(cfg.palette.tileFloor || '#c9c7c2', 0.5),
+    // 12×24 porcelain, staggered; wall tile: 12×24 white, laid horizontally
+    tileFloor: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.4, map: tileTexture(cfg.palette.tileFloor || '#a7a8a6', '#8b8c8a', 24, 12) }),
+    wallTile: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.15, map: tileTexture(cfg.palette.wallTile || '#f3f3f1', '#d9d9d6', 24, 12) }),
+    wallTileShade: std('#dcdcd8', 0.3),
+    ledStrip: std('#ffffff', 0.4, 0, { emissive: '#f4f8ff', emissiveIntensity: 1.6 }),
     ground: std(cfg.palette.ground || '#d3d8cf', 0.95),
     stone: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.92, map: stoneTexture(cfg.palette.stone || '#6e737c') }),
     stoneCap: std(cfg.palette.stoneCap || '#8d929a', 0.85),
@@ -107,7 +111,7 @@ export function buildHouse(cfg, focus) {
     if (grade < -1.05) tag(addBox(root, M.stone, x0 - 1.5, grade - 0.6, z0 - 1.5, x1 - x0 + 3, -2.5 - grade + 0.6, z1 - z0 + 3), { id: 'Stone skirt', type: 'Stone veneer skirt', height: -grade, materials: mats(undefined, 'stone'), notes: `From the ground up to the floor, about ${fmtIn(-grade)}. ⚠ Height estimated from the photos.` });
     // flat ceiling everywhere except under the vaults
     let flat = [{ x: x0, y: z0, w: x1 - x0, h: z1 - z0 }];
-    for (const v of [...vaults, ...(cfg.ceilings || [])]) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
+    for (const v of [...vaults, ...(cfg.ceilings || []), ...(cfg.slopes || [])]) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
     for (const r of flat) addBox(ceiling, M.ceiling, r.x, H, r.y, r.w, 1, r.h, { cast: false });
   }
   // rooms with a lower flat ceiling (the walls carry on up behind it)
@@ -120,6 +124,31 @@ export function buildHouse(cfg, focus) {
     const v = vaults.find((a) => x >= a.x0 && x <= a.x1 && z >= a.z0 && z <= a.z1);
     return v ? vaultHeight(v, H, x) : H;
   };
+
+  // single sloped ceilings (one side of a roof): the height follows `along` (a vault's
+  // shape) between x0 and x1; `ends` close the gap above the wall tops
+  for (const s of cfg.slopes || []) {
+    const h = (x) => vaultHeight(s.along, H, x);
+    const sg = new THREE.Group();
+    ceiling.add(sg);
+    const lo = h(s.x0) < h(s.x1) ? s.x0 : s.x1, hi = lo === s.x0 ? s.x1 : s.x0;
+    const run = Math.abs(hi - lo), rise = h(hi) - h(lo), len = Math.hypot(run, rise);
+    const pg = new THREE.Group();
+    pg.position.set(lo, h(lo), s.z0);
+    pg.rotation.z = (hi > lo ? 1 : -1) * Math.atan2(rise, run);
+    addBox(pg, M.ceiling, hi > lo ? 0 : -len, 0, 0, len, 1, s.z1 - s.z0, { cast: false });
+    sg.add(pg);
+    for (const e of s.ends || []) {
+      if (e.z !== undefined) {
+        const sh = new THREE.Shape([new THREE.Vector2(s.x0, H), new THREE.Vector2(s.x1, H), new THREE.Vector2(s.x1, h(s.x1) + 1), new THREE.Vector2(s.x0, h(s.x0) + 1)]);
+        const m = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: e.t, bevelEnabled: false }), M.wall);
+        m.position.z = e.z;
+        sg.add(m);
+      } else addBox(sg, M.wall, e.x, H, s.z0, e.t, Math.max(h(e.x), h(e.x + e.t)) + 1 - H, s.z1 - s.z0);
+    }
+    for (const [lx, lz] of s.lights || []) F.recessedLight(ceiling, ctx, lx, lz, h(lx), Math.atan((h(lx + 1) - h(lx - 1)) / 2));
+    tag(sg, { id: s.id, type: 'Sloped ceiling', height: Math.max(h(s.x0), h(s.x1)), materials: mats(s.materials, 'ceiling'), notes: s.notes });
+  }
   for (const v of vaults) {
     const vg = new THREE.Group();
     ceiling.add(vg);

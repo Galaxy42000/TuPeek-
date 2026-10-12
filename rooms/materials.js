@@ -99,6 +99,30 @@ export default {
     Cooktop: 'Induction',
     Width: '30″',
   },
+  dreamlineShower: {
+    name: 'Shower enclosure',
+    Brand: 'DreamLine',
+    Type: 'Frameless neo-angle, hinged door, chrome hardware',
+    Base: 'White neo-angle base',
+  },
+  showerTile: {
+    name: 'Shower wall tile',
+    Look: 'White, 12″ × 24″, laid horizontally in a running bond, with two recessed niches',
+  },
+  porcelainFloorTile: {
+    name: 'Floor tile',
+    Material: 'Porcelain',
+    Look: 'Gray marble look, 12″ × 24″, staggered',
+  },
+  ditraHeat: {
+    name: 'Heated floor',
+    Brand: 'Schluter',
+    System: 'DITRA-HEAT electric floor warming, under the tile',
+  },
+  ledMirror: {
+    name: 'Mirror',
+    Type: 'LED-backlit, with touch controls',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',

@@ -13,7 +13,8 @@
 //    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls);
 //    outside at the bathroom end (bathroom window with the condenser under it);
 //    the deck framing outside the sliding door; the outside all round (vinyl siding,
-//    Clipstone skirt, Kolbe windows, roof, entry porch).
+//    Clipstone skirt, Kolbe windows, roof, entry porch); the bathroom (DreamLine
+//    shower, tile, LED mirror, sloped ceiling).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -99,7 +100,7 @@ export default {
     cabinets: '#f1efe9',
     cabinetGrain: false,
     doors: '#f8f7f3',
-    tileFloor: '#cfccc6',
+    tileFloor: '#a7a8a6', // gray marble-look porcelain
     ground: '#d3d8cf',
     siding: '#7a8591',
     stone: '#6e737c',
@@ -111,6 +112,7 @@ export default {
   // bathroom is drawn with a tile floor, which isn't recorded yet.
   surfaces: {
     floor: ['oakFloor'],
+    tileFloor: ['porcelainFloorTile', 'ditraHeat'],
     windows: ['kolbeWindow', 'cherrySill', 'drywallReturns'],
     siding: ['vinylSiding'],
     stone: ['clipstone'],
@@ -131,7 +133,7 @@ export default {
       notes: 'The gable end at the bathroom.',
       openings: [
         { id: 'W11', type: 'window', at: 24, width: 52, bottom: 64, height: 20, notes: 'Wide awning window high in bedroom 1’s east end. ⚠ Size, height and position estimated from the outside photos.' },
-        { id: 'W9', type: 'window', at: X_BATH + 2, width: 24, bottom: 48, height: 24, notes: 'Bathroom awning window, over the toilet, with the mini-split condenser below it outside. ⚠ Size, height and position estimated from the outside photo.' },
+        { id: 'W9', type: 'window', at: X_BATH + 1, width: 20, bottom: 48, height: 24, notes: 'Bathroom awning window, over the toilet, with the mini-split condenser below it outside. ⚠ Size, height and position estimated from the outside photo.' },
       ],
     },
     {
@@ -166,7 +168,7 @@ export default {
     {
       id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH,
       openings: [
-        { id: 'W10', type: 'window', at: 41, width: 23, bottom: 53, height: 27, notes: 'Small bathroom window. Its top lines up with the sliding door’s. ⚠ Size, height and position estimated from the outside photo. It sits where LINEN was drawn from the sketch, so that cabinet can’t be 84″ tall there.' },
+        { id: 'W10', type: 'window', at: 41, width: 23, bottom: 53, height: 27, notes: 'Small bathroom awning window, just past the shower. Its top lines up with the sliding door’s. ⚠ Size, height and position estimated from the photos.' },
         { id: 'SLIDER', type: 'door', door: 'slider', at: Z_COUNTER_END + 1.5 - EXT, width: 72, height: 80, casing: false, materials: ['kolbeSlider'],
           notes: '6′ sliding glass door, starting 1½″ past the end of the kitchen countertop. No inside trim drawn (there is no room for casing beside the counter). ⚠ Height assumed to be the standard 6′-8″.' },
         { id: 'W8', type: 'window', at: 341 - EXT, width: 32, bottom: 16, height: 64, notes: 'Living room. Its top lines up with the sliding door’s. ⚠ Size, height and position estimated from the outside photos.' },
@@ -222,11 +224,15 @@ export default {
   // world-aligned (width east–west, depth north–south).
   fixtures: [
     // bathroom ⚠ sizes and positions are placeholders until the interior photos
-    { id: 'WC', type: 'Toilet', kind: 'toilet', x: X_BATH + 5, z: EXT, width: 19, depth: 28, height: 30, facing: 'south' },
-    { id: 'VANITY', type: 'Vanity', kind: 'vanity', x: X_EAST - 36 - 21, z: EXT, width: 21, depth: 19, height: 32.5, facing: 'south' },
-    { id: 'SHOWER', type: 'Neo-angle shower', kind: 'cornerShower', corner: 'north-east', x: X_EAST, z: EXT, size: 36 },
-    { id: 'LINEN', type: 'Bathroom cabinet', kind: 'cabinet', x: X_EAST - 18, z: EXT + 38, width: 32, depth: 18, height: 84, facing: 'west', doors: 2,
-      notes: '⚠ Drawn along the south wall, west of the shower; what it is and how tall are unknown.' },
+    // bathroom, from the bathroom photo: shower in the corner of the gable wall and the
+    // long outside wall, W10 just past it, the vanity's plumbing and LED mirror beside it
+    { id: 'WC', type: 'Toilet', kind: 'toilet', x: X_BATH + 2, z: EXT, width: 19, depth: 28, height: 30, facing: 'south', notes: '⚠ Not in the photo; position from the sketch.' },
+    { id: 'VANITY', type: 'Vanity', kind: 'vanity', x: X_EAST - 38 - 24, z: EXT, width: 24, depth: 19, height: 32.5, facing: 'south', mirror: 'led', mirrorWidth: 22, mirrorHeight: 32, mirrorBottom: 44,
+      materials: ['ledMirror'], notes: 'Not installed yet in the photo (plumbing stubbed out); LED-lit mirror above it about 4″ from the shower. ⚠ Vanity size assumed.' },
+    { id: 'SHOWER', type: 'Neo-angle shower (frameless)', code: 'DreamLine', kind: 'cornerShower', corner: 'north-east', x: X_EAST, z: EXT, size: 36, height: 72, tile: 90,
+      niches: [{ wall: 'x', at: 14, bottom: 52, width: 12, height: 24 }, { wall: 'x', at: 22, bottom: 22, width: 6, height: 6 }],
+      materials: ['dreamlineShower', 'showerTile'],
+      notes: 'Frameless glass: two short returns and a hinged door on the angled front, on a white neo-angle base. White 12″ × 24″ tile on both walls with two niches on the outside wall. ⚠ Base size (36″) and glass height (72″) assumed.' },
     // utility room, against the top wall of the plan
     { id: 'W/D', type: 'Stacked washer + dryer', kind: 'laundry', x: X_MAIN + 1, z: EXT + 0.5, width: 27, depth: 30, height: 77, facing: 'south' },
     { id: 'ELEC', type: 'Electrical panel', kind: 'box', x: X_MAIN + 38, z: EXT, width: 14.25, depth: 4, height: 30, bottom: 48, color: '#a7abaf', metal: true, notes: '⚠ Size and height are typical, not measured.' },
@@ -261,6 +267,14 @@ export default {
   ceilings: [
     { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, height: LIVING_CEILING,
       notes: '⚠ About 7′, flush with the underside of beam BEAM-2; estimated from the living room photo.' },
+  ],
+
+  // Single sloped ceilings, following the roof: `along` is the vault whose slope it
+  // follows; ends close the gap above the walls (z = a wall across x, x = a wall along z).
+  slopes: [
+    { id: 'Bathroom ceiling', x0: X_BATH, x1: X_EAST, z0: EXT, z1: Z_BATH, along: { x0: X_MAIN, x1: X_EAST, peak: PEAK },
+      ends: [{ z: 0, t: EXT }, { x: X_BATH - INT, t: INT }], lights: [[X_BATH + 30, EXT + 48]],
+      notes: 'Slopes down to the long outside wall (seen in the bathroom photo), like the kitchen vault. ⚠ Heights follow the kitchen’s 9′ peak; not measured.' },
   ],
 
   // Vaulted ceilings (scissor trusses). The ceiling rises from the flat ceiling height at

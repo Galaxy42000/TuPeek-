@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { addBox, addMesh } from './geometry.js';
+import { addBox, addMesh, panelRects } from './geometry.js';
 import { slab } from './roomBuilder.js';
 import * as F from './fixtures.js';
 
@@ -37,11 +37,22 @@ export function vanity(parent, ctx, w, d, item = {}) {
   tap.position.set(w / 2, top, 1.5);
   F.faucet(tap, ctx, 0, 0, 0);
   parent.add(tap);
-  if (item.mirror !== false) addBox(parent, M.mirror, 1, top + 7, 0, w - 2, 30, 0.5);
+  if (item.mirror === 'led') {
+    // LED-backlit mirror: lit bars set into the glass near its edges
+    const mw = item.mirrorWidth ?? 24, mh = item.mirrorHeight ?? 32, mx = (w - mw) / 2, my = item.mirrorBottom ?? top + 9;
+    addBox(parent, M.black, mx, my, 0, mw, mh, 0.6);
+    addBox(parent, M.mirror, mx + 0.3, my + 0.3, 0.6, mw - 0.6, mh - 0.6, 0.1);
+    const bar = (x, y, bw, bh) => addBox(parent, M.ledStrip, mx + x, my + y, 0.72, bw, bh, 0.05, { cast: false });
+    for (const y of [2.5, mh - 3.2]) { bar(2.5, y, mw / 2 - 4, 0.7); bar(mw / 2 + 1.5, y, mw / 2 - 4, 0.7); }
+    for (const x of [2.5, mw - 3.2]) { bar(x, 2.5, 0.7, mh / 2 - 4); bar(x, mh / 2 + 1.5, 0.7, mh / 2 - 4); }
+  } else if (item.mirror !== false) addBox(parent, M.mirror, 1, top + 7, 0, w - 2, 30, 0.5);
 }
 
 // Neo-angle shower in a corner: local x runs along one wall, z along the other.
-export function cornerShower(parent, ctx, a, { returnLen = 12, height = 72 } = {}) {
+// Frameless glass (two returns and a hinged door on the angled front, handle on its
+// local-x end), an acrylic base, and optionally a tile surround up to `tile` inches
+// with recessed niches: niches = [{ wall: 'x' | 'z', at, bottom, width, height }].
+export function cornerShower(parent, ctx, a, { returnLen = 12, height = 72, tile = 0, niches = [] } = {}) {
   const M = ctx.M, r = returnLen, base = 4;
   parent.add(slab([[0, 0], [a, 0], [a, r], [r, a], [0, a]], base, 0, M.porcelain));
   const panel = (x0, z0, x1, z1, door) => {
@@ -50,18 +61,40 @@ export function cornerShower(parent, ctx, a, { returnLen = 12, height = 72 } = {
     p.position.set(x0, base, z0);
     p.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
     parent.add(p);
-    addBox(p, M.glass, 0, 0, -0.2, len, height, 0.4, { cast: false });
-    addBox(p, M.steel, 0, height - 0.75, -0.45, len, 0.75, 0.9);
-    addBox(p, M.steel, 0, 0, -0.45, len, 0.75, 0.9);
-    if (door) addBox(p, M.steel, len - 4, 34, 0.2, 0.75, 14, 1.5); // pull
+    addBox(p, M.glass, 0.25, 0, -0.19, len - 0.5, height, 0.375, { cast: false });
+    for (const y of [0, height - 1.5]) addBox(p, M.steel, -0.4, y, -0.6, 0.6, 1.5, 1.2); // clips at the ends
+    if (door) {
+      for (const y of [6, height - 10]) addBox(p, M.steel, 0.2, y, -0.7, 2.6, 4, 1.4); // hinges
+      addBox(p, M.steel, len - 3, 24, 1, 0.75, 22, 0.75); // pull bar, both sides
+      addBox(p, M.steel, len - 3, 24, -1.75, 0.75, 22, 0.75);
+    }
   };
-  panel(a, 0, a, r);
-  panel(a, r, r, a, true);
   panel(r, a, 0, a);
-  // shower head on the wall along local x
-  addBox(parent, M.steel, a / 2 - 0.4, 76, 0, 0.8, 0.8, 7);
-  addMesh(parent, new THREE.CylinderGeometry(3, 3, 0.6, 24), M.steel, a / 2, 75.6, 7);
-  addMesh(parent, new THREE.CylinderGeometry(2.2, 2.2, 0.6, 20).rotateX(Math.PI / 2), M.steel, a / 2, 46, 0.3);
+  panel(a, r, r, a, true);
+  panel(a, 0, a, r);
+  if (tile > 0) {
+    // tile on both walls, a little wider than the base; niches are recessed into the wall
+    const w = a + 2, h = tile - base;
+    for (const wall of ['x', 'z']) {
+      const g = new THREE.Group();
+      if (wall === 'z') { g.rotation.y = -Math.PI / 2; g.scale.z = -1; } // run along local z, facing +x
+      parent.add(g);
+      const ns = niches.filter((n) => n.wall === wall).map((n) => ({ start: n.at, width: n.width, bottom: n.bottom - base, height: n.height }));
+      for (const q of panelRects(w, h, ns)) addBox(g, M.wallTile, q.x, base + q.y, 0, q.w, q.h, 0.4, { cast: false });
+      for (const n of ns) {
+        addBox(g, M.wallTileShade, n.start, base + n.bottom, -3.5, n.width, n.height, 0.4, { cast: false }); // back
+        addBox(g, M.wallTile, n.start, base + n.bottom, -3.5, n.width, 0.4, 3.9, { cast: false }); // shelf
+        addBox(g, M.wallTileShade, n.start, base + n.bottom + n.height - 0.4, -3.5, n.width, 0.4, 3.9, { cast: false });
+        addBox(g, M.wallTileShade, n.start, base + n.bottom, -3.5, 0.4, n.height, 3.9, { cast: false });
+        addBox(g, M.wallTileShade, n.start + n.width - 0.4, base + n.bottom, -3.5, 0.4, n.height, 3.9, { cast: false });
+      }
+    }
+  }
+  // valve and shower head on the wall along local z, in the photo's left-hand wall
+  const sz = a / 2, wz = tile > 0 ? 0.4 : 0;
+  addMesh(parent, new THREE.CylinderGeometry(2.6, 2.6, 0.5, 24).rotateZ(Math.PI / 2), M.steel, wz + 0.25, 46, sz);
+  addBox(parent, M.steel, wz, 76, sz - 0.4, 7, 0.8, 0.8);
+  addMesh(parent, new THREE.CylinderGeometry(3, 3, 0.6, 24), M.steel, wz + 7, 75.6, sz);
 }
 
 // Stacked washer + dryer.
