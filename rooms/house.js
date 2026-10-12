@@ -9,7 +9,8 @@
 //  Interior photos: bedroom 1 looking into bedroom 2 (no wall between them,
 //    steel beam over the bedroom 1 door, bedroom wing windows); kitchen looking
 //    into the living room (vaulted kitchen ceiling on scissor trusses with a 9′
-//    peak, steel beam across the living room, its windows, the mini-split).
+//    peak, steel beam across the living room, its windows, the mini-split);
+//    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -35,15 +36,16 @@
 import kitchen from './kitchen.js';
 import { fmtFt } from '../js/units.js';
 
-const HEIGHT = 84; // ⚠ flat ceiling height, estimated from the living room photo (not measured)
+const HEIGHT = 96; // ⚠ wall height (8′), from the kitchen photo: the 6′ slider is a standard 6′-8″ tall
 const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling (keep HEIGHT and PEAK in step with rooms/kitchen.js)
+const LIVING_CEILING = 84; // ⚠ the living room's flat ceiling looks lower (about 7′), flush with the beam's underside
 const EXT = 6; // ⚠ exterior wall thickness
 const INT = 4.5; // interior partition thickness
 const OLD = 6; // ⚠ wall between the bedroom wing and the main room
 
 const LENGTH = 411; // 34′-3″ outside face to outside face
 const WING_LENGTH = 291; // 24′-3″
-const WING_WIDTH = 101; // ⚠ inside width of the bedroom wing, estimated from the photo with a 7′ ceiling (the drawing scaled to 88″)
+const WING_WIDTH = 115; // ⚠ inside width of the bedroom wing, estimated from the photo with an 8′ ceiling (the drawing scaled to 88″)
 const MAIN_WIDTH = 185; // 15′-5″ R.O.
 const BATH_WIDTH = 84; // 7′-0″
 const BATH_DEPTH = 72; // 6′-0″
@@ -72,7 +74,7 @@ export default {
   id: 'house',
   kind: 'house',
   name: 'Whole house',
-  height: HEIGHT, // ⚠ not on the plan; estimated from the photos
+  height: HEIGHT, // ⚠ not on the plan; estimated from the photos (rooms can have a lower ceiling, see `ceilings`)
 
   palette: {
     ...kitchen.palette,
@@ -102,14 +104,14 @@ export default {
       id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
       notes: 'Windows are not on the plan; they come from the bedroom photo.',
       openings: [
-        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 37, height: 40, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
-        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 37, height: 40, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
       ],
     },
     {
       id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH,
       openings: [
-        { id: 'W7', type: 'window', at: 14, width: 21, bottom: 31, height: 40, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W7', type: 'window', at: 16, width: 24, bottom: 36, height: 46, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
       ],
     },
     {
@@ -122,13 +124,15 @@ export default {
       id: 'West wall', exterior: true, inside: 'north', x0: X_MAIN, z0: Z_SOUTH, x1: X_EAST, z1: LENGTH,
       notes: 'The 15′-5″ R.O. dimension is written along this wall.',
       openings: [
-        { id: 'W3', type: 'window', at: 30, width: 33, bottom: 19, height: 60, notes: 'Tall window, north side. ⚠ Size, height and position estimated from the living room photo.' },
-        { id: 'W4', type: 'window', at: 137, width: 28, bottom: 23, height: 56, notes: 'Tall window, south side. ⚠ Size, height and position estimated from the living room photo.' },
+        { id: 'W3', type: 'window', at: 30, width: 33, bottom: 19, height: 60, materials: ['kolbeWindow'], notes: 'Tall window, north side. ⚠ Size, height and position estimated from the living room photo.' },
+        { id: 'W4', type: 'window', at: 137, width: 28, bottom: 23, height: 56, materials: ['kolbeWindow'], notes: 'Tall window, south side. ⚠ Size, height and position estimated from the living room photo.' },
       ],
     },
     {
       id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH,
       openings: [
+        { id: 'SLIDER', type: 'door', door: 'slider', at: 210 - EXT, width: 72, height: 80, materials: ['kolbeSlider'],
+          notes: '6′ sliding glass door, just past the end of the kitchen counters. ⚠ Position estimated from the photo; height assumed to be the standard 6′-8″.' },
         { id: 'W8', type: 'window', at: 340, width: 27, bottom: 21, height: 58, notes: 'Living room. ⚠ Size, height and position estimated from the photo; the sill was hidden.' },
       ],
     },
@@ -194,7 +198,7 @@ export default {
       notes: '17¾″ W × 24⅞″ H × 11¼″ D (from the plan). ⚠ Mounting height assumed.' },
     // heating / cooling: the indoor unit hangs on the framing above the living room
     // beam, facing the kitchen
-    { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: HEIGHT + 8, color: '#f6f6f4',
+    { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: LIVING_CEILING + 8, color: '#f6f6f4',
       notes: 'Mounted above beam BEAM-2 under the peak of the vault, blowing into the kitchen. ⚠ Size is a typical 18,000 BTU Blueridge unit, judged from the photo.' },
     { id: 'CONDENSER', type: 'Mini-split condenser (outside)', kind: 'box', x: WIDTH + 3, z: 291, width: 13, depth: 31, height: 22, bottom: 3, color: '#d9dbd9', notes: '⚠ Size is typical, not measured.' },
     { id: 'PAD', type: 'Equipment pad', kind: 'box', x: WIDTH + 1, z: 289, width: 17, depth: 35, height: 3.6, bottom: -0.6, color: '#b9b8b2', label: false },
@@ -208,9 +212,15 @@ export default {
       notes: 'Over the bedroom 1 door, running along the old outside wall north into the utility room. Exposed, top at the ceiling. ⚠ Where it ends is estimated: about 20″ past the door in the photo, and at the outside wall in the utility room.',
     },
     {
-      id: 'BEAM-2', type: 'Steel beam (W-flange)', from: [X_MAIN - 3, Z_BEAM], to: [X_EAST + 3, Z_BEAM], depth: 8, flange: 4, bottom: HEIGHT, materials: ['steelW8'],
+      id: 'BEAM-2', type: 'Steel beam (W-flange)', from: [X_MAIN - 3, Z_BEAM], to: [X_EAST + 3, Z_BEAM], depth: 8, flange: 4, bottom: LIVING_CEILING, materials: ['steelW8'],
       notes: 'Spans the whole width of the living room where the vaulted ceiling ends; its bottom is flush with the flat living room ceiling. ⚠ Position along the room estimated from the photo.',
     },
+  ],
+
+  // Rooms whose flat ceiling is lower than the wall height (x/z box, inches).
+  ceilings: [
+    { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, height: LIVING_CEILING,
+      notes: '⚠ About 7′, flush with the underside of beam BEAM-2; estimated from the living room photo.' },
   ],
 
   // Vaulted ceilings (scissor trusses). The ceiling rises from the flat ceiling height at
@@ -219,7 +229,7 @@ export default {
   vaults: [
     {
       id: 'Kitchen vault', type: 'Vaulted ceiling (scissor trusses)', x0: X_MAIN, x1: X_EAST, z0: KZ, z1: Z_BEAM - 2, peak: PEAK,
-      ends: [{ z: KZ - INT, t: INT, base: HEIGHT }, { z: Z_BEAM - 2, t: 4, base: HEIGHT + 8 }],
+      ends: [{ z: KZ - INT, t: INT, base: HEIGHT }, { z: Z_BEAM - 2, t: 4, base: LIVING_CEILING + 8 }],
       notes: '9′-0″ at the peak. Runs from the kitchen’s range wall to the living room beam. ⚠ Where it starts at the range-wall end is assumed.',
     },
   ],

@@ -36,7 +36,7 @@ export default {
   room: {
     width: 144.75, // north wall, west reference line → east wall
     depth: 122.75, // east wall, north wall → end of the east wall
-    height: 84, // ⚠ not on the plan; 7′ walls, estimated from the living room photo
+    height: 96, // ⚠ not on the plan; 8′ walls, estimated from the kitchen photo
     // Vaulted ceiling on scissor trusses, 9′ at the peak. It spans the whole main room
     // (15′-5″), whose east wall is the kitchen's sink wall, so it starts 40¼″ west of the
     // kitchen's west reference line. Keep in step with the vault in rooms/house.js.
@@ -83,7 +83,9 @@ export default {
   // type: 'window' | 'door' | 'opening';  bottom = height of the opening's sill above the floor
   openings: [
     // 36″ from the corner, 36½″ wide (plan). Sill and head heights are not on the plan.
-    { id: 'W1', type: 'window', wall: 'east', start: 36, width: 36.5, bottom: 42, height: 40, grid: [2, 1], notes: 'Sill (42″) and height (40″) are assumptions.' },
+    // 4′ × 4′ (from the owner; the plan drew it 36½″ wide), kept centered on the sink
+    { id: 'W1', type: 'window', wall: 'east', start: 54.25 - 24, width: 48, bottom: 42, height: 48, materials: ['kolbeWindow'],
+      notes: '4′ × 4′. Centered on the sink as on the plan. ⚠ Sill height (42″) assumed. The plan drew a 36½″ window; at 4′ it runs into the trim space of U6 and U7.' },
   ],
 
   // Base cabinets: 24″ deep, 34½″ tall + 1½″ counter = 36″ counter height.

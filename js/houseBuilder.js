@@ -89,8 +89,12 @@ export function buildHouse(cfg, focus) {
     tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor') });
     // flat ceiling everywhere except under the vaults
     let flat = [{ x: x0, y: z0, w: x1 - x0, h: z1 - z0 }];
-    for (const v of vaults) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
+    for (const v of [...vaults, ...(cfg.ceilings || [])]) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
     for (const r of flat) addBox(ceiling, M.ceiling, r.x, H, r.y, r.w, 1, r.h, { cast: false });
+  }
+  // rooms with a lower flat ceiling (the walls carry on up behind it)
+  for (const c of cfg.ceilings || []) {
+    tag(addBox(ceiling, M.ceiling, c.x0, c.height, c.z0, c.x1 - c.x0, 1, c.z1 - c.z0, { cast: false }), { id: c.id || 'Ceiling', type: 'Ceiling', height: c.height, materials: mats(c.materials, 'ceiling'), notes: c.notes });
   }
 
   // vaulted ceilings: rise from H at x0 and x1 to the peak over the middle (ridge along z)
@@ -194,7 +198,7 @@ export function buildHouse(cfg, focus) {
       F.opening(og, ctx, o, t);
       if (!spec.exterior && o.type !== 'opening' && o.casing !== false) backCasing(og, M, o, t);
       if (o.type === 'door') doorLeaf(og, ctx, o, t);
-      const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors' }[o.door] || 'Doorway';
+      const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors', slider: 'Sliding glass door' }[o.door] || 'Doorway';
       tag(og, {
         id: o.id, type: kind, wall: spec.id, width: o.width, height: o.height, bottom: o.bottom || undefined,
         materials: mats(o.materials, { window: 'windows', door: 'doors' }[o.type]),
@@ -372,6 +376,16 @@ function doorLeaf(parent, ctx, o, t) {
     const pw = lw / 2 + 1;
     addBox(parent, M.door, x + 0.75, 0, -t / 2 - 1.5, pw, lh, 1.25);
     addBox(parent, M.door, x + w - 0.75 - pw, 0, -t / 2 + 0.25, pw, lh, 1.25);
+  } else if (o.door === 'slider') {
+    // sliding patio door: two glass panels in white frames, one fixed and one sliding
+    const pw = (w - 1.5) / 2 + 1, fh = o.height - 0.75;
+    for (const [px, pz] of [[x + 0.75, -t / 2 - 1.75], [x + w - 0.75 - pw, -t / 2 + 0.25]]) {
+      addBox(parent, M.trim, px, 0, pz, 2.75, fh, 1.5);
+      addBox(parent, M.trim, px + pw - 2.75, 0, pz, 2.75, fh, 1.5);
+      addBox(parent, M.trim, px + 2.75, 0, pz, pw - 5.5, 3.5, 1.5);
+      addBox(parent, M.trim, px + 2.75, fh - 2.75, pz, pw - 5.5, 2.75, 1.5);
+      addBox(parent, M.glass, px + 2.75, 3.5, pz + 0.7, pw - 5.5, fh - 6.25, 0.1, { cast: false });
+    }
   }
   // pocket doors are shown open (slid into the wall)
 }

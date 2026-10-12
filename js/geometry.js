@@ -97,11 +97,13 @@ export function vaultCeiling(parent, mat, { x0, x1, peak }, h, z0, d) {
 // Triangular wall closing the end of a vault: from `base` (the wall top, or a beam's
 // top) up to the sloped ceiling, t thick starting at z.
 export function vaultEnd(mat, { x0, x1, peak }, h, base, z, t) {
-  const half = (x1 - x0) / 2;
+  const half = (x1 - x0) / 2, xm = x0 + half;
   const inset = ((base - h) * half) / (peak - h);
-  const shape = new THREE.Shape([
-    new THREE.Vector2(x0 + inset, base), new THREE.Vector2(x1 - inset, base), new THREE.Vector2(x0 + half, peak + 1),
-  ]);
+  // above the wall tops it is a triangle; starting lower (a beam below the plate) it is a pentagon
+  const pts = base >= h
+    ? [[x0 + inset, base], [x1 - inset, base], [xm, peak + 1]]
+    : [[x0, base], [x1, base], [x1, h], [xm, peak + 1], [x0, h]];
+  const shape = new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
   const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: t, bevelEnabled: false }), mat);
   m.position.z = z;
   m.castShadow = m.receiveShadow = true;

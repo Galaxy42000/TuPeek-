@@ -16,6 +16,15 @@ export default {
     Finish: 'Clear',
     'Boards run': 'East–west', // keep in step with palette.floorBoards in rooms/kitchen.js
   },
+  kolbeWindow: {
+    name: 'Window',
+    Maker: 'Kolbe Windows & Doors (label on the glass in the photos)',
+  },
+  kolbeSlider: {
+    name: 'Sliding glass patio door',
+    Maker: 'Kolbe Windows & Doors (label on the glass in the photo)',
+    Width: '6′',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',
