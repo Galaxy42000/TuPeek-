@@ -63,10 +63,10 @@ export default {
     island: '#dcb98a',
     cabinetGrain: true, // clear-finished wood: show the grain
     counter: '#e9e7e2', // speckle color, used only when there is no counterPhoto
-    // Navasca granite (Antonio Grey): a photo of the slab made into a seamless tile
-    // covering about 20″ × 15″
+    // Navasca granite (Antonio Grey): a seamless slab-sized texture (12′ × 6′) matched to
+    // the installed counters; each countertop and backsplash piece shows its own part of it
     counterPhoto: 'textures/navasca-granite.jpg',
-    counterPhotoSize: [20, 15],
+    counterPhotoSize: [144, 72],
     backsplash: 'counter', // granite slab backsplash, like the countertops (or a tile color)
     grout: '#d2cfc7',
     hardware: '#2a2a2a',

@@ -460,5 +460,13 @@ export function buildRoom(cfg, opts = {}) {
     }
   }
 
+  // stone pieces (counters, backsplash) each show a different part of a slab-sized texture
+  let piece = 0;
+  root.traverse((o) => {
+    if (!o.isMesh || (o.material !== M.counter && o.material !== M.backsplash) || !(o.material.map?.repeat.x < 1 / 100)) return;
+    const k = ++piece, uv = o.geometry.attributes.uv; // UVs are in inches
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) + k * 53, uv.getY(i) + k * 29);
+  });
+
   return { root, walls, ceiling, labels, bounds: { W, D, H, floor: floorBox } };
 }

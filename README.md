@@ -71,7 +71,7 @@ rooms/house.js      building walls, doors, windows, rooms  ← edit this
 rooms/materials.js  materials & finishes shown when you click something  ← edit this
 rooms/site.js       which way the plans face (true north)
 rooms/kitchen.js    kitchen layout & measurements  ← edit this
-textures/           photos of real finishes (Navasca granite), made into seamless tiles
+textures/           finish textures (Navasca granite slab, made by tools/make-granite.py)
 vendor/three/       Three.js r169 (MIT), vendored so the site has no CDN dependency
 ```
 
