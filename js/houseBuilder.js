@@ -7,6 +7,7 @@ import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
 import { buildDecks } from './deckBuilder.js';
 import { buildPlumbing } from './plumbingBuilder.js';
+import { buildWiring } from './wiringBuilder.js';
 import { sidingTexture, shingleTexture, stoneTexture, tileTexture, speckleTexture } from './materials.js';
 import { buildRoof } from './roofBuilder.js';
 import { framingMaterial, wallFraming, roofFraming, gableFraming } from './framingBuilder.js';
@@ -458,6 +459,7 @@ export function buildHouse(cfg, focus) {
   // ---------- decks (framing is a separate line drawing the viewer can toggle) ----------
   const deckFraming = buildDecks(root, ctx, cfg.decks, tag, label, grade);
   const plumbing = buildPlumbing(root, cfg.plumbing, tag);
+  const wiring = buildWiring(root, cfg.wiring, tag);
   if (deckFraming) framingLayers.push(deckFraming);
   if (roof) {
     const rf = roofFraming(cfg, FM);
@@ -482,10 +484,10 @@ export function buildHouse(cfg, focus) {
 
   if (focus) {
     if (roof) roof.group.visible = false; // single-room views have no roof
-    return { ...focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H }), plumbing, framing };
+    return { ...focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H }), plumbing, wiring, framing };
   }
   const roofInfo = roof && { group: roof.group, top: roof.top + 6, footprint: cfg.footprint };
-  return { root, walls, ceiling, labels, framing, plumbing, ground, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
+  return { root, walls, ceiling, labels, framing, plumbing, wiring, ground, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
 }
 
 // Cut the model down to one room (plus any rooms listed in its `with`): the clip box reaches through the walls around it

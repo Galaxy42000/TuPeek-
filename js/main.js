@@ -71,7 +71,7 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true, plumbing: false, env: false };
+const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true, plumbing: false, wiring: false, env: false };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
@@ -122,6 +122,8 @@ async function loadRoom(id) {
   showFraming();
   $('#plumbing-toggle').hidden = !room.plumbing;
   if (room.plumbing) room.plumbing.visible = opts.plumbing;
+  $('#wiring-toggle').hidden = !room.wiring;
+  if (room.wiring) room.wiring.visible = opts.wiring;
   $('#env-toggle').hidden = !(cfg.environment && !built.clip);
   showEnvironment();
   setView('overview', false);
@@ -312,8 +314,9 @@ function pick(cx, cy) {
   raycaster.setFromCamera(ndc, camera);
   const p = new THREE.Vector3();
   const shown = (h) => !room.clip || insideClip(room.clip, p.copy(h.point).divideScalar(IN), 0);
-  // x-ray layers (plumbing) are drawn through walls, so they win the click when shown
-  const xray = room.plumbing?.visible ? raycaster.intersectObject(room.plumbing, true).find((h) => shown(h)) : null;
+  // x-ray layers (plumbing, wiring) are drawn through walls, so they win the click when shown
+  const layers = [room.plumbing, room.wiring].filter((l) => l?.visible);
+  const xray = layers.length ? raycaster.intersectObjects(layers, true).find((h) => shown(h)) : null;
   const hit = xray || raycaster.intersectObject(room.root, true).find((h) => visibleInScene(h.object) && !h.object.material?.transparent && shown(h));
   let o = hit?.object;
   while (o && !o.userData.info) o = o.parent;
@@ -439,6 +442,7 @@ $('#t-cutaway').addEventListener('change', (e) => (opts.cutaway = e.target.check
 $('#t-roof').addEventListener('change', (e) => (opts.roof = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
 $('#t-plumbing').addEventListener('change', (e) => { opts.plumbing = e.target.checked; if (room?.plumbing) room.plumbing.visible = opts.plumbing; });
+$('#t-wiring').addEventListener('change', (e) => { opts.wiring = e.target.checked; if (room?.wiring) room.wiring.visible = opts.wiring; });
 $('#t-env').addEventListener('change', (e) => { opts.env = e.target.checked; showEnvironment(); });
 $('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; showFraming(); });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));

@@ -46,6 +46,7 @@
 
 import kitchen from './kitchen.js';
 import { fmtFt } from '../js/units.js';
+import { houseWiring } from './houseWiring.js';
 
 const HEIGHT = 96; // ⚠ wall height (8′), from the kitchen photo: the 6′ slider is a standard 6′-8″ tall
 const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling (keep HEIGHT and PEAK in step with rooms/kitchen.js)
@@ -115,7 +116,7 @@ const supply = (kind, id, y, toX, endY, what) => ({
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
 
-export default {
+const house = {
   id: 'house',
   kind: 'house',
   name: 'Whole house',
@@ -555,3 +556,19 @@ export default {
     eye: { pos: [215, 64, 395], target: [195, 42, 120] },
   },
 };
+
+// Electrical wiring (the viewer's "Wiring" checkbox), laid out in rooms/houseWiring.js
+const fixture = (id) => house.fixtures.find((f) => f.id === id);
+const living = house.ceilings.find((c) => c.id === 'Living room ceiling');
+const at = (f) => [f.x + f.width / 2, f.z + f.depth / 2];
+house.wiring = houseWiring({
+  HEIGHT, PEAK, EXT, INT, OLD, X_MAIN, X_EAST, X_BATH, WIDTH, LENGTH, WING_LENGTH, KX, KZ, Z_BATH, Z_CLOSET, Z_BEAM, Z_SOUTH, D_BR1, DIVIDER, X_PANEL, kitchen,
+  roof: house.roof,
+  livingLights: living.lights, lrBox: living.boxes[0].at,
+  meter: at(fixture('METER')), disconnect: at(fixture('DISCONNECT')), condenser: at(fixture('CONDENSER')),
+  acTop: fixture('A/C').bottom + fixture('A/C').height,
+  soffit: [3, 2, 1, 0, 4].map((i) => house.roof.lights[i]),
+});
+
+export default house;
+

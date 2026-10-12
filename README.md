@@ -18,6 +18,7 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 | **Cut away walls** | Hides the walls between the camera and the room, dollhouse style |
 | **Outside** / **Roof** | (Whole house) Outside walks around the finished exterior (walls stay up so the siding and roof show). The roof also shows whenever Cut away walls is off, and from below the ridge. Untick Roof to hide it. |
 | **Plumbing** | Shows the water lines (red hot, blue cold PEX), drains and vents through the walls and floor. Click a pipe for what it feeds. |
+| **Wiring** | Shows a proposed electrical layout through the walls, ceilings and floor: cables colour-coded like NM-B (yellow 12 AWG / 20 A, white 14 AWG / 15 A, orange 10 AWG / 30 A, black 6–8 AWG, blue Cat6) from the panel to the receptacles, switches, lights and appliances. Click a cable for its circuit, or a box for what it is. |
 | **Surroundings** | (Whole house) Adds the yard from the outside photos: lawn, pine needles and dirt by the house, the gravel parking spot, trees (white pines and broadleaf), shrubs, hostas and the split-rail fence |
 | **Framing** | (House) Hides the drywall, siding, ceilings and roofing and shows the framing instead: wall studs, plates and headers, the roof trusses and rafters, and the deck framing as a blue line drawing |
 | Compass (bottom left) | Always points to true north and shows which way you're facing, in every view and in walk mode |
@@ -68,6 +69,7 @@ js/deckBuilder.js   deck boards, border, skirt and the framing line drawing
 js/framingBuilder.js wall studs, plates, headers; roof trusses and rafters (Framing checkbox)
 js/roofBuilder.js   roof, fascia, soffits and lights, entry porch roof
 js/plumbingBuilder.js  plumbing runs (x-ray layer)
+js/wiringBuilder.js    electrical cables and boxes (x-ray layer); layout in rooms/houseWiring.js
 js/environmentBuilder.js  the yard: lawn, trees, shrubs, fence (Surroundings)
 js/materials.js     materials + procedural textures (wood, tile, quartz)
 js/compass.js       plan → true directions
