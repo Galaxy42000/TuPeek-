@@ -130,7 +130,8 @@ export default {
   squareDPanel: {
     name: 'Electrical panel',
     Brand: 'Square D',
-    Type: 'Plug-On Neutral load center with main breaker',
+    Series: 'QO',
+    Rating: '200 amp, main breaker',
     Mounting: 'Flush (recessed in the wall)',
   },
   ecosmartHeater: {
