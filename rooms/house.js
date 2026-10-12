@@ -15,7 +15,8 @@
 //    outside at the bathroom end (bathroom window with the condenser under it);
 //    the deck framing outside the sliding door; the outside all round (vinyl siding,
 //    Clipstone skirt, Kolbe windows, roof, entry porch); the bathroom (DreamLine
-//    shower, tile, LED mirror, sloped ceiling).
+//    shower, tile, LED mirror, sloped ceiling); the crawl space under the bathroom
+//    (4″ drain from the toilet past the shower trap).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -94,6 +95,9 @@ const PORCH = { width: 72, out: 48, step: 12, stepWidth: 58 };
 const CAV = EXT / 2; // middle of the back wall's stud cavity
 const WASHER_BOX_X = X_BATH - INT - 11;
 const P_VANITY = X_EAST - 38 - 12, P_TOILET = X_BATH + 11.5, P_SHOWER = X_EAST - 18, P_STACK = X_EAST - 30;
+// the 4″ main drain under the floor (crawl space photo): along the bathroom's back wall
+// from the toilet, then west along the south side ⚠ positions estimated
+const Z_DRAIN = EXT + 12, X_DRAIN = X_EAST - 8;
 const supply = (kind, id, y, toX, endY, what) => ({
   id, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'], notes: `Runs from the ${kind === 'hot' ? 'water heater’s manifold' : 'cold manifold'} along the back wall to ${what}. ⚠ Route approximate.`,
   path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [toX, y, CAV], [toX, endY, CAV]],
@@ -332,17 +336,25 @@ export default {
       path: [[WASHER_BOX_X, 33, CAV], [WASHER_BOX_X, 6, CAV], [WASHER_BOX_X + 3, 3, CAV], [WASHER_BOX_X + 3, -8, CAV]] },
     { id: 'Vanity drain', kind: 'drain', materials: ['pvcDwv'], notes: '2″ PVC: the vanity drain comes down the wall to a tee near the floor; the line along the wall continues to the washer side.',
       path: [[P_VANITY, 20, EXT + 3], [P_VANITY, 20, CAV], [P_VANITY, 11, CAV], [X_BATH - INT, 11, CAV]] },
-    { id: 'Bathroom drain', kind: 'drain', d: 3.5, materials: ['pvcDwv'], notes: '3″ drain under the floor from the toilet and the shower to the stack. ⚠ Route assumed.',
-      path: [[P_TOILET, 0, EXT + 12], [P_TOILET, -8, EXT + 12], [P_SHOWER - 4, -8, EXT + 14], [P_SHOWER - 4, 0, EXT + 14]] },
-    { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -8, CAV], [P_VANITY, -8, EXT + 12]], notes: 'Down into the floor to the bathroom drain.' },
+    // under the floor, from the crawl space photo (looking east): the 4″ drain starts at the
+    // toilet's closet bend, runs east under the joists past a wye for the vanity and the
+    // shower's P-trap hanging below, then turns west along the south side under the kitchen
+    { id: 'Main drain', kind: 'drain', d: 4.5, materials: ['pvcDwv'],
+      notes: '4″ PVC building drain in the crawl space, hung from the joists on copper straps: from the toilet, past the vanity wye and the shower trap, then west along the south side under the kitchen, where the kitchen sink ties in. ⚠ Heights, slope and the route west of the kitchen sink not measured (beyond the photo it is assumed to carry on toward the septic).',
+      path: [[P_TOILET, 0, Z_DRAIN], [P_TOILET, -11.5, Z_DRAIN], [X_DRAIN, -12.8, Z_DRAIN], [X_DRAIN, -15.3, KZ + 53.5], [X_DRAIN, -16, KZ + 85]] },
+    { id: 'Shower trap', kind: 'drain', materials: ['pvcDwv'],
+      notes: '2″ P-trap hanging below the main drain under the shower; the trap arm comes back up into the side of the main. ⚠ Position from the crawl space photo.',
+      path: [[P_SHOWER - 2, 0, Z_DRAIN + 7], [P_SHOWER - 2, -19, Z_DRAIN + 7], [P_SHOWER - 7, -19, Z_DRAIN + 7], [P_SHOWER - 7, -13, Z_DRAIN + 7], [P_SHOWER - 7, -12.6, Z_DRAIN]] },
+    { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -6, CAV], [P_VANITY, -6, Z_DRAIN - 6], [P_VANITY - 6, -11.6, Z_DRAIN]],
+      notes: 'Down through the floor and into the main drain at a 45° wye (crawl space photo).' },
     // kitchen sink, from the kitchen plumbing photo: drain up the outside wall to a tee at the
     // sink, the vent jogging left over the corner cabinet and up through the top plate
-    { id: 'Kitchen sink drain', kind: 'drain', materials: ['pvcDwv'], notes: '1½″ PVC drain up the wall behind the sink to a sanitary tee for the trap arm, then down through the floor. ⚠ Route under the floor not seen.',
-      path: [[X_EAST - 3, 22, KZ + 53.5], [X_EAST + EXT / 2, 22, KZ + 53.5], [X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, -10, KZ + 53.5]], d: 1.9 },
+    { id: 'Kitchen sink drain', kind: 'drain', materials: ['pvcDwv'], notes: '1½″ PVC drain up the wall behind the sink to a sanitary tee for the trap arm, then down through the floor into the main drain. ⚠ The tie-in under the floor is assumed.',
+      path: [[X_EAST - 3, 22, KZ + 53.5], [X_EAST + EXT / 2, 22, KZ + 53.5], [X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, -10, KZ + 53.5], [X_DRAIN, -13, KZ + 53.5]], d: 1.9 },
     { id: 'Kitchen sink vent', kind: 'vent', materials: ['pvcDwv'], notes: 'Vent from the sink tee: up to about 37″, over toward the bathroom corner, then up through the top plate and out the roof.',
       path: [[X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 17.5], [X_EAST + EXT / 2, 112, KZ + 17.5]] },
-    { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it.',
-      path: [[P_STACK, -8, CAV], [P_STACK, 126, CAV]] },
+    { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it; at the bottom it drops into the main drain. ⚠ Tie-in assumed.',
+      path: [[P_STACK, -12, Z_DRAIN], [P_STACK, -6, CAV], [P_STACK, 126, CAV]] },
     { id: 'Vanity vent', kind: 'vent', materials: ['pvcDwv'], path: [[P_VANITY, 20, CAV], [P_VANITY, 37, CAV], [P_STACK, 37, CAV]], notes: 'Vent from the vanity drain over to the stack.' },
   ],
 
