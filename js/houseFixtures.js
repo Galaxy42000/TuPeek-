@@ -117,6 +117,19 @@ export function steelBeam(parent, ctx, len, depth = 8, flange = 4, { web = 0.25,
   addBox(parent, S, 0, tf, -web / 2, len, depth - 2 * tf, web);
 }
 
+// Upright pressure tank (well system): cylinder with domed ends on a short base ring,
+// diameter w across, h tall; x/z of the group = its footprint's north-west corner.
+export function tank(parent, ctx, w, h, item = {}) {
+  const r = w / 2, mat = ctx.color(item.color || '#2f6fb7');
+  const dome = r * 0.35;
+  addMesh(parent, new THREE.CylinderGeometry(r * 0.9, r * 0.9, 2, 32), ctx.M.black, r, 1, r);
+  addMesh(parent, new THREE.CylinderGeometry(r, r, h - 2 - 2 * dome, 40), mat, r, 2 + dome + (h - 2 - 2 * dome) / 2, r);
+  for (const [y, s] of [[h - dome, 1], [2 + dome, -1]]) {
+    const d = addMesh(parent, new THREE.SphereGeometry(r, 40, 16, 0, Math.PI * 2, s > 0 ? 0 : Math.PI / 2, Math.PI / 2), mat, r, y, r);
+    d.scale.y = dome / r;
+  }
+}
+
 // Plain box in a given color (water heater, panel, A/C...). Optional round grille on the +z face.
 export function box(parent, ctx, w, h, d, bottom, item = {}) {
   const mat = ctx.color(item.color || '#f2f2ef', item.metal);

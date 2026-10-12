@@ -127,6 +127,17 @@ export default {
     name: 'Stone step',
     Type: 'Decorative natural stone slab ⚠ stone and size not recorded',
   },
+  ecosmartHeater: {
+    name: 'Water heater',
+    Brand: 'EcoSmart',
+    Type: 'Electric tankless (instant hot water)',
+  },
+  pressureTank: {
+    name: 'Pressure tank',
+    Type: 'Well pressure tank',
+    Size: '25 gallons',
+    Color: 'Blue',
+  },
   steelW8: {
     name: 'Structural steel',
     Shape: 'W-flange (wide-flange I-beam)',

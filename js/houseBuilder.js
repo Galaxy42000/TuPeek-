@@ -327,6 +327,10 @@ export function buildHouse(cfg, focus) {
       g.position.set(it.x, 0, it.z);
       g.rotation.y = CORNER_ROT[it.corner] ?? 0;
       HF.cornerShower(g, ctx, it.size, it);
+    } else if (it.kind === 'tank') {
+      g = new THREE.Group();
+      g.position.set(it.x, 0, it.z);
+      HF.tank(g, ctx, it.width, it.height, it);
     } else if (it.kind === 'box') {
       // world-aligned: width runs east–west, depth north–south
       g = new THREE.Group();
