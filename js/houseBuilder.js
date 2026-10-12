@@ -9,6 +9,7 @@ import { buildDecks } from './deckBuilder.js';
 import { buildPlumbing } from './plumbingBuilder.js';
 import { sidingTexture, shingleTexture, stoneTexture, tileTexture, speckleTexture } from './materials.js';
 import { buildRoof } from './roofBuilder.js';
+import { framingMaterial, wallFraming, roofFraming } from './framingBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
 
@@ -206,6 +207,9 @@ export function buildHouse(cfg, focus) {
   }
 
   // ---------- walls, doors, windows ----------
+  // each wall's drywall/siding goes in its own `finish` group and its studs in a hidden
+  // framing mesh, so the Framing checkbox can swap one for the other
+  const FM = framingMaterial(), finish = [], framingLayers = [];
   for (const spec of cfg.walls) {
     const fr = SIDES[spec.inside];
     const L = fr.along === 'x' ? spec.x1 - spec.x0 : spec.z1 - spec.z0;
@@ -245,12 +249,21 @@ export function buildHouse(cfg, focus) {
       const at = a - min, w = e - a;
       rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: b.bottom ?? H - b.depth, h: b.depth });
     }
-    for (const r of rects) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
+    const fin = new THREE.Group();
+    g.add(fin);
+    finish.push(fin);
+    for (const r of rects) addBox(fin, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
+    const toWorld = (lx, lz) => [ox + lx * Math.cos(fr.rot) + lz * Math.sin(fr.rot), oz - lx * Math.sin(fr.rot) + lz * Math.cos(fr.rot)];
+    const studs = wallFraming(FM, L, t, H, ops, wallTop(cfg, spec, roof, (lx) => toWorld(lx, -t / 2), fr.along));
+    studs.visible = false;
+    g.add(studs);
+    framingLayers.push(studs);
+    tag(studs, { id: `${spec.id} (framing)`, type: 'Wall framing', depth: t, materials: ['studFraming'],
+      notes: `${t >= 5.5 ? '2×6' : '2×4'} studs 16″ on centre on a bottom plate and a double top plate, with king and jack studs, headers and sills around the openings. ⚠ Stud layout drawn to standard spacing, not counted from the photos.` });
     if (spec.exterior && roof) {
       // siding on the outside face, up to the roof; the stone cap runs along the bottom
       const skin = new THREE.Group();
       for (const r of panelRects(L, H, ops)) sidingBox(skin, M.siding, r.x, r.y, -t - 0.6, r.w, r.h, 0.6);
-      const toWorld = (lx, lz) => [ox + lx * Math.cos(fr.rot) + lz * Math.sin(fr.rot), oz - lx * Math.sin(fr.rot) + lz * Math.cos(fr.rot)];
       const prof = [];
       for (let lx = 0; lx <= L; lx = Math.min(L, lx + 3) + (lx === L ? 1 : 0)) prof.push([lx, roof.heightAt(...toWorld(lx, -t - 0.6))]);
       if (Math.max(...prof.map((q) => q[1])) > H + 0.5) {
@@ -261,7 +274,7 @@ export function buildHouse(cfg, focus) {
         skin.add(band);
       }
       tag(skin, { id: `${spec.id} (outside)`, type: 'Siding', materials: mats(spec.outsideMaterials, 'siding') });
-      g.add(skin);
+      fin.add(skin);
       const cap = addBox(g, M.stoneCap, -3, -2.5, -t - 3, L + 6, 2.5, 3.2);
       tag(cap, { id: 'Stone cap', type: 'Stone skirt cap', materials: mats(undefined, 'stone') });
     }
@@ -288,8 +301,8 @@ export function buildHouse(cfg, focus) {
     if (cfg.style?.baseboard !== false) {
       const doors = ops.filter((o) => o.bottom === 0).map((o) => [o.start, o.start + o.width]);
       for (const [a, b] of freeIntervals(L, doors)) {
-        addBox(g, M.trim, a, 0, 0, b - a, 4.5, 0.6, { cast: false });
-        if (!spec.exterior) addBox(g, M.trim, a, 0, -t - 0.6, b - a, 4.5, 0.6, { cast: false });
+        addBox(fin, M.trim, a, 0, 0, b - a, 4.5, 0.6, { cast: false });
+        if (!spec.exterior) addBox(fin, M.trim, a, 0, -t - 0.6, b - a, 4.5, 0.6, { cast: false });
       }
     }
 
@@ -306,9 +319,11 @@ export function buildHouse(cfg, focus) {
   // white corner boards on the outside corners; each is cut away like a wall
   if (roof) {
     for (const [cx, cz, sx, sz] of cfg.roof.corners || []) {
-      const cg = new THREE.Group();
+      const cg = new THREE.Group(), board = new THREE.Group();
       const top = roof.heightAt(cx + sx, cz + sz), w = 6.5;
-      addBox(cg, M.exteriorTrim, sx > 0 ? cx - w : cx - 1.4, 0, sz > 0 ? cz - w : cz - 1.4, w + 1.4, top, w + 1.4);
+      cg.add(board);
+      finish.push(board);
+      addBox(board, M.exteriorTrim, sx > 0 ? cx - w : cx - 1.4, 0, sz > 0 ? cz - w : cz - 1.4, w + 1.4, top, w + 1.4);
       root.add(cg);
       walls.push({ name: 'corner', group: cg, center: new THREE.Vector3(cx, H / 2, cz), normal: new THREE.Vector3(-sx, 0, -sz).normalize() });
     }
@@ -387,12 +402,22 @@ export function buildHouse(cfg, focus) {
   }
 
   // ---------- decks (framing is a separate line drawing the viewer can toggle) ----------
-  const framing = buildDecks(root, ctx, cfg.decks, tag, label, grade);
+  const deckFraming = buildDecks(root, ctx, cfg.decks, tag, label, grade);
   const plumbing = buildPlumbing(root, cfg.plumbing, tag);
+  if (deckFraming) framingLayers.push(deckFraming);
+  if (roof) {
+    const rf = roofFraming(cfg, FM);
+    rf.visible = false;
+    root.add(rf);
+    framingLayers.push(rf);
+    tag(rf, { id: 'Roof framing', type: 'Trusses and rafters', materials: ['scissorTrusses'],
+      notes: 'Scissor trusses 24″ on centre over the kitchen, hall and bathroom (their bottom chords follow the vaulted ceiling), common and step-down hip trusses over the living room, and shed rafters over flat ceiling joists in the bedroom wing. ⚠ Truss webs and spacing drawn to a typical layout; only the kitchen trusses are seen in the photos.' });
+  }
+  const framing = { layers: framingLayers, finish };
 
   if (focus) {
     if (roof) roof.group.visible = false; // single-room views have no roof
-    return { ...focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H }), plumbing };
+    return { ...focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H }), plumbing, framing };
   }
   const roofInfo = roof && { group: roof.group, top: roof.top + 6, footprint: cfg.footprint };
   return { root, walls, ceiling, labels, framing, plumbing, ground, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
@@ -433,6 +458,24 @@ function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
   // the house's camera presets are for the whole building; by default a room's eye
   // view looks from its south-west corner to the far corner, and a room can set its own
   return { root, walls, ceiling, labels, clip, views: { eye: { pos: [r.x0 + 10, 64, r.z1 - 10], target: [r.x1, 44, r.z0] }, ...r.views }, bounds: { W: r.x1 - r.x0, D: r.z1 - r.z0, H, floor: clip } };
+}
+
+// Height the framing of a wall runs up to, along the wall (local x → inches): the
+// underside of the roof for a gable or rake end, the vaulted or sloped ceiling for an
+// inside wall that closes one, otherwise null (just the top plates at the wall height).
+function wallTop(cfg, spec, roof, world, along) {
+  const H = cfg.height;
+  if (spec.exterior) return roof ? (lx) => Math.max(H, roof.heightAt(...world(lx)) - 5) : null;
+  for (const v of cfg.vaults || []) {
+    if (along === 'x' && (v.ends || []).some((e) => Math.abs(e.z - spec.z0) < 1 && e.base <= H)) {
+      return (lx) => { const x = world(lx)[0]; return x > v.x0 && x < v.x1 ? Math.max(H, vaultHeight(v, H, x)) : H; };
+    }
+  }
+  for (const s of cfg.slopes || []) {
+    const e = (s.ends || []).find((e) => along === 'z' && e.x !== undefined && Math.abs(e.x - spec.x0) < 1);
+    if (e) return () => Math.max(H, vaultHeight(s.along, H, e.x + e.t));
+  }
+  return null;
 }
 
 // Remove rectangle c from a list of rectangles {x, y, w, h} (wall x/y, or plan x/z).

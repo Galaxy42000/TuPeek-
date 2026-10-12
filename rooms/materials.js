@@ -136,6 +136,8 @@ export default {
   pexHot: { name: 'Water line', Material: 'PEX tubing, red (hot)' },
   pexCold: { name: 'Water line', Material: 'PEX tubing, blue (cold)' },
   copperManifold: { name: 'Manifold', Material: 'Copper' },
+  studFraming: { name: 'Wall framing', Material: 'Kiln-dried SPF studs and plates (2×6 outside walls, 2×4 inside walls), doubled 2× headers' },
+  scissorTrusses: { name: 'Roof framing', Material: 'Engineered wood trusses (scissor trusses over the kitchen) with metal gusset plates' },
   blackSewer: { name: 'Sewer line', Material: 'Black pipe (ABS or older black plastic), underground to the septic' },
   pvcDwv: { name: 'Drain / vent pipe', Material: 'PVC Schedule 40 DWV (2″ shown in the photo)' },
   eastmanBox: { name: 'Washer outlet box', Brand: 'Eastman', Contents: 'Hot and cold shut-off valves, drain' },

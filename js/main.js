@@ -116,10 +116,10 @@ async function loadRoom(id) {
 
   select(null);
   applyLabelVisibility();
-  $('#framing-toggle').hidden = !room.framing;
+  $('#framing-toggle').hidden = !room.framing?.layers.length;
   $('#roof-toggle').hidden = !room.roof;
   $('#outside-btn').hidden = !viewPresets().outside;
-  if (room.framing) room.framing.visible = opts.framing;
+  showFraming();
   $('#plumbing-toggle').hidden = !room.plumbing;
   if (room.plumbing) room.plumbing.visible = opts.plumbing;
   $('#env-toggle').hidden = !(cfg.environment && !built.clip);
@@ -393,13 +393,21 @@ function updateVisibility() {
     const outside = tmp.copy(camIn).sub(w.center).dot(w.normal) < -2;
     w.group.visible = !(opts.cutaway && outside);
   }
-  room.ceiling.visible = opts.ceiling && camIn.y < room.bounds.H;
+  const bare = opts.framing && room.framing;
+  room.ceiling.visible = opts.ceiling && !bare && camIn.y < room.bounds.H;
   // the roof shows from outside: always with walls up, or from below the ridge when cutting away
   const r = room.roof;
   if (r) {
     const inside = camIn.y < r.top && r.footprint.some(([x0, z0, x1, z1]) => camIn.x > x0 && camIn.x < x1 && camIn.z > z0 && camIn.z < z1);
-    r.group.visible = opts.roof && !inside && (!opts.cutaway || camIn.y < r.top);
+    r.group.visible = opts.roof && !bare && !inside && (!opts.cutaway || camIn.y < r.top);
   }
+}
+// Framing on: studs, trusses and the deck framing show; drywall, siding, ceilings and the
+// roofing hide (updateVisibility keeps the ceiling and roof off)
+function showFraming() {
+  if (!room?.framing) return;
+  for (const l of room.framing.layers) l.visible = opts.framing;
+  for (const f of room.framing.finish) f.visible = !opts.framing;
 }
 function setCutaway(on) {
   opts.cutaway = on;
@@ -432,7 +440,7 @@ $('#t-roof').addEventListener('change', (e) => (opts.roof = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
 $('#t-plumbing').addEventListener('change', (e) => { opts.plumbing = e.target.checked; if (room?.plumbing) room.plumbing.visible = opts.plumbing; });
 $('#t-env').addEventListener('change', (e) => { opts.env = e.target.checked; showEnvironment(); });
-$('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; if (room?.framing) room.framing.visible = opts.framing; });
+$('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; showFraming(); });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));
 
 window.addEventListener('resize', () => {
