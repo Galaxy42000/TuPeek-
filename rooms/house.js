@@ -319,11 +319,12 @@ export default {
     // these two carry on past the bathroom's corner, turn into the long outside wall and
     // run behind the shower and the corner cabinet to the kitchen sink
     ...['hot', 'cold'].map((kind) => {
-      const y = kind === 'hot' ? 28 : 21, xw = X_EAST + EXT / 2, zs = KZ + 54, dx = kind === 'hot' ? -1.5 : 1.5;
+      // in the kitchen they run at 29″ (hot) and 27″ (cold) to capped stubs just past the sink drain
+      const y = kind === 'hot' ? 29 : 27, xw = X_EAST + EXT / 2, ze = KZ + (kind === 'hot' ? 59 : 61);
       return {
         id: `${kind === 'hot' ? 'Hot' : 'Cold'} to kitchen sink`, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'],
-        notes: 'Runs along the bathroom’s back wall, turns the corner into the long outside wall and carries on to the kitchen sink (seen leaving the bathroom in the second plumbing photo). ⚠ Route past the bathroom assumed.',
-        path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [xw, y, CAV], [xw, y, zs + dx], [xw, 20, zs + dx], [X_EAST - 3, 20, zs + dx]],
+        notes: 'Runs along the bathroom’s back wall, turns the corner into the long outside wall and carries on to a capped stub in the sink cabinet, just past the sink drain (both plumbing photos and the kitchen photo).',
+        path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [xw, y, CAV], [xw, y, ze], [X_EAST - 3, y, ze]],
       };
     }),
     // drains and vents (PVC)
@@ -334,6 +335,12 @@ export default {
     { id: 'Bathroom drain', kind: 'drain', d: 3.5, materials: ['pvcDwv'], notes: '3″ drain under the floor from the toilet and the shower to the stack. ⚠ Route assumed.',
       path: [[P_TOILET, 0, EXT + 12], [P_TOILET, -8, EXT + 12], [P_SHOWER - 4, -8, EXT + 14], [P_SHOWER - 4, 0, EXT + 14]] },
     { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -8, CAV], [P_VANITY, -8, EXT + 12]], notes: 'Down into the floor to the bathroom drain.' },
+    // kitchen sink, from the kitchen plumbing photo: drain up the outside wall to a tee at the
+    // sink, the vent jogging left over the corner cabinet and up through the top plate
+    { id: 'Kitchen sink drain', kind: 'drain', materials: ['pvcDwv'], notes: '1½″ PVC drain up the wall behind the sink to a sanitary tee for the trap arm, then down through the floor. ⚠ Route under the floor not seen.',
+      path: [[X_EAST - 3, 22, KZ + 53.5], [X_EAST + EXT / 2, 22, KZ + 53.5], [X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, -10, KZ + 53.5]], d: 1.9 },
+    { id: 'Kitchen sink vent', kind: 'vent', materials: ['pvcDwv'], notes: 'Vent from the sink tee: up to about 37″, over toward the bathroom corner, then up through the top plate and out the roof.',
+      path: [[X_EAST + EXT / 2, 30, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 53.5], [X_EAST + EXT / 2, 37, KZ + 17.5], [X_EAST + EXT / 2, 112, KZ + 17.5]] },
     { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it.',
       path: [[P_STACK, -8, CAV], [P_STACK, 126, CAV]] },
     { id: 'Vanity vent', kind: 'vent', materials: ['pvcDwv'], path: [[P_VANITY, 20, CAV], [P_VANITY, 37, CAV], [P_STACK, 37, CAV]], notes: 'Vent from the vanity drain over to the stack.' },
