@@ -314,6 +314,8 @@ export default {
   ceilings: [
     { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, follow: 'roof',
       lights: [[X_MAIN + 62, Z_SOUTH - 40], [X_EAST - 62, Z_SOUTH - 40]], // the two cans near the end wall in the photo ⚠ positions estimated
+      // round ceiling box on new blocking near the ridge, toward the middle of the room
+      boxes: [{ id: 'BOX-LR', at: [(X_MAIN - OLD + WIDTH) / 2 - 12, (Z_BEAM + Z_SOUTH) / 2], notes: 'Round (pancake) ceiling box on new 2× blocking between the rafters, one bay off the ridge (living room ceiling photo); for a ceiling fan or light. ⚠ Position estimated from the photo.' }],
       notes: 'Fixed to the rafters of the hip roof (living room ceiling photos: the cans hang between the rafters, which are furred down with new 2× lumber): it rises from the tops of the walls to the ridge and is hipped at the end wall. Beam BEAM-2 hangs below it. ⚠ Slope follows the roof pitch estimated from the outside photos.' },
   ],
 

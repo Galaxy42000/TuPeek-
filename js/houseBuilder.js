@@ -238,6 +238,15 @@ export function buildHouse(cfg, focus) {
       cg.add(end);
     }
     for (const [lx, lz] of c.lights || []) F.recessedLight(cg, ctx, lx, lz, y(lx, lz), 0);
+    // ceiling electrical boxes (for a fan or a light still to be chosen)
+    for (const bx of c.boxes || []) {
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 1.5, 24), ctx.color('#2f78c8', false));
+      m.position.set(bx.at[0], y(...bx.at) - 0.75, bx.at[1]);
+      const bg = new THREE.Group();
+      bg.add(m);
+      cg.add(bg);
+      tag(bg, { id: bx.id, type: 'Ceiling electrical box', materials: bx.materials, notes: bx.notes });
+    }
     tag(cg, { id: c.id, type: 'Sloped ceiling (follows the roof)', height: y(xm, c.z0), materials: mats(c.materials, 'ceiling'), notes: c.notes });
   }
 
