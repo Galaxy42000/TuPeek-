@@ -16,7 +16,7 @@
 //    the deck framing outside the sliding door; the outside all round (vinyl siding,
 //    Clipstone skirt, Kolbe windows, roof, entry porch); the bathroom (DreamLine
 //    shower, tile, LED mirror, sloped ceiling); the crawl space under the bathroom
-//    (4″ drain from the toilet past the shower trap).
+//    (drain from the toilet past the shower trap, and a close-up of the shower trap).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -339,12 +339,15 @@ export default {
     // under the floor, from the crawl space photo (looking east): the 4″ drain starts at the
     // toilet's closet bend, runs east under the joists past a wye for the vanity and the
     // shower's P-trap hanging below, then turns west along the south side under the kitchen
-    { id: 'Main drain', kind: 'drain', d: 4.5, materials: ['pvcDwv'],
-      notes: '4″ PVC building drain in the crawl space, hung from the joists on copper straps: from the toilet, past the vanity wye and the shower trap, then west along the south side under the kitchen, where the kitchen sink ties in. ⚠ Heights, slope and the route west of the kitchen sink not measured (beyond the photo it is assumed to carry on toward the septic).',
-      path: [[P_TOILET, 0, Z_DRAIN], [P_TOILET, -11.5, Z_DRAIN], [X_DRAIN, -12.8, Z_DRAIN], [X_DRAIN, -15.3, KZ + 53.5], [X_DRAIN, -16, KZ + 85]] },
+    { id: 'Toilet closet bend', kind: 'drain', d: 4.5, materials: ['pvcDwv'],
+      notes: '4″ closet bend from the toilet flange down to the main drain (crawl space photo).',
+      path: [[P_TOILET, 0, Z_DRAIN], [P_TOILET, -11.5, Z_DRAIN], [P_TOILET + 6, -11.6, Z_DRAIN]] },
+    { id: 'Main drain', kind: 'drain', d: 3.5, materials: ['pvcDwv'],
+      notes: '3″ PVC building drain (Charlotte Pipe fittings marked 3″) in the crawl space, hung from the joists on copper straps: from the toilet, past the vanity wye and the stack, then west along the south side under the kitchen, picking up the shower’s trap arm and the kitchen sink. ⚠ Heights, slope and the route west of the kitchen sink not measured (beyond the photo it is assumed to carry on toward the septic).',
+      path: [[P_TOILET + 6, -11.6, Z_DRAIN], [X_DRAIN, -12.8, Z_DRAIN], [X_DRAIN, -15.3, KZ + 53.5], [X_DRAIN, -16, KZ + 85]] },
     { id: 'Shower trap', kind: 'drain', materials: ['pvcDwv'],
-      notes: '2″ P-trap hanging below the main drain under the shower; the trap arm comes back up into the side of the main. ⚠ Position from the crawl space photo.',
-      path: [[P_SHOWER - 2, 0, Z_DRAIN + 7], [P_SHOWER - 2, -19, Z_DRAIN + 7], [P_SHOWER - 7, -19, Z_DRAIN + 7], [P_SHOWER - 7, -13, Z_DRAIN + 7], [P_SHOWER - 7, -12.6, Z_DRAIN]] },
+      notes: '2″ PVC (Charlotte Pipe Sch 40) P-trap under the shower drain; from its outlet a 2″ trap arm about 2½′ long runs alongside the main, falling gently, into a wye on it (close-up crawl space photo). ⚠ Positions estimated.',
+      path: [[P_SHOWER, 0, Z_DRAIN + 7], [P_SHOWER, -19, Z_DRAIN + 7], [P_SHOWER + 4, -19, Z_DRAIN + 7], [P_SHOWER + 4, -13, Z_DRAIN + 7], [P_SHOWER + 4, -13.6, Z_DRAIN + 37], [X_DRAIN, -13.6, Z_DRAIN + 40]] },
     { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -6, CAV], [P_VANITY, -6, Z_DRAIN - 6], [P_VANITY - 6, -11.6, Z_DRAIN]],
       notes: 'Down through the floor and into the main drain at a 45° wye (crawl space photo).' },
     // kitchen sink, from the kitchen plumbing photo: drain up the outside wall to a tee at the
