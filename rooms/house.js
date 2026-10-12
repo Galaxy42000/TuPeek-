@@ -443,6 +443,74 @@ export default {
       materials: ['entryStoneStep'], notes: 'Last step down from the entry porch to the ground. ⚠ Size and stone not known; drawn as a 40″ × 15″ natural stone slab.' },
   ],
 
+  // Surroundings, from the outside photos (the viewer's "Surroundings" checkbox). Plan
+  // inches like everything else: -x is true north (the entry side), +x true south (the
+  // deck), -z true east (the bathroom end), +z true west. ⚠ Every position and size here
+  // is a rough placement from the photos, not measured.
+  //  • north (front): open lawn in front of the entry, hostas along the bedroom wing's
+  //    stone skirt, woods beyond with ivy-covered trees;
+  //  • east (bathroom end): a strip of pine needles and dirt under white pines, a big
+  //    leaning broadleaf tree past the corner, shrubs at the edge of the woods;
+  //  • south (deck): open lawn, trees further out;
+  //  • west: lawn, a gravel spot where the truck parks, a big white pine, and a
+  //    split-rail fence along the lot line.
+  environment: {
+    center: [145, 205],
+    radius: 2200,
+    beds: [
+      // bare dirt and needles along the foundation all round
+      { kind: 'dirt', shape: [145, 205, 215, 270, 1], feather: 30, wobble: 0.05 },
+      // pine needles under the trees at the bathroom end
+      { kind: 'needles', shape: [170, -260, 520, 260, 0.3], feather: 90, wobble: 0.15 },
+      // gravel where the truck parks, west of the entry
+      { kind: 'gravel', shape: [-130, 600, 150, 120, 0.5], feather: 30, wobble: 0.06 },
+    ],
+    trees: [
+      // east: past the bathroom end
+      { kind: 'broadleaf', x: 330, z: -300, height: 600, spread: 380, lean: 0.12, leanDir: Math.PI * 0.75, notes: 'Big leaning broadleaf tree past the bathroom end.' },
+      { kind: 'pine', x: 440, z: -200, height: 840 },
+      { kind: 'pine', x: -150, z: -400, height: 780 },
+      { kind: 'pine', x: 120, z: -560, height: 900 },
+      { kind: 'broadleaf', x: -380, z: -200, height: 540, color: '#557f34' },
+      { kind: 'broadleaf', x: 620, z: -440, height: 660 },
+      { kind: 'pine', x: 860, z: -260, height: 720 },
+      // north: woods past the front lawn
+      { kind: 'pine', x: -820, z: -120, height: 780 },
+      { kind: 'broadleaf', x: -900, z: 240, height: 640, color: '#466d2e' },
+      { kind: 'broadleaf', x: -820, z: 560, height: 600, color: '#3f6a2c' },
+      // west: the big white pine by the fence, and trees past it
+      { kind: 'pine', x: -200, z: 980, height: 900, spread: 420 },
+      { kind: 'pine', x: 470, z: 900, height: 780 },
+      { kind: 'broadleaf', x: 950, z: 1060, height: 620 },
+      // south: past the deck lawn
+      { kind: 'broadleaf', x: 1180, z: -80, height: 640 },
+      { kind: 'broadleaf', x: 1260, z: 380, height: 580, color: '#5a8236' },
+    ],
+    // more woods all round, further out; `gaps` are ranges of plan angle from the centre
+    // (degrees, 0 = +x = true south, 90 = +z = true west) kept open: the south lawn and
+    // the neighbours to the west
+    woods: { count: 46, r0: 1250, r1: 1900, spacing: 220, pines: 0.5, gaps: [[330, 30], [70, 110]] },
+    shrubs: [
+      // hostas along the front of the bedroom wing
+      { kind: 'hosta', row: [[-20, 30], [-20, 270]], every: 38, skip: 0.25 },
+      { kind: 'hosta', x: 20, z: 300, size: 26 },
+      // weeds and low shrubs along the living room end and the south side
+      { kind: 'shrub', row: [[120, 428], [270, 428]], every: 40, size: 26, height: 22, skip: 0.4, color: '#4f7a36' },
+      { kind: 'shrub', row: [[308, 20], [308, 90]], every: 35, size: 24, height: 20, skip: 0.3, color: '#4f7a36' },
+      // shrubs at the edge of the woods, east
+      { kind: 'shrub', x: -110, z: -150, size: 70, height: 60 },
+      { kind: 'shrub', x: -40, z: -240, size: 80, height: 70 },
+      { kind: 'shrub', x: 560, z: -110, size: 90, height: 80 },
+      { kind: 'shrub', x: 640, z: -60, size: 70, height: 55 },
+      { kind: 'shrub', x: -300, z: -40, size: 60, height: 50 },
+    ],
+    fences: [
+      // split-rail fence along the west lot line, past the parking spot
+      { from: [-360, 820], to: [1150, 820], span: 96 },
+    ],
+    notes: 'Lawn, trees and shrubs placed from the outside photos. ⚠ Positions and sizes are rough.',
+  },
+
   views: {
     outside: { pos: [WIDTH + 330, 70, LENGTH + 250], target: [X_MAIN + 70, 45, LENGTH - 140] }, // from the south-west corner
     eye: { pos: [215, 64, 395], target: [195, 42, 120] },

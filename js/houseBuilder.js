@@ -395,7 +395,7 @@ export function buildHouse(cfg, focus) {
     return { ...focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H }), plumbing };
   }
   const roofInfo = roof && { group: roof.group, top: roof.top + 6, footprint: cfg.footprint };
-  return { root, walls, ceiling, labels, framing, plumbing, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
+  return { root, walls, ceiling, labels, framing, plumbing, ground, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
 }
 
 // Cut the model down to one room (plus any rooms listed in its `with`): the clip box reaches through the walls around it

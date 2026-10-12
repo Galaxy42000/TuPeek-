@@ -4,6 +4,7 @@ import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildRoom } from './roomBuilder.js';
 import { buildHouse } from './houseBuilder.js';
+import { buildEnvironment } from './environmentBuilder.js';
 import { ROOMS } from '../rooms/index.js';
 import { IN, fmtIn, fmtFtIn } from './units.js';
 import { trueVec, POINTS } from './compass.js';
@@ -70,12 +71,16 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true, plumbing: false };
+const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true, plumbing: false, env: false };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
   const entry = ROOMS.find((r) => r.id === id) || ROOMS[0];
   const cfg = (await entry.load()).default;
+  if (room?.env) {
+    scene.remove(room.env);
+    room.env.traverse((o) => o.geometry?.dispose());
+  }
   if (room) {
     scene.remove(room.root);
     room.root.traverse((o) => {
@@ -92,7 +97,7 @@ async function loadRoom(id) {
     setTimeout(() => { if (room?.root === built.root) room.overlaps = resolveOverlaps(built.root, { scale: 1 / IN }); }, 30);
   }
   if (built.clip) clipTo(built);
-  room = { ...built, cfg };
+  room = { ...built, cfg, env: null };
   document.title = `${entry.name} · TuPeek`;
   $('#room-select').value = entry.id;
 
@@ -106,6 +111,7 @@ async function loadRoom(id) {
   sc.right = sc.top = span;
   sc.near = 0.1;
   sc.far = 30;
+  sun.userData.span = span;
   sc.updateProjectionMatrix();
 
   select(null);
@@ -116,7 +122,32 @@ async function loadRoom(id) {
   if (room.framing) room.framing.visible = opts.framing;
   $('#plumbing-toggle').hidden = !room.plumbing;
   if (room.plumbing) room.plumbing.visible = opts.plumbing;
+  $('#env-toggle').hidden = !(cfg.environment && !built.clip);
+  showEnvironment();
   setView('overview', false);
+}
+
+// Surroundings on: lawn instead of the plain ground plate, a sky with haze at the
+// distance, and a wider sun shadow so the nearby trees cast shade on the house.
+const PLAIN_SKY = new THREE.Color('#e4e9ee'), SKY = new THREE.Color('#c9dced');
+// The surroundings (whole-house model only) are built the first time they are shown,
+// outside the room's own group so the overlap fixer and click-to-inspect leave them alone.
+function showEnvironment() {
+  if (opts.env && room && !room.env && room.cfg.environment && !room.clip) {
+    room.env = buildEnvironment(room.cfg.environment, room.cfg.grade);
+    room.env.scale.setScalar(IN);
+    scene.add(room.env);
+  }
+  const on = !!(opts.env && room?.env);
+  if (room?.env) room.env.visible = on;
+  if (room?.ground) room.ground.visible = !on;
+  scene.background = on ? SKY : PLAIN_SKY;
+  scene.fog = on ? new THREE.Fog(SKY, 35, 75) : null;
+  const span = (sun.userData.span || 10) * (on ? 1.8 : 1), sc = sun.shadow.camera;
+  sc.left = sc.bottom = -span;
+  sc.right = sc.top = span;
+  sc.far = on ? 60 : 30;
+  sc.updateProjectionMatrix();
 }
 
 // Show only what is inside a box (inches): clip every material, hide labels outside it.
@@ -400,6 +431,7 @@ $('#t-cutaway').addEventListener('change', (e) => (opts.cutaway = e.target.check
 $('#t-roof').addEventListener('change', (e) => (opts.roof = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
 $('#t-plumbing').addEventListener('change', (e) => { opts.plumbing = e.target.checked; if (room?.plumbing) room.plumbing.visible = opts.plumbing; });
+$('#t-env').addEventListener('change', (e) => { opts.env = e.target.checked; showEnvironment(); });
 $('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; if (room?.framing) room.framing.visible = opts.framing; });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));
 
