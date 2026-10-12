@@ -95,6 +95,9 @@ const PORCH = { width: 72, out: 48, step: 12, stepWidth: 58 };
 // through the bathroom wall, to the washer box and the bathroom fixtures.
 const CAV = EXT / 2; // middle of the back wall's stud cavity
 const WASHER_BOX_X = X_BATH - INT - 11;
+// utility room back wall, left to right (⚠ scaled from the utility room photo): the panel
+// starts about 8″ from the bedroom wing wall, then the filters, heater and manifold
+const X_PANEL = X_MAIN + 8.25, X_MANIFOLD = X_PANEL + 31.5;
 const P_VANITY = X_EAST - 38 - 12, P_TOILET = X_BATH + 11.5, P_SHOWER = X_EAST - 18, P_STACK = X_EAST - 30;
 // the 4″ main drain under the floor (crawl space photo): along the bathroom's back wall
 // from the toilet, then west along the south side ⚠ positions estimated
@@ -102,7 +105,7 @@ const Z_DRAIN = EXT + 12, X_DRAIN = X_EAST - 8;
 const Z_SEPTIC = KZ + 53.5 + 30; // ⚠ where it turns down to the septic, a couple of feet past the kitchen sink wye
 const supply = (kind, id, y, toX, endY, what) => ({
   id, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'], notes: `Runs from the ${kind === 'hot' ? 'water heater’s manifold' : 'cold manifold'} along the back wall to ${what}. ⚠ Route approximate.`,
-  path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [toX, y, CAV], [toX, endY, CAV]],
+  path: [[X_MANIFOLD, kind === 'hot' ? 28 : 24, CAV], [X_MANIFOLD, y, CAV], [toX, y, CAV], [toX, endY, CAV]],
 });
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
@@ -265,12 +268,12 @@ export default {
     // utility room back wall, from the utility room photo (left to right): main panel,
     // EcoSmart tankless heater with a copper manifold below it, whole-house filters near
     // the floor, and the well pressure tank next to the washer/dryer ⚠ positions scaled from the photo
-    { id: 'ELEC', type: 'Main electrical panel (flush mount)', code: 'Square D QO, 200 A', kind: 'box', x: 120.25, z: EXT, width: 14.5, depth: 0.4, height: 36, bottom: 29, color: '#a7abaf', metal: true, materials: ['squareDPanel'],
+    { id: 'ELEC', type: 'Main electrical panel (flush mount)', code: 'Square D QO, 200 A', kind: 'box', x: X_PANEL, z: EXT, width: 14.5, depth: 0.4, height: 36, bottom: 29, color: '#a7abaf', metal: true, materials: ['squareDPanel'],
       notes: 'Square D QO 200-amp main breaker panel, mounted flush: the box is set into the wall framing, so only the cover shows. ⚠ Size and height scaled from the photo.' },
-    { id: 'H2O', type: 'Electric tankless water heater', code: 'EcoSmart', kind: 'box', x: 143, z: EXT, width: 17, depth: 4, height: 16, bottom: 58, color: '#d6d8d8', materials: ['ecosmartHeater'],
+    { id: 'H2O', type: 'Electric tankless water heater', code: 'EcoSmart', kind: 'box', x: X_PANEL + 22.75, z: EXT, width: 17, depth: 4, height: 16, bottom: 58, color: '#d6d8d8', materials: ['ecosmartHeater'],
       notes: 'EcoSmart electric tankless heater (the plan listed a Takagi gas unit; the photo shows the EcoSmart installed). ⚠ Size typical for the EcoSmart ECO line; model not recorded.' },
-    { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 151.75, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
-    { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: 138.5, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
+    { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: X_MANIFOLD, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
+    { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: X_PANEL + 18.25, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
       notes: 'Two filter housings on the incoming water line. ⚠ Size scaled from the photo.' },
     { id: 'WASHER BOX', type: 'Washer outlet box (shut-off valves)', code: 'Eastman', kind: 'box', x: WASHER_BOX_X - 4.5, z: EXT, width: 9, depth: 0.75, height: 10, bottom: 33, color: '#f4f4f2', materials: ['eastmanBox'],
       notes: 'Eastman recessed box with the hot and cold shut-off valves and the drain for the washer/dryer, on the back wall right next to the bathroom wall, behind the washer/dryer. ⚠ Size typical; position from the bathroom plumbing photo.' },
@@ -312,9 +315,9 @@ export default {
   plumbing: [
     // main: pressure tank → filters → cold manifold; heater fed from it
     { id: 'Main line', kind: 'main', materials: ['pexCold'], notes: 'From the well pressure tank through the whole-house filters to the cold manifold and the water heater. ⚠ Route approximate.',
-      path: [[X_BATH - INT - 27.5 - 10, 6, EXT + 10], [X_BATH - INT - 27.5 - 10, 6, CAV], [143.5, 6, CAV], [143.5, 24, CAV], [151.75, 24, CAV]] },
-    { id: 'Heater feed', kind: 'cold', path: [[149, 24, CAV], [149, 58, CAV]], materials: ['pexCold'], notes: 'Cold water up to the EcoSmart heater.' },
-    { id: 'Hot manifold', kind: 'hot', d: 1, path: [[151.75, 58, CAV], [151.75, 28, CAV]], materials: ['copperManifold'], notes: 'Copper manifold under the heater.' },
+      path: [[X_BATH - INT - 27.5 - 10, 6, EXT + 10], [X_BATH - INT - 27.5 - 10, 6, CAV], [X_PANEL + 23.25, 6, CAV], [X_PANEL + 23.25, 24, CAV], [X_MANIFOLD, 24, CAV]] },
+    { id: 'Heater feed', kind: 'cold', path: [[X_MANIFOLD - 2.75, 24, CAV], [X_MANIFOLD - 2.75, 58, CAV]], materials: ['pexCold'], notes: 'Cold water up to the EcoSmart heater.' },
+    { id: 'Hot manifold', kind: 'hot', d: 1, path: [[X_MANIFOLD, 58, CAV], [X_MANIFOLD, 28, CAV]], materials: ['copperManifold'], notes: 'Copper manifold under the heater.' },
     supply('hot', 'Hot to washer', 32, WASHER_BOX_X - 1.5, 38, 'the washer box'),
     supply('cold', 'Cold to washer', 27, WASHER_BOX_X + 1.5, 38, 'the washer box'),
     supply('hot', 'Hot to vanity', 30.5, P_VANITY - 3, 20, 'the vanity'),
@@ -330,7 +333,7 @@ export default {
       return {
         id: `${kind === 'hot' ? 'Hot' : 'Cold'} to kitchen sink`, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'],
         notes: 'Runs along the bathroom’s back wall, turns the corner into the long outside wall and carries on to a capped stub in the sink cabinet, just past the sink drain (both plumbing photos and the kitchen photo).',
-        path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [xw, y, CAV], [xw, y, ze], [X_EAST - 3, y, ze]],
+        path: [[X_MANIFOLD, kind === 'hot' ? 28 : 24, CAV], [X_MANIFOLD, y, CAV], [xw, y, CAV], [xw, y, ze], [X_EAST - 3, y, ze]],
       };
     }),
     // drains and vents (PVC)
