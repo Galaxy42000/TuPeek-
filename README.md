@@ -14,7 +14,7 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 | Click an object | Shows its ID, measurements and the materials it's made of |
 | **Overview / Eye level / Top down** | Camera presets |
 | **Walk** | First-person mode: drag to look, W A S D or arrow keys to move (Shift moves faster), Esc to leave. Touch screens get an on-screen pad. |
-| **Measurements** | Shows or hides the ID and width labels |
+| **All labels** | Labels (IDs, widths, room sizes, dimensions) are hidden until you click something, which shows just that piece's label. Tick this to show them all. |
 | **Cut away walls** | Hides the walls between the camera and the room, dollhouse style |
 | **Outside** / **Roof** | (Whole house) Outside walks around the finished exterior (walls stay up so the siding and roof show). The roof also shows whenever Cut away walls is off, and from below the ridge. Untick Roof to hide it. |
 | **Deck framing** | (Whole house) Shows the deck's framing as a blue line drawing over the decking |

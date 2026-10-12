@@ -133,7 +133,7 @@ export function buildHouse(cfg, focus) {
     const w = r.x1 - r.x0, d = r.z1 - r.z0;
     const f = addBox(root, r.floor === 'tile' ? M.tileFloor : M.floor, r.x0, r.floor === 'tile' ? -0.75 : -1, r.z0, w, 1, d, { cast: false });
     tag(f, { id: r.name, type: 'Room', width: w, depth: d, materials: mats(r.materials, r.floor === 'tile' ? 'tileFloor' : 'floor'), notes: `${fmtFt(w)} ${trueDir('east–west')} × ${fmtFt(d)} ${trueDir('north–south')}, wall to wall.${r.notes ? ' ' + r.notes : ''}` });
-    if (r.label !== false) label(root, `<b>${r.name}</b><br>${fmtFt(w)} × ${fmtFt(d)}`, (r.x0 + r.x1) / 2, 2, (r.z0 + r.z1) / 2, 'room');
+    if (r.label !== false) label(root, `<b>${r.name}</b><br>${fmtFt(w)} × ${fmtFt(d)}`, (r.x0 + r.x1) / 2, 2, (r.z0 + r.z1) / 2, 'room').userData.owner = f;
   }
 
   // ---------- rooms built in detail (kitchen) ----------
@@ -320,7 +320,7 @@ export function buildHouse(cfg, focus) {
     if (it.label !== false) {
       g.updateMatrixWorld(true);
       const c = new THREE.Box3().setFromObject(g).getCenter(new THREE.Vector3());
-      label(root, it.id, c.x, it.kind === 'cornerShower' ? 40 : (it.bottom ?? 0) + (it.height ?? 30) + 3, c.z);
+      label(root, it.id, c.x, it.kind === 'cornerShower' ? 40 : (it.bottom ?? 0) + (it.height ?? 30) + 3, c.z).userData.owner = g;
     }
   }
 
@@ -395,7 +395,7 @@ function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
     const len = Math.hypot(x1 - x0, z1 - z0);
     const center = new THREE.Vector3((x0 + x1) / 2, H / 2, (z0 + z1) / 2);
     for (const w of found) walls.push({ name: w.id, group: wallGroups.get(w), center, normal: new THREE.Vector3(s.inward[0], 0, s.inward[1]) });
-    if (found.length) label(root, `${capDir(side)} wall · ${fmtFtIn(len)}`, center.x + s.inward[0] * 2, H - 6, center.z + s.inward[1] * 2, 'wall');
+    if (found.length) label(root, `${capDir(side)} wall · ${fmtFtIn(len)}`, center.x + s.inward[0] * 2, H - 6, center.z + s.inward[1] * 2, 'wall').userData.owner = wallGroups.get(found[0]);
     else label(root, `Open to ${trueDir(side)} · ${fmtFtIn(len)}`, center.x, 2, center.z, 'wall');
   }
   const clip = { x0: r.x0 - margin.west, x1: r.x1 + margin.east, z0: r.z0 - margin.north, z1: r.z1 + margin.south };

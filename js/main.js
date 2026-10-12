@@ -59,7 +59,7 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: true, framing: false, roof: true };
+const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
@@ -116,7 +116,7 @@ function clipTo(built) {
     for (const m of [o.material].flat()) if (m) { m.clippingPlanes = planes; m.clipShadows = true; }
     if (o.isLight && !insideClip(c, o.getWorldPosition(p).divideScalar(IN), 0)) o.visible = false;
   });
-  for (const l of built.labels) if (!insideClip(c, l.getWorldPosition(p).divideScalar(IN), 2)) l.visible = false;
+  for (const l of built.labels) if (!insideClip(c, l.getWorldPosition(p).divideScalar(IN), 2)) l.userData.outside = true;
 }
 const insideClip = (c, v, tol) => v.x >= c.x0 - tol && v.x <= c.x1 + tol && v.z >= c.z0 - tol && v.z <= c.z1 + tol;
 
@@ -271,6 +271,7 @@ function pick(cx, cy) {
 
 function select(obj) {
   selected = obj;
+  applyLabelVisibility();
   const panel = $('#info');
   if (!obj) {
     highlight.visible = false;
@@ -354,8 +355,16 @@ function setCutaway(on) {
   $('#t-cutaway').checked = on;
 }
 
+// Labels stay hidden until their piece is clicked (or "All labels" is ticked). A label
+// belongs to the nearest clickable thing it hangs from, or the one it names as its owner.
+function labelOwner(l) {
+  if (l.userData.owner) return l.userData.owner;
+  for (let o = l.parent; o; o = o.parent) if (o.userData.info) return o;
+  return null;
+}
 function applyLabelVisibility() {
-  labelRenderer.domElement.style.display = opts.dims ? '' : 'none';
+  if (!room) return;
+  for (const l of room.labels) l.visible = !l.userData.outside && (opts.dims || (selected !== null && labelOwner(l) === selected));
 }
 
 // ---------- UI wiring ----------
