@@ -238,23 +238,33 @@ export function buildHouse(cfg, focus) {
     }));
 
     // steel beams running inside this wall are left exposed: cut the wall away around them
+    // (beamCuts: where the framing has to make way for a beam, along the wall or crossing it)
     let rects = panelRects(L, H, ops);
+    const beamCuts = [];
     for (const b of cfg.beams || []) {
       const [bx0, bz0] = b.from, [bx1, bz1] = b.to;
       const [p0, p1, q0, q1] = fr.along === 'x' ? [bx0, bx1, bz0, bz1] : [bz0, bz1, bx0, bx1];
       const [w0, w1] = fr.along === 'x' ? [spec.z0, spec.z1] : [spec.x0, spec.x1];
+      const y0 = b.bottom ?? H - b.depth;
+      if (Math.abs(p1 - p0) < 0.01 && Math.max(q0, q1) > w0 && Math.min(q0, q1) < w1 && p0 > min && p0 < min + L) {
+        // crossing the wall (its end sits in it): local x of the beam, flange wide
+        const at = p0 - min - b.flange / 2;
+        beamCuts.push({ a: fr.flip ? L - at - b.flange : at, b: (fr.flip ? L - at - b.flange : at) + b.flange, y0, y1: y0 + b.depth, along: false });
+        continue;
+      }
       if (Math.abs(q1 - q0) > 0.01 || q0 <= w0 || q0 >= w1) continue; // not running along inside this wall
       const a = Math.max(Math.min(p0, p1), min), e = Math.min(Math.max(p0, p1), min + L);
       if (e <= a) continue;
       const at = a - min, w = e - a;
-      rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: b.bottom ?? H - b.depth, h: b.depth });
+      rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: y0, h: b.depth });
+      beamCuts.push({ a: fr.flip ? L - at - w : at, b: (fr.flip ? L - at - w : at) + w, y0, y1: y0 + b.depth, along: true });
     }
     const fin = new THREE.Group();
     g.add(fin);
     finish.push(fin);
     for (const r of rects) addBox(fin, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
     const toWorld = (lx, lz) => [ox + lx * Math.cos(fr.rot) + lz * Math.sin(fr.rot), oz - lx * Math.sin(fr.rot) + lz * Math.cos(fr.rot)];
-    const studs = wallFraming(FM, L, t, H, ops, wallTop(cfg, spec, roof, (lx) => toWorld(lx, -t / 2), fr.along));
+    const studs = wallFraming(FM, L, t, H, ops, wallTop(cfg, spec, roof, (lx) => toWorld(lx, -t / 2), fr.along), beamCuts);
     studs.visible = false;
     g.add(studs);
     framingLayers.push(studs);

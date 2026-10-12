@@ -50,7 +50,7 @@ export function framingMaterial() {
 
 // ops: the wall's openings ({start, width, bottom, height, type}); topAt(x): height of the
 // framing's top along the wall (H, or higher under a rake).
-export function wallFraming(mat, L, t, H, ops, topAt) {
+export function wallFraming(mat, L, t, H, ops, topAt, cuts = []) {
   const fm = new Members();
   const d = t >= 5.5 ? 5.5 : Math.min(3.5, t), zc = -t / 2;
   const up = [0, 1, 0], along = [1, 0, 0], across = [0, 0, 1];
@@ -58,12 +58,27 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
   const flat = (x0, x1, y) => x1 - x0 > 0.3 && fm.add([x0, y, zc], [x1, y, zc], up, T, d); // plate, y = its centre
   const plateTop = H - 2 * T;
 
+  // Steel beams: one running along inside the wall replaces the top plates, sitting on a
+  // single plate with a doubled post under each end (as under BEAM-1 in the photo); one
+  // crossing the wall rests on a doubled post, with short studs above it.
+  const beamAlong = (x) => cuts.find((c) => c.along && x > c.a - T / 2 && x < c.b + T / 2);
+  const beamAcross = (x) => cuts.find((c) => !c.along && x > c.a - T && x < c.b + T);
+  const topOf = (x) => { const c = beamAlong(x); return c ? c.y0 - T : plateTop; };
+  const tall = (x, y0, y1 = topOf(x)) => {
+    const c = beamAcross(x);
+    if (!c) return stud(x, y0, y1);
+    stud(x, y0, Math.min(y1, c.y0));
+    if (c.y1 + 1 < y1) stud(x, c.y1, y1);
+  };
+
   // rough openings: 3″ of king + jack stud either side
   const rough = ops.filter((o) => o.type !== 'opening' || o.height < H - 6).map((o) => {
-    const head = Math.min(o.bottom + o.height, plateTop - 1);
-    const hh = Math.min(o.width > 48 ? 11.25 : 7.25, plateTop - head); // header depth
+    const top = topOf(o.start + o.width / 2);
+    const head = Math.min(o.bottom + o.height, top - 1);
+    // an opening that reaches the beam above it needs no header (the beam is its header)
+    const hh = top - (o.bottom + o.height) < 1 ? 0 : Math.min(o.width > 48 ? 11.25 : 7.25, top - head);
     const j = o.width >= 72 ? 2 : 1; // jack studs each side (doubled under a wide header, as at the slider)
-    return { ...o, j, a: Math.max(0, o.start - (1 + j) * T), b: Math.min(L, o.start + o.width + (1 + j) * T), head, hh };
+    return { ...o, j, top, a: Math.max(0, o.start - (1 + j) * T), b: Math.min(L, o.start + o.width + (1 + j) * T), head: hh ? head : top, hh };
   });
   // cased openings without a door get the same framing (they are rough openings too)
   const inOpening = (x) => rough.find((o) => x > o.a - T / 2 && x < o.b + T / 2);
@@ -75,34 +90,54 @@ export function wallFraming(mat, L, t, H, ops, topAt) {
     x0 = o.b - (1 + o.j) * T;
   }
   flat(x0, L, T / 2);
-  // double top plate
-  flat(0, L, H - 1.5 * T);
-  flat(0, L, H - T / 2);
+  // double top plate, broken where a beam runs along the wall (a single plate under it)
+  let p0 = 0;
+  for (const c of cuts.filter((c) => c.along).sort((p, q) => p.a - q.a)) {
+    flat(p0, c.a, H - 1.5 * T);
+    flat(p0, c.a, H - T / 2);
+    // under the beam, except over an opening that runs up to it
+    let u0 = c.a;
+    for (const o of rough.filter((o) => !o.hh && o.a < c.b && o.b > c.a).sort((p, q) => p.a - q.a)) {
+      flat(u0, o.a + (1 + o.j) * T, c.y0 - T / 2);
+      u0 = o.b - (1 + o.j) * T;
+    }
+    flat(u0, c.b, c.y0 - T / 2);
+    for (const x of [c.a + T / 2, c.a + 1.5 * T, c.b - T / 2, c.b - 1.5 * T]) if (x > T && x < L - T && !inOpening(x)) stud(x, T, c.y0 - T);
+    p0 = c.b;
+  }
+  flat(p0, L, H - 1.5 * T);
+  flat(p0, L, H - T / 2);
+  // doubled post under a beam crossing the wall
+  for (const c of cuts.filter((c) => !c.along)) {
+    stud(c.a + T / 2, T, c.y0);
+    stud(c.b - T / 2, T, c.y0);
+    if (c.y1 + 1 < plateTop) for (const x of [c.a + T / 2, c.b - T / 2]) stud(x, c.y1, plateTop);
+  }
 
   // common studs: both ends, then 16″ on centre
   const xs = [T / 2, L - T / 2];
   for (let x = 16; x < L - T; x += 16) xs.push(x);
   for (const x of xs) {
     const o = inOpening(x);
-    if (!o) stud(x, T, plateTop);
+    if (!o) tall(x, T);
     else {
       // cripples above the header and below the sill
       if (x > o.a + (1 + o.j) * T && x < o.b - (1 + o.j) * T) {
-        stud(x, o.head + o.hh, plateTop);
+        if (o.hh) tall(x, o.head + o.hh, o.top);
         if (o.bottom > 0) stud(x, T, o.bottom - T);
       }
     }
   }
   for (const o of rough) {
     // king studs full height, jack studs up to the header
-    stud(o.a + T / 2, T, plateTop);
-    stud(o.b - T / 2, T, plateTop);
+    tall(o.a + T / 2, T);
+    tall(o.b - T / 2, T);
     for (let k = 1; k <= o.j; k++) {
       stud(o.a + (k + 0.5) * T, o.bottom === 0 ? 0 : T, o.head);
       stud(o.b - (k + 0.5) * T, o.bottom === 0 ? 0 : T, o.head);
     }
     // header (on edge, the full wall thickness) and the rough sill under a window
-    fm.add([o.a + T, o.head + o.hh / 2, zc], [o.b - T, o.head + o.hh / 2, zc], across, d, o.hh);
+    if (o.hh) fm.add([o.a + T, o.head + o.hh / 2, zc], [o.b - T, o.head + o.hh / 2, zc], across, d, o.hh);
     if (o.bottom > 0) flat(o.a + (1 + o.j) * T, o.b - (1 + o.j) * T, o.bottom - T / 2);
   }
 
