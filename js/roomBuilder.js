@@ -422,7 +422,9 @@ export function buildRoom(cfg, opts = {}) {
         const out = st.offset ?? 4;
         const sx = along ? c.x + s : st.side === 'east' ? c.x + c.width + out : c.x - out;
         const sz = along ? (st.side === 'south' ? c.z + c.depth + out : c.z - out) : c.z + s;
-        F.stool(g, ctx, sx, sz, st.height ?? 25);
+        // the back faces away from the island
+        const rot = { south: 0, north: Math.PI, east: Math.PI / 2, west: -Math.PI / 2 }[st.side];
+        F.stool(g, ctx, sx, sz, st.height ?? 25, { back: st.back, rot });
       }
     }
   }

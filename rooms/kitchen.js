@@ -70,7 +70,8 @@ export default {
     backsplash: 'counter', // granite slab backsplash, like the countertops (or a tile color)
     grout: '#d2cfc7',
     hardware: '#2a2a2a',
-    stoolSeat: '#8a6544',
+    stoolSeat: '#cfc9bf', // light upholstered seats
+    stoolFrame: '#d8c3a0', // light natural wood frames
     stoolLegs: '#1d1d1d',
     pendant: '#b08d57',
     cherry: '#8a4a2c', // varnished cherry window sills (the granite sill uses the countertop stone)
@@ -228,7 +229,7 @@ export default {
         { id: 'POST-W', code: 'PSP3X3.34', x: 7, z: 30 + 38.75 + 54 - 3 },
         { id: 'POST-E', code: 'PSP3X3.34', x: 7 + 74 - 3, z: 30 + 38.75 + 54 - 3 },
       ],
-      stools: { side: 'south', count: 3, offset: 6 },
+      stools: { side: 'south', count: 3, offset: 9, back: 'low', height: 25 }, // counter-height, low backrest
     },
   ],
 

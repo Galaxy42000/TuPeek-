@@ -250,6 +250,7 @@ export function createMaterials(p) {
     glass: new THREE.MeshStandardMaterial({ color: '#e3f1f7', roughness: 0.04, metalness: 0.1, transparent: true, opacity: 0.16, depthWrite: false }),
     stoolSeat: std(p.stoolSeat, 0.55),
     stoolLeg: std(p.stoolLegs, 0.35, 0.85),
+    stoolFrame: std(p.stoolFrame || p.stoolLegs, 0.55),
     pendant: std(p.pendant, 0.3, 0.85, { side: THREE.DoubleSide }),
     bulb: std('#ffffff', 0.4, 0, { emissive: '#ffe0b0', emissiveIntensity: 2.5 }),
     canLens: std('#ffffff', 0.4, 0, { emissive: '#fff4e2', emissiveIntensity: 1.6 }),

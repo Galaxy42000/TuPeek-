@@ -254,8 +254,26 @@ export function faucet(parent, ctx, x, z, counterTop) {
 
 // ---------- furniture & lighting ----------
 
-export function stool(parent, ctx, x, z, seat = 25) {
+// opts.back = 'low': wooden counter stool with an upholstered seat and a low backrest;
+// opts.rot turns it so the back is away from the counter (back on local +z).
+export function stool(parent, ctx, x, z, seat = 25, opts = {}) {
   const M = ctx.M;
+  if (opts.back === 'low') {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    g.rotation.y = opts.rot ?? 0;
+    parent.add(g);
+    const W = 17, D = 16, leg = 1.5, F = M.stoolFrame;
+    for (const [lx, lz] of [[-W / 2, -D / 2], [W / 2 - leg, -D / 2], [-W / 2, D / 2 - leg], [W / 2 - leg, D / 2 - leg]]) {
+      addBox(g, F, lx, 0, lz, leg, lz > 0 ? seat + 10 : seat - 1.5, leg); // back legs carry on up into the backrest
+    }
+    addBox(g, F, -W / 2, seat - 3, -D / 2, W, 1.5, D); // seat frame
+    addBox(g, M.stoolSeat, -W / 2 + 0.5, seat - 1.5, -D / 2 + 0.5, W - 1, 2, D - 1.5); // cushion
+    addBox(g, F, -W / 2 + leg, seat + 4.5, D / 2 - leg, W - 2 * leg, 4, 1); // low back rail
+    for (const fy of [8, 9]) addBox(g, F, -W / 2 + leg, fy, -D / 2 + 0.25, W - 2 * leg, 1, 1); // footrest in front
+    for (const sx of [-W / 2, W / 2 - leg]) addBox(g, F, sx, 10, -D / 2 + leg, leg, 1, D - 2 * leg); // side stretchers
+    return;
+  }
   addMesh(parent, new THREE.CylinderGeometry(7, 6.6, 1.6, 32), M.stoolSeat, x, seat - 0.8, z);
   const legGeo = new THREE.CylinderGeometry(0.45, 0.45, seat - 1.6, 10);
   for (let i = 0; i < 4; i++) {
