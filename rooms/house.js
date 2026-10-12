@@ -255,6 +255,8 @@ export default {
     { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 151.75, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
     { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: 138.5, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
       notes: 'Two filter housings on the incoming water line. ⚠ Size scaled from the photo.' },
+    { id: 'WASHER BOX', type: 'Washer outlet box (shut-off valves)', kind: 'box', x: 172, z: EXT, width: 9, depth: 0.75, height: 10, bottom: 33, color: '#f4f4f2',
+      notes: 'Recessed box with the hot and cold shut-off valves (and drain) for the washer/dryer, just right of the pressure tank, behind the washer/dryer. ⚠ Size typical; position scaled from the utility room photo.' },
     { id: 'TANK', type: 'Well pressure tank', kind: 'tank', x: X_BATH - INT - 27.5 - 2 - 16, z: EXT + 2, width: 16, depth: 16, height: 37, color: '#2f6fb7', materials: ['pressureTank'],
       notes: '25-gallon blue pressure tank on the floor, beside the washer/dryer, with its pressure switch and fittings. ⚠ Size typical for a 25-gallon tank.' },
     // heating / cooling: the indoor unit hangs on the framing above the living room
