@@ -16,4 +16,11 @@ export default {
     Finish: 'Clear',
     'Boards run': 'East–west', // keep in step with palette.floorBoards in rooms/kitchen.js
   },
+  steelW8: {
+    name: 'Structural steel',
+    Shape: 'W-flange (wide-flange I-beam)',
+    'Flange width': '4″',
+    Depth: '8″',
+    'Likely size': 'W8×10, W8×13 or W8×15 (all have a 4″ flange); weight per foot not confirmed',
+  },
 };

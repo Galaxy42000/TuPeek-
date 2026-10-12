@@ -281,6 +281,7 @@ function select(obj) {
   if (i.wall) row('On wall', `${i.wall[0].toUpperCase()}${i.wall.slice(1)}`);
   if (i.start !== undefined && i.wall) row('Starts at', `${fmtFtIn(i.start)} from the wall's left corner`);
   else if (i.start !== undefined) row('Starts at', fmtFtIn(i.start));
+  row('Length', i.length !== undefined ? fmtFtIn(i.length) : undefined);
   row('Width', i.width !== undefined ? fmtFtIn(i.width) : undefined);
   row('Height', i.height !== undefined ? fmtFtIn(i.height) : undefined);
   row('Depth', i.depth !== undefined ? fmtFtIn(i.depth) : undefined);

@@ -76,6 +76,14 @@ export function laundry(parent, ctx, w = 27, d = 30, h = 77) {
   }
 }
 
+// Wide-flange (I) steel beam along local x from 0 to len, bottom at y = 0, centered on z = 0.
+export function steelBeam(parent, ctx, len, depth = 8, flange = 4, { web = 0.25, tf = 0.35 } = {}) {
+  const S = ctx.M.beam;
+  addBox(parent, S, 0, 0, -flange / 2, len, tf, flange);
+  addBox(parent, S, 0, depth - tf, -flange / 2, len, tf, flange);
+  addBox(parent, S, 0, tf, -web / 2, len, depth - 2 * tf, web);
+}
+
 // Plain box in a given color (water heater, panel, A/C...). Optional round grille on the +z face.
 export function box(parent, ctx, w, h, d, bottom, item = {}) {
   const mat = ctx.color(item.color || '#f2f2ef', item.metal);

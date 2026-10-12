@@ -6,8 +6,10 @@
 //    15′-5″ R.O.  main room width (left to right; true north–south)
 //    7′-0″ × 6′-0″  bathroom
 //    Takagi T-H3S-DV-P water heater, 11¼″ × 17¾″ × 24⅞″
+//  Interior photos: bedroom 1 looking into bedroom 2 (no wall between them,
+//    steel beam over the bedroom 1 door, bedroom wing windows).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
-//  or assumed, and should be measured.
+//  or a photo, or assumed, and should be measured.
 //
 //  How positions work
 //  ------------------
@@ -37,7 +39,7 @@ const OLD = 6; // ⚠ wall between the bedroom wing and the main room
 
 const LENGTH = 411; // 34′-3″ outside face to outside face
 const WING_LENGTH = 291; // 24′-3″
-const WING_WIDTH = 88; // ⚠ inside width of the bedroom wing, scaled from the drawing (no dimension)
+const WING_WIDTH = 115; // ⚠ inside width of the bedroom wing, estimated from the photo (the drawing scaled to 88″)
 const MAIN_WIDTH = 185; // 15′-5″ R.O.
 const BATH_WIDTH = 84; // 7′-0″
 const BATH_DEPTH = 72; // 6′-0″
@@ -49,8 +51,9 @@ const Z_SOUTH = LENGTH - EXT; // south wall, inside face (405)
 
 const X_BATH = X_EAST - BATH_WIDTH; // bathroom's west inside face (201)
 const Z_BATH = EXT + BATH_DEPTH; // bathroom's south inside face (78)
-const Z_CLOSET = 37; // ⚠ front of the laundry closet (scaled)
-const DIVIDER = 154; // ⚠ wall between the two bedrooms (scaled)
+const Z_CLOSET = 37; // ⚠ front of the utility room (scaled)
+const DIVIDER = 154; // ⚠ where bedroom 1 ends and bedroom 2 begins; there is no wall between them
+const D_BR1 = 85.5; // ⚠ north jamb of the bedroom 1 door (scaled)
 
 // The kitchen's east wall is the building's east wall, and its north wall is the
 // bathroom's south wall.
@@ -88,9 +91,20 @@ export default {
   walls: [
     // ---- exterior ----
     { id: 'East wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT },
-    { id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
-      notes: '⚠ No windows are drawn in the bedroom wing.' },
-    { id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH },
+    {
+      id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
+      notes: 'Windows are not on the plan; they come from the bedroom photo.',
+      openings: [
+        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
+      ],
+    },
+    {
+      id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH,
+      openings: [
+        { id: 'W7', type: 'window', at: 16, width: 24, bottom: 36, height: 46, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
+      ],
+    },
     {
       id: 'Main north wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
       openings: [
@@ -111,13 +125,13 @@ export default {
     // ---- interior ----
     {
       id: 'Bedroom wing / main room wall', inside: 'east', x0: X_MAIN - OLD, z0: EXT, x1: X_MAIN, z1: WING_LENGTH,
-      notes: 'Probably the original outside wall, given its thickness on the plan.',
+      notes: 'Probably the original outside wall, given its thickness on the plan. Steel beam BEAM-1 runs along its top from the bedroom 1 door into the utility room.',
       openings: [
-        { id: 'D-BR1', type: 'door', door: 'pocket', at: 85.5 - EXT, width: 30, height: 80, notes: 'Pocket door into bedroom 1. ⚠ Position scaled from the drawing.' },
+        { id: 'D-BR1', type: 'door', door: 'pocket', at: D_BR1 - EXT, width: 30, height: 96 - 8, casing: false,
+          notes: 'Into bedroom 1. The opening goes up to the underside of the steel beam; jambs are bare wood in the photo. ⚠ Position scaled from the drawing; door type from the plan.' },
         { id: 'D-BR2', type: 'door', door: 'pocket', at: 245 - EXT, width: 30, height: 80, notes: 'Pocket door into bedroom 2. ⚠ Position scaled from the drawing.' },
       ],
     },
-    { id: 'Bedroom divider', inside: 'south', x0: EXT, z0: DIVIDER, x1: X_MAIN - OLD, z1: DIVIDER + INT },
     {
       id: 'Bathroom north wall', inside: 'east', x0: X_BATH - INT, z0: EXT, x1: X_BATH, z1: Z_BATH,
       openings: [{ id: 'D-BATH', type: 'door', door: 'pocket', at: 40, width: 28, height: 80, notes: 'Pocket door from the hall. ⚠ Width and position scaled from the drawing.' }],
@@ -125,19 +139,22 @@ export default {
     { id: 'Bathroom / kitchen wall', inside: 'south', x0: KX, z0: Z_BATH, x1: X_EAST, z1: KZ,
       notes: 'The kitchen’s east (range) wall. Ends behind the tall cabinet, leaving a walkway from the kitchen to the hall. ⚠ The kitchen plan draws this wall continuing further north.' },
     {
-      id: 'Laundry closet front', inside: 'south', x0: X_MAIN, z0: Z_CLOSET, x1: X_BATH - INT, z1: Z_CLOSET + INT,
+      id: 'Utility room front', inside: 'south', x0: X_MAIN, z0: Z_CLOSET, x1: X_BATH - INT, z1: Z_CLOSET + INT,
       openings: [{ id: 'D-LAUNDRY', type: 'door', door: 'bypass', at: 2, width: 72, height: 80, notes: 'Sliding bypass doors. ⚠ Width scaled from the drawing.' }],
     },
   ],
 
   // Rooms: inside faces of their walls. Labels show their size. Each room also gets
   // its own entry in the room menu unless it has menu: false; `views` sets its camera
-  // presets (same format as the kitchen's).
+  // presets (same format as the kitchen's); `with` lists rooms its view also shows.
   rooms: [
-    { name: 'Bedroom 1', x0: EXT, z0: EXT, x1: X_MAIN - OLD, z1: DIVIDER },
-    { name: 'Bedroom 2', x0: EXT, z0: DIVIDER + INT, x1: X_MAIN - OLD, z1: WING_LENGTH - EXT },
+    // no wall between the bedrooms, so each one's view shows both (`with`)
+    { name: 'Bedroom 1', x0: EXT, z0: EXT, x1: X_MAIN - OLD, z1: DIVIDER, with: ['Bedroom 2'], notes: 'Open to bedroom 2; no wall between them.',
+      views: { eye: { pos: [EXT + 22, 76, EXT + 10], target: [EXT + 85, 38, WING_LENGTH - EXT] } } }, // like the photo: from the bedroom 1 end, looking toward bedroom 2
+    { name: 'Bedroom 2', x0: EXT, z0: DIVIDER, x1: X_MAIN - OLD, z1: WING_LENGTH - EXT, with: ['Bedroom 1'], notes: 'Open to bedroom 1; no wall between them.',
+      views: { eye: { pos: [X_MAIN - OLD - 14, 64, WING_LENGTH - EXT - 12], target: [EXT + 40, 44, EXT] } } }, // from the bedroom 2 end, looking back
     { name: 'Bathroom', x0: X_BATH, z0: EXT, x1: X_EAST, z1: Z_BATH, floor: 'tile' },
-    { name: 'Laundry closet', x0: X_MAIN, z0: EXT, x1: X_BATH - INT, z1: Z_CLOSET,
+    { name: 'Utility room', x0: X_MAIN, z0: EXT, x1: X_BATH - INT, z1: Z_CLOSET,
       views: { eye: { pos: [X_MAIN + 48, 56, 150], target: [X_MAIN + 48, 42, EXT] } } }, // from across the hall, looking in
     { name: 'Hall', x0: X_MAIN, z0: Z_CLOSET + INT, x1: X_BATH - INT, z1: Z_BATH,
       views: { eye: { pos: [X_MAIN + 8, 64, Z_BATH - 10], target: [X_BATH, 44, Z_BATH - 20] } } },
@@ -158,7 +175,7 @@ export default {
     { id: 'SHOWER', type: 'Neo-angle shower', kind: 'cornerShower', corner: 'north-east', x: X_EAST, z: EXT, size: 36 },
     { id: 'LINEN', type: 'Bathroom cabinet', kind: 'cabinet', x: X_EAST - 18, z: EXT + 38, width: 32, depth: 18, height: 84, facing: 'west', doors: 2,
       notes: '⚠ Drawn along the south wall, west of the shower; what it is and how tall are unknown.' },
-    // laundry closet, against the top wall of the plan
+    // utility room, against the top wall of the plan
     { id: 'W/D', type: 'Stacked washer + dryer', kind: 'laundry', x: X_MAIN + 1, z: EXT + 0.5, width: 27, depth: 30, height: 77, facing: 'south' },
     { id: 'ELEC', type: 'Electrical panel', kind: 'box', x: X_MAIN + 38, z: EXT, width: 14.25, depth: 4, height: 30, bottom: 48, color: '#a7abaf', metal: true, notes: '⚠ Size and height are typical, not measured.' },
     { id: 'H2O', type: 'Tankless water heater', code: 'Takagi T-H3S-DV-P', kind: 'box', x: X_BATH - INT - 24, z: EXT, width: 17.75, depth: 11.25, height: 24.88, bottom: 42, color: '#f1f1ee',
@@ -169,6 +186,15 @@ export default {
     { id: 'PAD', type: 'Equipment pad', kind: 'box', x: WIDTH + 1, z: 289, width: 17, depth: 35, height: 3.6, bottom: -0.6, color: '#b9b8b2', label: false },
   ],
 
+  // Structural steel. from/to = ends of the beam's centerline [x, z]; the top sits at
+  // the ceiling. Walls it runs inside are cut away around it, so it shows.
+  beams: [
+    {
+      id: 'BEAM-1', type: 'Steel beam (W-flange)', from: [X_MAIN - OLD / 2, EXT], to: [X_MAIN - OLD / 2, D_BR1 + 30 + 20], depth: 8, flange: 4, materials: ['steelW8'],
+      notes: 'Over the bedroom 1 door, running along the old outside wall north into the utility room. Exposed, top at the ceiling. ⚠ Where it ends is estimated: about 20″ past the door in the photo, and at the outside wall in the utility room.',
+    },
+  ],
+
   // Dimension lines on the ground outside the walls, as written on the plan.
   dimensions: [
     { from: [-30, 0], to: [-30, WING_LENGTH], text: '24′-3″', notes: 'Bedroom wing, outside faces.' },
@@ -176,7 +202,7 @@ export default {
     { from: [X_MAIN, LENGTH + 30], to: [X_EAST, LENGTH + 30], text: '15′-5″ R.O.', notes: 'Main room width. R.O. = rough opening (framing to framing).' },
     { from: [X_BATH, -30], to: [X_EAST, -30], text: '7′-0″', notes: 'Bathroom width. ⚠ The drawing itself scales closer to 8′-5″.' },
     { from: [WIDTH + 30, EXT], to: [WIDTH + 30, Z_BATH], text: '6′-0″', notes: 'Bathroom depth.' },
-    { from: [0, -60], to: [WIDTH, -60], text: `≈ ${fmtFt(WIDTH)} (est.)`, estimate: true, notes: '⚠ Not on the plan: adds the measured 15′-5″ to the scaled bedroom wing width and assumed wall thicknesses.' },
+    { from: [0, -60], to: [WIDTH, -60], text: `≈ ${fmtFt(WIDTH)} (est.)`, estimate: true, notes: '⚠ Not on the plan: adds the measured 15′-5″ to the bedroom wing width estimated from a photo and assumed wall thicknesses.' },
   ],
 
   views: {

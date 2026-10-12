@@ -39,6 +39,7 @@ export function buildHouse(cfg, focus) {
     porcelainShade: std('#e3e4e2', 0.25),
     appliance: std('#f3f3f1', 0.35),
     mirror: std('#dfe6ea', 0.04, 1),
+    beam: std('#3a302b', 0.6, 0.5),
     door: std(cfg.palette.doors || cfg.palette.trim, 0.45),
     tileFloor: std(cfg.palette.tileFloor || '#c9c7c2', 0.5),
     ground: std(cfg.palette.ground || '#d3d8cf', 0.95),
@@ -153,7 +154,19 @@ export function buildHouse(cfg, focus) {
       hingeSide: o.hinge === fr.leftEnd ? 'left' : 'right',
     }));
 
-    for (const r of panelRects(L, H, ops)) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
+    // steel beams running inside this wall are left exposed: cut the wall away around them
+    let rects = panelRects(L, H, ops);
+    for (const b of cfg.beams || []) {
+      const [bx0, bz0] = b.from, [bx1, bz1] = b.to;
+      const [p0, p1, q0, q1] = fr.along === 'x' ? [bx0, bx1, bz0, bz1] : [bz0, bz1, bx0, bx1];
+      const [w0, w1] = fr.along === 'x' ? [spec.z0, spec.z1] : [spec.x0, spec.x1];
+      if (Math.abs(q1 - q0) > 0.01 || q0 <= w0 || q0 >= w1) continue; // not running along inside this wall
+      const a = Math.max(Math.min(p0, p1), min), e = Math.min(Math.max(p0, p1), min + L);
+      if (e <= a) continue;
+      const at = a - min, w = e - a;
+      rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: H - b.depth, h: b.depth });
+    }
+    for (const r of rects) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
     const endA = fr.along === 'x' ? 'west' : 'north';
     tag(g, { id: spec.id, type: spec.exterior ? 'Exterior wall' : 'Interior wall', width: L, height: H, depth: t, materials: mats(spec.materials, 'walls'), notes: spec.notes });
 
@@ -161,7 +174,7 @@ export function buildHouse(cfg, focus) {
       const og = new THREE.Group();
       g.add(og);
       F.opening(og, ctx, o, t);
-      if (!spec.exterior && o.type !== 'opening') backCasing(og, M, o, t);
+      if (!spec.exterior && o.type !== 'opening' && o.casing !== false) backCasing(og, M, o, t);
       if (o.type === 'door') doorLeaf(og, ctx, o, t);
       const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors' }[o.door] || 'Doorway';
       tag(og, {
@@ -221,6 +234,19 @@ export function buildHouse(cfg, focus) {
     }
   }
 
+  // ---------- structural steel ----------
+  for (const b of cfg.beams || []) {
+    const [x0, z0] = b.from, [x1, z1] = b.to;
+    const len = Math.hypot(x1 - x0, z1 - z0);
+    const g = new THREE.Group();
+    g.position.set(x0, H - b.depth, z0);
+    g.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
+    HF.steelBeam(g, ctx, len, b.depth, b.flange);
+    root.add(g);
+    tag(g, { id: b.id, type: b.type || 'Steel beam', length: len, width: b.flange, height: b.depth, bottom: H - b.depth, materials: mats(b.materials, 'steel'), notes: b.notes });
+    label(g, `${b.id} · ${fmtIn(b.flange)} × ${fmtIn(b.depth)}`, len / 2, -3, 0);
+  }
+
   // ---------- plan dimensions (drawn on the ground) ----------
   for (const dm of cfg.dimensions || []) {
     const [x0, z0] = dm.from, [x1, z1] = dm.to;
@@ -243,11 +269,17 @@ export function buildHouse(cfg, focus) {
   return { root, walls, ceiling, labels, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
 }
 
-// Cut the model down to one room: the clip box reaches through the walls around it
+// Cut the model down to one room (plus any rooms listed in its `with`): the clip box reaches through the walls around it
 // (but not past them), and those walls become the ones that cut away.
 function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
-  const r = cfg.rooms.find((rm) => rm.name === name);
-  if (!r) throw new Error(`No room named "${name}" in the house plan`);
+  const find = (n) => {
+    const rm = cfg.rooms.find((x) => x.name === n);
+    if (!rm) throw new Error(`No room named "${n}" in the house plan`);
+    return rm;
+  };
+  // a room open to another (no wall between them) can show both: with: ['Other room']
+  const own = find(name), all = [own, ...(own.with || []).map(find)];
+  const r = { x0: Math.min(...all.map((a) => a.x0)), x1: Math.max(...all.map((a) => a.x1)), z0: Math.min(...all.map((a) => a.z0)), z1: Math.max(...all.map((a) => a.z1)), views: own.views };
   const overlaps = (a0, a1, b0, b1) => Math.min(a1, b1) - Math.max(a0, b0) > 1;
   const sides = {
     north: { inward: [0, 1], edge: [r.x0, r.z0, r.x1, r.z0], find: (w) => Math.abs(w.z1 - r.z0) < 0.5 && overlaps(w.x0, w.x1, r.x0, r.x1), t: (w) => w.z1 - w.z0 },
@@ -272,6 +304,21 @@ function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
   // the house's camera presets are for the whole building; by default a room's eye
   // view looks from its south-west corner to the far corner, and a room can set its own
   return { root, walls, ceiling, labels, clip, views: { eye: { pos: [r.x0 + 10, 64, r.z1 - 10], target: [r.x1, 44, r.z0] }, ...r.views }, bounds: { W: r.x1 - r.x0, D: r.z1 - r.z0, H, floor: clip } };
+}
+
+// Remove rectangle c from a list of wall rectangles (all in wall-local x/y).
+function carve(rects, c) {
+  const out = [];
+  for (const r of rects) {
+    const x0 = Math.max(r.x, c.x), x1 = Math.min(r.x + r.w, c.x + c.w);
+    const y0 = Math.max(r.y, c.y), y1 = Math.min(r.y + r.h, c.y + c.h);
+    if (x1 <= x0 || y1 <= y0) { out.push(r); continue; }
+    if (x0 > r.x) out.push({ x: r.x, y: r.y, w: x0 - r.x, h: r.h });
+    if (x1 < r.x + r.w) out.push({ x: x1, y: r.y, w: r.x + r.w - x1, h: r.h });
+    if (y0 > r.y) out.push({ x: x0, y: r.y, w: x1 - x0, h: y0 - r.y });
+    if (y1 < r.y + r.h) out.push({ x: x0, y: y1, w: x1 - x0, h: r.y + r.h - y1 });
+  }
+  return out;
 }
 
 // Casing on the second face of an interior wall (fixtures.opening trims the inside face).

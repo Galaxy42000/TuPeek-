@@ -280,7 +280,7 @@ export function opening(parent, ctx, o, t) {
   addBox(parent, jamb, x, y + h - 0.75, -t, w, 0.75, t, { cast: false });
   addBox(parent, jamb, x, y, -t, 0.75, h, t, { cast: false });
   addBox(parent, jamb, x + w - 0.75, y, -t, 0.75, h, t, { cast: false });
-  if (o.type === 'opening') return;
+  if (o.type === 'opening' || o.casing === false) return;
 
   const cw = 3.5; // casing width
   addBox(parent, M.trim, x - cw, y, 0, cw, h + cw, 0.75);
