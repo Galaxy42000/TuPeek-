@@ -90,9 +90,10 @@ export default {
   // type: 'window' | 'door' | 'opening';  bottom = height of the opening's sill above the floor
   openings: [
     // 36″ from the corner, 36½″ wide (plan). Sill and head heights are not on the plan.
-    // 4′ × 4′ (from the owner; the plan drew it 36½″ wide), kept centered on the sink
-    { id: 'W1', type: 'window', wall: 'east', start: 54.25 - 24, width: 48, bottom: 42, height: 48, sill: 'granite', materials: ['kolbeWindow', 'graniteSill', 'drywallReturns'],
-      notes: '4′ × 4′. Centered on the sink as on the plan. ⚠ Sill height (42″) assumed. The plan drew a 36½″ window; at 4′ it runs about 2¾″ behind U6 and 2½″ behind U7.' },
+    // finished opening 3′-8″ square in a 4′ × 4′ rough opening (from the owner; the plan
+    // drew it 36½″ wide), kept centered on the sink
+    { id: 'W1', type: 'window', wall: 'east', start: 54.25 - 22, width: 44, bottom: 44, height: 44, sill: 'granite', materials: ['kolbeWindow', 'graniteSill', 'drywallReturns'],
+      notes: '3′-8″ × 3′-8″ finished (4′ × 4′ rough opening). Centered on the sink as on the plan. ⚠ Height assumed: rough opening from 42″ to 90″, finished 2″ inside it all round. The plan drew a 36½″ window; at 3′-8″ it still runs ¾″ behind U6 and ½″ behind U7.' },
   ],
 
   // Base cabinets: 24″ deep, 34½″ tall + 1½″ counter = 36″ counter height.
