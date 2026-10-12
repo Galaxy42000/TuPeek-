@@ -68,6 +68,7 @@ js/roofBuilder.js   roof, fascia, soffits and lights, entry porch roof
 js/plumbingBuilder.js  plumbing runs (x-ray layer)
 js/materials.js     materials + procedural textures (wood, tile, quartz)
 js/compass.js       plan → true directions
+js/overlapCheck.js  finds faces that share a plane (flicker) and pulls them apart
 rooms/index.js      list of views in the menu
 rooms/house.js      building walls, doors, windows, rooms  ← edit this
 rooms/materials.js  materials & finishes shown when you click something  ← edit this
@@ -85,6 +86,18 @@ ES modules need to be served over HTTP:
 python3 -m http.server 8000
 # open http://localhost:8000
 ```
+
+## Flickering surfaces (z-fighting)
+
+Two faces in the same plane (a sill on top of a wall, tile against a wall, a room's floor
+over the subfloor) draw at the same depth and flicker as the camera moves. Every time a
+view loads, `js/overlapCheck.js` finds them and pushes the smaller piece's face out in
+front by 0.03″, so you don't need to avoid them by hand. To look at them:
+
+- `tupeek.checkOverlaps()` in the browser console lists the faces still sharing a plane
+  (pass `{ tol: 0.25 }` to also see ones that are nearly touching);
+- `?check` in the address bar prints that list after loading;
+- `?raw` skips the fix, to compare.
 
 ## Turning on GitHub Pages
 

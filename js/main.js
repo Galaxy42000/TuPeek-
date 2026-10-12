@@ -8,6 +8,7 @@ import { ROOMS } from '../rooms/index.js';
 import { IN, fmtIn, fmtFtIn } from './units.js';
 import { trueVec, POINTS } from './compass.js';
 import MATERIALS from '../rooms/materials.js';
+import { overlapReport, resolveOverlaps } from './overlapCheck.js';
 
 const $ = (s) => document.querySelector(s);
 const viewport = $('#viewport');
@@ -35,6 +36,16 @@ scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environmentIntensity = 0.5;
 
 const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.02, 200);
+// Depth precision depends mostly on the near plane, so it moves out as the camera backs
+// away (orbit) and stays a few centimetres out when walking. Faces in the same plane are
+// pulled apart by resolveOverlaps when the room is built.
+function fitNearPlane() {
+  const near = walk.on ? 0.05 : THREE.MathUtils.clamp(camera.position.distanceTo(controls.target) * 0.015, 0.02, 0.4);
+  if (Math.abs(near - camera.near) > camera.near * 0.05) {
+    camera.near = near;
+    camera.updateProjectionMatrix();
+  }
+}
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
@@ -75,6 +86,11 @@ async function loadRoom(id) {
   const built = cfg.kind === 'house' ? buildHouse(cfg, entry.focus) : buildRoom(cfg);
   built.root.scale.setScalar(IN);
   scene.add(built.root);
+  // faces sharing a plane would flicker as the camera moves: move the smaller one in front,
+  // once the first frame is up (?raw leaves them as built, to compare)
+  if (!new URLSearchParams(location.search).has('raw')) {
+    setTimeout(() => { if (room?.root === built.root) room.overlaps = resolveOverlaps(built.root, { scale: 1 / IN }); }, 30);
+  }
   if (built.clip) clipTo(built);
   room = { ...built, cfg };
   document.title = `${entry.name} · TuPeek`;
@@ -401,6 +417,7 @@ renderer.setAnimationLoop((now) => {
   stepTween(now);
   if (walk.on) stepWalk(dt);
   else controls.update();
+  fitNearPlane();
   updateVisibility();
   updateCompass();
   if (selected) highlight.setFromObject(selected);
@@ -409,11 +426,16 @@ renderer.setAnimationLoop((now) => {
 });
 
 loadRoom(location.hash.slice(1) || ROOMS[0].id)
-  .then(() => document.body.classList.add('ready'))
+  .then(() => {
+    document.body.classList.add('ready');
+    if (new URLSearchParams(location.search).has('check')) setTimeout(() => console.table(checkOverlaps().map(({ meshes, ...r }) => r)), 100);
+  })
   .catch((err) => {
     console.error(err);
     $('#loading').textContent = `Could not load the room: ${err.message}`;
   });
 
-// handy for debugging from the browser console
-window.tupeek = { scene, camera, controls, setView, get room() { return room; } };
+// handy for debugging from the browser console; checkOverlaps() lists coplanar faces
+// that would flicker (see js/overlapCheck.js)
+const checkOverlaps = (opts) => overlapReport(room.root, { scale: 1 / IN, ...opts });
+window.tupeek = { scene, camera, controls, setView, checkOverlaps, get room() { return room; } };
