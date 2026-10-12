@@ -66,6 +66,9 @@ const D_BR1 = 85.5; // ⚠ north jamb of the bedroom 1 door (scaled)
 const KX = X_EAST - kitchen.room.width; // kitchen x = 0 (40¼″ east of the main room's west wall)
 const KZ = Z_BATH + INT; // kitchen z = 0 (82½″)
 const Z_KITCHEN_END = KZ + kitchen.room.depth; // where the kitchen's east wall ends (205¼″)
+// end of the sink-wall countertop, taken from the kitchen's own layout (204½″)
+const SINK_RUN = kitchen.baseRuns.find((r) => r.wall === 'east');
+const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a + it.width, 0) + SINK_RUN.extendRight;
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
@@ -131,8 +134,8 @@ export default {
     {
       id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH,
       openings: [
-        { id: 'SLIDER', type: 'door', door: 'slider', at: 210 - EXT, width: 72, height: 80, materials: ['kolbeSlider'],
-          notes: '6′ sliding glass door, just past the end of the kitchen counters. ⚠ Position estimated from the photo; height assumed to be the standard 6′-8″.' },
+        { id: 'SLIDER', type: 'door', door: 'slider', at: Z_COUNTER_END + 1.5 - EXT, width: 72, height: 80, casing: false, materials: ['kolbeSlider'],
+          notes: '6′ sliding glass door, starting 1½″ past the end of the kitchen countertop. No inside trim drawn (there is no room for casing beside the counter). ⚠ Height assumed to be the standard 6′-8″.' },
         { id: 'W8', type: 'window', at: 340, width: 27, bottom: 21, height: 58, notes: 'Living room. ⚠ Size, height and position estimated from the photo; the sill was hidden.' },
       ],
     },
