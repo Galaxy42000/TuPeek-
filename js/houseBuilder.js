@@ -53,6 +53,7 @@ export function buildHouse(cfg, focus) {
     stone: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.92, map: stoneTexture(cfg.palette.stone || '#6e737c') }),
     stoneCap: std(cfg.palette.stoneCap || '#8d929a', 0.85),
     siding: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6, map: sidingTexture(cfg.palette.siding || '#78838f') }),
+    sidingBoth: new THREE.MeshStandardMaterial({ color: cfg.palette.siding || '#78838f', roughness: 0.6, side: THREE.DoubleSide }),
     exteriorTrim: std(cfg.palette.exteriorTrim || '#f4f2ea', 0.5),
     windowFrame: std(cfg.palette.windowFrame || '#1f1d1c', 0.45),
     shingles: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95, side: THREE.DoubleSide, map: shingleTexture(cfg.palette.shingles || '#45474b') }),

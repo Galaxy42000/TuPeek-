@@ -298,18 +298,23 @@ export default {
   // ⚠ Pitches, overhangs and heights are estimated from the outside photos.
   roof: {
     plate: 101, overhang: 14, rake: 6, fascia: 7,
-    main: { x0: X_MAIN - OLD, x1: WIDTH, z0: 0, z1: LENGTH, pitch: 4.5 / 12 }, // gable at the bathroom end, hip at the living room end
-    wing: { x0: 0, z0: 0, z1: WING_LENGTH, pitch: 2 / 12 }, // shed over the bedrooms, running up into the main roof
+    // kitchen/bathroom roof: gable at the bathroom end and a small gable end over the
+    // living room beam (BEAM-2), where the vault ends
+    main: { x0: X_MAIN - OLD, x1: WIDTH, z0: 0, z1: Z_BEAM, pitch: 4.5 / 12 },
+    // living room roof: lower and shallower, hipped at the far end; the kitchen roof's
+    // slopes come down onto it (the flashed joint in the roof photo)
+    low: { z1: LENGTH, pitch: 2.5 / 12 },
+    wing: { x0: 0, z0: 0, z1: WING_LENGTH, pitch: 2 / 12 }, // shed over the bedrooms, running up into the main roof, hipped at the entry end
     // outside corners [x, z, outward x sign, outward z sign] get white corner boards
     corners: [[0, 0, -1, -1], [0, WING_LENGTH, -1, 1], [X_MAIN - OLD, LENGTH, -1, 1], [WIDTH, LENGTH, 1, 1], [WIDTH, 0, 1, -1]],
     // recessed lights in the soffits (plan x, z) ⚠ from the photos
     lights: [[120, LENGTH + 7], [265, LENGTH + 7], [WIDTH + 7, LENGTH - 16], [WIDTH + 7, 215], [X_MAIN - OLD - 7, LENGTH - 16]],
     // small gable roof over the entry door; the porch floor is one board below the door sill
     porch: {
-      wall: X_MAIN - OLD, z0: WING_LENGTH + 6, z1: WING_LENGTH + 72, depth: 40, overhang: 6, eave: 88, pitch: 7 / 12,
-      notes: 'Open gable with no tie beam across the front. The porch floor and steps are in `decks` and `stoneSteps`.',
+      wall: X_MAIN - OLD, z0: WING_LENGTH - 30, z1: WING_LENGTH + 72, depth: 40, overhang: 6, eave: 100, pitch: 6 / 12, back: 90,
+      notes: 'Open gable with no tie beam across the front; its side over the bedroom wing comes down onto the wing roof. The porch floor and steps are in `decks` and `stoneSteps`.',
     },
-    notes: 'Gable at the bathroom end, hipped at the living room end; a lower shed roof over the bedroom wing. ⚠ Pitches and overhangs estimated from the photos.',
+    notes: 'Kitchen/bathroom roof with gables at both ends; a lower, shallower hipped roof over the living room that the kitchen gable end sits above; a shed roof over the bedroom wing; a gable over the entry. ⚠ Pitches and overhangs estimated from the photos.',
   },
 
   // Dimension lines on the ground outside the walls, as written on the plan.
