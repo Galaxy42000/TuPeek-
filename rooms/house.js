@@ -316,6 +316,16 @@ export default {
     supply('cold', 'Cold to toilet', 25.5, P_TOILET + 6, 8, 'the toilet'),
     supply('cold', 'Cold to vanity', 24, P_VANITY + 3, 20, 'the vanity'),
     supply('cold', 'Cold to shower', 22.5, P_SHOWER + 2, 46, 'the shower valve'),
+    // these two carry on past the bathroom's corner, turn into the long outside wall and
+    // run behind the shower and the corner cabinet to the kitchen sink
+    ...['hot', 'cold'].map((kind) => {
+      const y = kind === 'hot' ? 28 : 21, xw = X_EAST + EXT / 2, zs = KZ + 54, dx = kind === 'hot' ? -1.5 : 1.5;
+      return {
+        id: `${kind === 'hot' ? 'Hot' : 'Cold'} to kitchen sink`, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'],
+        notes: 'Runs along the bathroom’s back wall, turns the corner into the long outside wall and carries on to the kitchen sink (seen leaving the bathroom in the second plumbing photo). ⚠ Route past the bathroom assumed.',
+        path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [xw, y, CAV], [xw, y, zs + dx], [xw, 20, zs + dx], [X_EAST - 3, 20, zs + dx]],
+      };
+    }),
     // drains and vents (PVC)
     { id: 'Washer drain', kind: 'drain', materials: ['pvcDwv'], notes: 'Standpipe and trap under the washer box, down into the floor.',
       path: [[WASHER_BOX_X, 33, CAV], [WASHER_BOX_X, 6, CAV], [WASHER_BOX_X + 3, 3, CAV], [WASHER_BOX_X + 3, -8, CAV]] },
