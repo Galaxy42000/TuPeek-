@@ -167,6 +167,26 @@ export function wallFraming(mat, L, t, H, ops, topAt, cuts = []) {
   return m;
 }
 
+// A short gable wall standing on a beam or a wall top and closing the end of a vault (as
+// over BEAM-2 in the photo): a plate along x at `base`, studs 16″ on centre up to the
+// raked plate under topAt(x), which is straight between the breakpoints xs. The wall
+// body runs from z0 to z0 + t.
+export function gableFraming(mat, xs, base, z0, t, topAt) {
+  const fm = new Members();
+  const d = Math.min(3.5, t), zc = z0 + t / 2, x0 = xs[0], x1 = xs[xs.length - 1];
+  fm.add([x0, base + T / 2, zc], [x1, base + T / 2, zc], [0, 1, 0], T, d);
+  const studs = [];
+  for (let x = x0 + T / 2; x < x1 - T / 2; x += 16) studs.push(x);
+  studs.push(x1 - T / 2);
+  for (const x of studs) if (topAt(x) - T > base + T + 0.3) fm.add([x, base + T, zc], [x, topAt(x) - T, zc], [1, 0, 0], T, d);
+  for (let i = 0; i + 1 < xs.length; i++) {
+    const xa = xs[i], xb = xs[i + 1], ya = topAt(xa), yb = topAt(xb);
+    const nrm = rakeNormal(xa, ya, xb, yb);
+    fm.add([xa, ya - T / 2, zc], [xb, yb - T / 2, zc], [nrm[0], nrm[1], 0], T, d);
+  }
+  return fm.mesh(mat, 'gable framing');
+}
+
 // A raked plate lies flat on the studs: its thickness is perpendicular to the slope,
 // in the wall's plane.
 function rakeNormal(xa, ya, xb, yb) {

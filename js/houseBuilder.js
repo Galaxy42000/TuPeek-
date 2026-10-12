@@ -9,7 +9,7 @@ import { buildDecks } from './deckBuilder.js';
 import { buildPlumbing } from './plumbingBuilder.js';
 import { sidingTexture, shingleTexture, stoneTexture, tileTexture, speckleTexture } from './materials.js';
 import { buildRoof } from './roofBuilder.js';
-import { framingMaterial, wallFraming, roofFraming } from './framingBuilder.js';
+import { framingMaterial, wallFraming, roofFraming, gableFraming } from './framingBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
 
@@ -465,7 +465,18 @@ export function buildHouse(cfg, focus) {
     root.add(rf);
     framingLayers.push(rf);
     tag(rf, { id: 'Roof framing', type: 'Trusses and rafters', materials: ['scissorTrusses'],
-      notes: 'Scissor trusses 24″ on centre over the kitchen, hall and bathroom (their bottom chords follow the vaulted ceiling), a stick-framed hip roof over the living room (2×6 rafters to a ridge board, hip rafters at the corners and jack rafters on the end, as in the living room photo), and shed rafters over flat ceiling joists in the bedroom wing. ⚠ Truss webs and spacing drawn to a typical layout; only the kitchen trusses are seen in the photos.' });
+      notes: 'Scissor trusses 24″ on centre over the kitchen, hall and bathroom: each bottom chord follows the vaulted ceiling up from its wall, crosses the other under the peak and runs on to the far top chord, with a vertical web up from the crossing and one in each half (truss photos), a stick-framed hip roof over the living room (2×6 rafters to a ridge board, hip rafters at the corners and jack rafters on the end, as in the living room photo), and shed rafters over flat ceiling joists in the bedroom wing. ⚠ Spacing drawn to a typical layout.' });
+  }
+  // vault ends standing on a beam rather than a wall: a plate on the beam and studs up to
+  // the last truss (over BEAM-2 in the photo)
+  for (const v of vaults) for (const e of v.ends || []) {
+    if (e.base >= H) continue;
+    const gf = gableFraming(FM, [v.x0, (v.x0 + v.x1) / 2, v.x1], e.base, e.z, e.t, (x) => vaultHeight(v, H, x));
+    gf.visible = false;
+    root.add(gf);
+    framingLayers.push(gf);
+    tag(gf, { id: `${v.id} end (framing)`, type: 'Wall framing', depth: e.t, materials: ['studFraming'],
+      notes: 'Short wall closing the end of the vault: a 2× plate on the beam and 2×4 studs 16″ on centre up to a raked plate under the last truss. ⚠ Stud layout drawn to standard spacing.' });
   }
   const framing = { layers: framingLayers, finish };
 
