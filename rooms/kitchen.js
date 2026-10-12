@@ -60,21 +60,26 @@ export default {
     floorBoards: 'north-south', // plan direction the boards run (true east–west)
     cabinets: '#f1efe9',
     island: '#41566b',
-    counter: '#e9e7e2', // quartz-like speckle
-    backsplash: '#f5f4ef',
+    counter: '#e9e7e2', // speckle color, used only when there is no counterPhoto
+    // Navasca granite (Antonio Grey): a photo of the slab made into a seamless tile
+    // covering about 20″ × 15″
+    counterPhoto: 'textures/navasca-granite.jpg',
+    counterPhotoSize: [20, 15],
+    backsplash: 'counter', // granite slab backsplash, like the countertops (or a tile color)
     grout: '#d2cfc7',
     hardware: '#2a2a2a',
     stoolSeat: '#8a6544',
     stoolLegs: '#1d1d1d',
     pendant: '#b08d57',
-    cherry: '#8a4a2c', // varnished cherry window sills
-    // granite: '#…',  // kitchen window sill; color not known yet, drawn like the countertop
+    cherry: '#8a4a2c', // varnished cherry window sills (the granite sill uses the countertop stone)
   },
 
   // Default materials by kind of surface (keys from rooms/materials.js).
   surfaces: {
     floor: ['oakFloor'],
     windows: ['cherrySill', 'drywallReturns'],
+    counter: ['navascaGranite'],
+    backsplash: ['navascaGranite'],
   },
 
   style: {

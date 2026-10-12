@@ -33,6 +33,12 @@ export default {
   graniteSill: {
     name: 'Window sill',
     Material: 'Granite',
+    Stone: 'Navasca (Antonio Grey), to match the countertops ⚠ assumed',
+  },
+  navascaGranite: {
+    name: 'Granite',
+    Stone: 'Navasca granite (also sold as Antonio Grey)',
+    Look: 'White and cream, with smoky grey quartz, brown mica, black tourmaline and small red garnets',
   },
   drywallReturns: {
     name: 'Window returns (top and sides)',

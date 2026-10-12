@@ -108,12 +108,27 @@ export function speckleTexture(color) {
   return toTexture(c, S);
 }
 
+// A photo of a real material (made seamless beforehand), tiled.
+// size = [width, height] in inches that the photo covers.
+function photoTexture(url, [w, h]) {
+  const t = new THREE.TextureLoader().load(url);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(1 / w, 1 / h);
+  t.anisotropy = 8;
+  return t;
+}
+
 export function createMaterials(p) {
   const std = (color, roughness = 0.6, metalness = 0, extra = {}) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, ...extra });
   // planks are drawn running along x (plan east–west); turn them for north–south
   const floorMap = woodTexture(p.floor, p.floorPlankWidth);
   if (p.floorBoards === 'north-south') floorMap.rotation = Math.PI / 2;
+  // countertop stone: a photo of the actual slab when there is one, else a speckle pattern
+  const stone = p.counterPhoto
+    ? std('#ffffff', 0.18, 0, { map: photoTexture(p.counterPhoto, p.counterPhotoSize || [16, 12]) })
+    : std('#ffffff', 0.22, 0, { map: speckleTexture(p.counter) });
   return {
     wall: std(p.walls, 0.92),
     ceiling: std(p.ceiling, 0.95),
@@ -123,10 +138,11 @@ export function createMaterials(p) {
     island: std(p.island, 0.42),
     interior: std(shade(p.cabinets, -0.04), 0.8),
     toeKick: std('#3a3734', 0.85),
-    counter: std('#ffffff', 0.22, 0, { map: speckleTexture(p.counter) }),
+    counter: stone,
     cherry: std('#ffffff', 0.3, 0, { map: woodTexture(p.cherry || '#8a4a2c', 6) }), // varnished cherry
-    granite: std('#ffffff', 0.2, 0, { map: speckleTexture(p.granite || p.counter) }),
-    backsplash: std('#ffffff', 0.18, 0, { map: tileTexture(p.backsplash, p.grout) }),
+    granite: p.counterPhoto ? stone : std('#ffffff', 0.2, 0, { map: speckleTexture(p.granite || p.counter) }),
+    // 'counter' = the countertop stone carried up the wall; otherwise a tile color
+    backsplash: p.backsplash === 'counter' ? stone : std('#ffffff', 0.18, 0, { map: tileTexture(p.backsplash, p.grout) }),
     hardware: std(p.hardware, 0.3, 0.85),
     steel: std('#d6d9db', 0.28, 1.0),
     black: std('#1a1a1a', 0.45, 0.2),
