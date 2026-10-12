@@ -7,7 +7,9 @@
 //    7′-0″ × 6′-0″  bathroom
 //    Takagi T-H3S-DV-P water heater, 11¼″ × 17¾″ × 24⅞″
 //  Interior photos: bedroom 1 looking into bedroom 2 (no wall between them,
-//    steel beam over the bedroom 1 door, bedroom wing windows).
+//    steel beam over the bedroom 1 door, bedroom wing windows); kitchen looking
+//    into the living room (vaulted kitchen ceiling on scissor trusses with a 9′
+//    peak, steel beam across the living room, its windows, the mini-split).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -33,13 +35,15 @@
 import kitchen from './kitchen.js';
 import { fmtFt } from '../js/units.js';
 
+const HEIGHT = 84; // ⚠ flat ceiling height, estimated from the living room photo (not measured)
+const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling
 const EXT = 6; // ⚠ exterior wall thickness
 const INT = 4.5; // interior partition thickness
 const OLD = 6; // ⚠ wall between the bedroom wing and the main room
 
 const LENGTH = 411; // 34′-3″ outside face to outside face
 const WING_LENGTH = 291; // 24′-3″
-const WING_WIDTH = 115; // ⚠ inside width of the bedroom wing, estimated from the photo (the drawing scaled to 88″)
+const WING_WIDTH = 101; // ⚠ inside width of the bedroom wing, estimated from the photo with a 7′ ceiling (the drawing scaled to 88″)
 const MAIN_WIDTH = 185; // 15′-5″ R.O.
 const BATH_WIDTH = 84; // 7′-0″
 const BATH_DEPTH = 72; // 6′-0″
@@ -60,12 +64,15 @@ const D_BR1 = 85.5; // ⚠ north jamb of the bedroom 1 door (scaled)
 const KX = X_EAST - kitchen.room.width; // kitchen x = 0 (40¼″ east of the main room's west wall)
 const KZ = Z_BATH + INT; // kitchen z = 0 (82½″)
 const Z_KITCHEN_END = KZ + kitchen.room.depth; // where the kitchen's east wall ends (205¼″)
+// The living room beam lines up with the bedroom wing's end wall, likely the old back
+// wall of the house: the vault runs from the kitchen's range wall to it.
+const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
 
 export default {
   id: 'house',
   kind: 'house',
   name: 'Whole house',
-  height: 96, // ⚠ not on the plan; same 8′ assumption as the kitchen
+  height: HEIGHT, // ⚠ not on the plan; estimated from the photos
 
   palette: {
     ...kitchen.palette,
@@ -95,39 +102,43 @@ export default {
       id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
       notes: 'Windows are not on the plan; they come from the bedroom photo.',
       openings: [
-        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
-        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 37, height: 40, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 37, height: 40, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
       ],
     },
     {
       id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH,
       openings: [
-        { id: 'W7', type: 'window', at: 16, width: 24, bottom: 36, height: 46, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W7', type: 'window', at: 14, width: 21, bottom: 31, height: 40, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
       ],
     },
     {
       id: 'Main north wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
       openings: [
         { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 70, notes: 'Swings in, hinged on the west jamb. ⚠ Position scaled from the drawing.' },
-        { id: 'W2', type: 'window', at: 49, width: 20, bottom: 36, height: 48, notes: '⚠ Narrow window drawn just west of the entry door; size and height are guesses.' },
       ],
     },
     {
       id: 'West wall', exterior: true, inside: 'north', x0: X_MAIN, z0: Z_SOUTH, x1: X_EAST, z1: LENGTH,
       notes: 'The 15′-5″ R.O. dimension is written along this wall.',
       openings: [
-        { id: 'W3', type: 'window', at: 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the north wall; size and height are guesses.' },
-        { id: 'W4', type: 'window', at: MAIN_WIDTH - 34 - 15, width: 30, bottom: 36, height: 48, grid: [1, 2], notes: '⚠ Centered about 34″ from the south wall; size and height are guesses.' },
+        { id: 'W3', type: 'window', at: 30, width: 33, bottom: 19, height: 60, notes: 'Tall window, north side. ⚠ Size, height and position estimated from the living room photo.' },
+        { id: 'W4', type: 'window', at: 137, width: 28, bottom: 23, height: 56, notes: 'Tall window, south side. ⚠ Size, height and position estimated from the living room photo.' },
       ],
     },
-    { id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH },
+    {
+      id: 'South wall', exterior: true, inside: 'west', x0: X_EAST, z0: EXT, x1: WIDTH, z1: LENGTH,
+      openings: [
+        { id: 'W8', type: 'window', at: 340, width: 27, bottom: 21, height: 58, notes: 'Living room. ⚠ Size, height and position estimated from the photo; the sill was hidden.' },
+      ],
+    },
 
     // ---- interior ----
     {
       id: 'Bedroom wing / main room wall', inside: 'east', x0: X_MAIN - OLD, z0: EXT, x1: X_MAIN, z1: WING_LENGTH,
       notes: 'Probably the original outside wall, given its thickness on the plan. Steel beam BEAM-1 runs along its top from the bedroom 1 door into the utility room.',
       openings: [
-        { id: 'D-BR1', type: 'door', door: 'pocket', at: D_BR1 - EXT, width: 30, height: 96 - 8, casing: false,
+        { id: 'D-BR1', type: 'door', door: 'pocket', at: D_BR1 - EXT, width: 30, height: HEIGHT - 8, casing: false,
           notes: 'Into bedroom 1. The opening goes up to the underside of the steel beam; jambs are bare wood in the photo. ⚠ Position scaled from the drawing; door type from the plan.' },
         { id: 'D-BR2', type: 'door', door: 'pocket', at: 245 - EXT, width: 30, height: 80, notes: 'Pocket door into bedroom 2. ⚠ Position scaled from the drawing.' },
       ],
@@ -160,7 +171,8 @@ export default {
       views: { eye: { pos: [X_MAIN + 8, 64, Z_BATH - 10], target: [X_BATH, 44, Z_BATH - 20] } } },
     { name: 'Walkway', x0: X_MAIN, z0: Z_BATH, x1: KX, z1: Z_KITCHEN_END, label: false, menu: false },
     { name: 'Kitchen', x0: KX, z0: KZ, x1: X_EAST, z1: Z_KITCHEN_END, notes: 'Detailed in the Kitchen view.', menu: false }, // has its own detailed view
-    { name: 'Living area', x0: X_MAIN, z0: Z_KITCHEN_END, x1: X_EAST, z1: Z_SOUTH, notes: 'Measured from the end of the kitchen’s south (sink) wall to the west wall.' },
+    { name: 'Living area', x0: X_MAIN, z0: Z_KITCHEN_END, x1: X_EAST, z1: Z_SOUTH, notes: 'Measured from the end of the kitchen’s south (sink) wall to the west wall.',
+      views: { eye: { pos: [X_MAIN + 70, 60, Z_KITCHEN_END + 2], target: [X_MAIN + 76, 76, Z_SOUTH] } } }, // like the photo: from the kitchen end
   ],
 
   include: [{ config: kitchen, x: KX, z: KZ, labels: false }],
@@ -180,8 +192,10 @@ export default {
     { id: 'ELEC', type: 'Electrical panel', kind: 'box', x: X_MAIN + 38, z: EXT, width: 14.25, depth: 4, height: 30, bottom: 48, color: '#a7abaf', metal: true, notes: '⚠ Size and height are typical, not measured.' },
     { id: 'H2O', type: 'Tankless water heater', code: 'Takagi T-H3S-DV-P', kind: 'box', x: X_BATH - INT - 24, z: EXT, width: 17.75, depth: 11.25, height: 24.88, bottom: 42, color: '#f1f1ee',
       notes: '17¾″ W × 24⅞″ H × 11¼″ D (from the plan). ⚠ Mounting height assumed.' },
-    // heating / cooling
-    { id: 'A/C', type: 'Ductless mini-split (indoor unit)', kind: 'box', x: X_EAST - 8, z: 290, width: 8, depth: 32, height: 11, bottom: 82, color: '#f6f6f4', notes: '⚠ Size and height are typical, not measured.' },
+    // heating / cooling: the indoor unit hangs on the framing above the living room
+    // beam, facing the kitchen
+    { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: HEIGHT + 8, color: '#f6f6f4',
+      notes: 'Mounted above beam BEAM-2 under the peak of the vault, blowing into the kitchen. ⚠ Size is a typical 18,000 BTU Blueridge unit, judged from the photo.' },
     { id: 'CONDENSER', type: 'Mini-split condenser (outside)', kind: 'box', x: WIDTH + 3, z: 291, width: 13, depth: 31, height: 22, bottom: 3, color: '#d9dbd9', notes: '⚠ Size is typical, not measured.' },
     { id: 'PAD', type: 'Equipment pad', kind: 'box', x: WIDTH + 1, z: 289, width: 17, depth: 35, height: 3.6, bottom: -0.6, color: '#b9b8b2', label: false },
   ],
@@ -192,6 +206,21 @@ export default {
     {
       id: 'BEAM-1', type: 'Steel beam (W-flange)', from: [X_MAIN - OLD / 2, EXT], to: [X_MAIN - OLD / 2, D_BR1 + 30 + 20], depth: 8, flange: 4, materials: ['steelW8'],
       notes: 'Over the bedroom 1 door, running along the old outside wall north into the utility room. Exposed, top at the ceiling. ⚠ Where it ends is estimated: about 20″ past the door in the photo, and at the outside wall in the utility room.',
+    },
+    {
+      id: 'BEAM-2', type: 'Steel beam (W-flange)', from: [X_MAIN - 3, Z_BEAM], to: [X_EAST + 3, Z_BEAM], depth: 8, flange: 4, bottom: HEIGHT, materials: ['steelW8'],
+      notes: 'Spans the whole width of the living room where the vaulted ceiling ends; its bottom is flush with the flat living room ceiling. ⚠ Position along the room estimated from the photo.',
+    },
+  ],
+
+  // Vaulted ceilings (scissor trusses). The ceiling rises from the flat ceiling height at
+  // x0 and x1 to `peak` along a ridge down the middle (plan north–south). `ends` are the
+  // walls closing the vault: z = where the wall starts, t = thickness, base = its bottom.
+  vaults: [
+    {
+      id: 'Kitchen vault', type: 'Vaulted ceiling (scissor trusses)', x0: X_MAIN, x1: X_EAST, z0: KZ, z1: Z_BEAM - 2, peak: PEAK,
+      ends: [{ z: KZ - INT, t: INT, base: HEIGHT }, { z: Z_BEAM - 2, t: 4, base: HEIGHT + 8 }],
+      notes: '9′-0″ at the peak. Runs from the kitchen’s range wall to the living room beam. ⚠ Where it starts at the range-wall end is assumed.',
     },
   ],
 

@@ -61,8 +61,11 @@ export function placeFootprint(x, z, w, d, facing) {
   return g;
 }
 
-export function buildRoom(cfg) {
+// opts.ceilingAt(x, z) gives the ceiling height at a point (room coordinates) when the room
+// sits under a sloped ceiling in the house; pendants and ceiling lights follow it.
+export function buildRoom(cfg, opts = {}) {
   const { width: W, depth: D, height: H, wallThickness: t = 4.5 } = cfg.room;
+  const ceilingAt = opts.ceilingAt || (() => H);
   const M = createMaterials(cfg.palette);
   const ctx = { M, style: cfg.style?.doorStyle || 'shaker', handle: cfg.style?.handle || 'bar', room: cfg.room };
   const frames = wallFrames(W, D);
@@ -413,11 +416,14 @@ export function buildRoom(cfg) {
       const o = n === 1 ? 0 : -span / 2 + (span * i) / (n - 1);
       const px = c.x + c.width / 2 + (alongX ? o : 0);
       const pz = c.z + c.depth / 2 + (alongX ? 0 : o) + (p.offset ?? 0);
-      F.pendant(pg, ctx, px, p.bottom ?? 68, pz, H);
+      F.pendant(pg, ctx, px, p.bottom ?? 68, pz, ceilingAt(px, pz));
     }
     tag(pg, { id: 'Pendants', type: `${n} pendant lights`, bottom: p.bottom ?? 68, materials: p.materials, notes: `Spaced ${fmtIn(n > 1 ? span / (n - 1) : 0)} apart over ${p.over}.` });
   }
-  for (const [cx, cz] of Lc.cans || []) F.recessedLight(ceiling, ctx, cx, cz, H);
+  for (const [cx, cz] of Lc.cans || []) {
+    const tilt = Math.atan((ceilingAt(cx + 1, cz) - ceilingAt(cx - 1, cz)) / 2);
+    F.recessedLight(ceiling, ctx, cx, cz, ceilingAt(cx, cz), tilt);
+  }
 
   // ---------- baseboards ----------
   if (cfg.style?.baseboard !== false) {

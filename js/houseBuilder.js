@@ -82,11 +82,48 @@ export function buildHouse(cfg, focus) {
 
   const ceiling = new THREE.Group();
   root.add(ceiling);
-  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling'), notes: 'Ceiling height is an assumption until it is measured.' });
+  tag(ceiling, { id: 'Ceiling', type: 'Ceiling', height: H, materials: mats(undefined, 'ceiling'), notes: 'Ceiling height is an estimate until it is measured.' });
+  const vaults = cfg.vaults || [];
   for (const [x0, z0, x1, z1] of cfg.footprint) {
     // subfloor sits a hair below the room floors so it only shows under walls and doorways
     tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor') });
-    addBox(ceiling, M.ceiling, x0, H, z0, x1 - x0, 1, z1 - z0, { cast: false });
+    // flat ceiling everywhere except under the vaults
+    let flat = [{ x: x0, y: z0, w: x1 - x0, h: z1 - z0 }];
+    for (const v of vaults) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
+    for (const r of flat) addBox(ceiling, M.ceiling, r.x, H, r.y, r.w, 1, r.h, { cast: false });
+  }
+
+  // vaulted ceilings: rise from H at x0 and x1 to the peak over the middle (ridge along z)
+  const ceilingAt = (x, z) => {
+    const v = vaults.find((a) => x >= a.x0 && x <= a.x1 && z >= a.z0 && z <= a.z1);
+    if (!v) return H;
+    const half = (v.x1 - v.x0) / 2;
+    return v.peak - ((v.peak - H) * Math.abs(x - (v.x0 + half))) / half;
+  };
+  for (const v of vaults) {
+    const half = (v.x1 - v.x0) / 2, rise = v.peak - H, d = v.z1 - v.z0;
+    const len = Math.hypot(half, rise), ang = Math.atan2(rise, half);
+    const vg = new THREE.Group();
+    ceiling.add(vg);
+    for (const side of [1, -1]) {
+      const g = new THREE.Group();
+      g.position.set(side > 0 ? v.x0 : v.x1, H, v.z0);
+      g.rotation.z = side * ang;
+      addBox(g, M.ceiling, side > 0 ? 0 : -len, 0, 0, len, 1, d, { cast: false });
+      vg.add(g);
+    }
+    // end walls above the plate (or above a beam), up to the sloped ceiling
+    for (const e of v.ends || []) {
+      const inset = ((e.base - H) * half) / rise;
+      const shape = new THREE.Shape([
+        new THREE.Vector2(v.x0 + inset, e.base), new THREE.Vector2(v.x1 - inset, e.base), new THREE.Vector2(v.x0 + half, v.peak + 1),
+      ]);
+      const m = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, { depth: e.t, bevelEnabled: false }), M.wall);
+      m.position.z = e.z;
+      m.castShadow = m.receiveShadow = true;
+      vg.add(m);
+    }
+    tag(vg, { id: v.id, type: v.type || 'Vaulted ceiling', width: v.x1 - v.x0, height: v.peak, materials: mats(v.materials, 'ceiling'), notes: v.notes });
   }
 
   for (const r of cfg.rooms || []) {
@@ -100,7 +137,7 @@ export function buildHouse(cfg, focus) {
   const imported = [];
   for (const inc of cfg.include || []) {
     const rc = inc.config;
-    const sub = buildRoom(rc);
+    const sub = buildRoom(rc, { ceilingAt: (x, z) => ceilingAt(inc.x + x, inc.z + z) });
     for (const w of sub.walls) w.group.removeFromParent();
     sub.root.getObjectByName('floor')?.removeFromParent();
     sub.ceiling.getObjectByName('ceiling')?.removeFromParent();
@@ -164,7 +201,7 @@ export function buildHouse(cfg, focus) {
       const a = Math.max(Math.min(p0, p1), min), e = Math.min(Math.max(p0, p1), min + L);
       if (e <= a) continue;
       const at = a - min, w = e - a;
-      rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: H - b.depth, h: b.depth });
+      rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: b.bottom ?? H - b.depth, h: b.depth });
     }
     for (const r of rects) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
     const endA = fr.along === 'x' ? 'west' : 'north';
@@ -239,11 +276,12 @@ export function buildHouse(cfg, focus) {
     const [x0, z0] = b.from, [x1, z1] = b.to;
     const len = Math.hypot(x1 - x0, z1 - z0);
     const g = new THREE.Group();
-    g.position.set(x0, H - b.depth, z0);
+    const bottom = b.bottom ?? H - b.depth; // default: top at the ceiling
+    g.position.set(x0, bottom, z0);
     g.rotation.y = -Math.atan2(z1 - z0, x1 - x0);
     HF.steelBeam(g, ctx, len, b.depth, b.flange);
     root.add(g);
-    tag(g, { id: b.id, type: b.type || 'Steel beam', length: len, width: b.flange, height: b.depth, bottom: H - b.depth, materials: mats(b.materials, 'steel'), notes: b.notes });
+    tag(g, { id: b.id, type: b.type || 'Steel beam', length: len, width: b.flange, height: b.depth, bottom, materials: mats(b.materials, 'steel'), notes: b.notes });
     label(g, `${b.id} · ${fmtIn(b.flange)} × ${fmtIn(b.depth)}`, len / 2, -3, 0);
   }
 
@@ -306,7 +344,7 @@ function focusRoom(cfg, name, { root, ceiling, labels, wallGroups, label, H }) {
   return { root, walls, ceiling, labels, clip, views: { eye: { pos: [r.x0 + 10, 64, r.z1 - 10], target: [r.x1, 44, r.z0] }, ...r.views }, bounds: { W: r.x1 - r.x0, D: r.z1 - r.z0, H, floor: clip } };
 }
 
-// Remove rectangle c from a list of wall rectangles (all in wall-local x/y).
+// Remove rectangle c from a list of rectangles {x, y, w, h} (wall x/y, or plan x/z).
 function carve(rects, c) {
   const out = [];
   for (const r of rects) {

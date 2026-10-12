@@ -262,9 +262,14 @@ export function pendant(parent, ctx, x, bottom, z, ceiling) {
   parent.add(light);
 }
 
-export function recessedLight(parent, ctx, x, z, ceiling) {
-  addMesh(parent, new THREE.CylinderGeometry(3.4, 3.4, 0.3, 24), ctx.M.trim, x, ceiling - 0.15, z, { cast: false });
-  addMesh(parent, new THREE.CylinderGeometry(2.6, 2.6, 0.32, 24), ctx.M.canLens, x, ceiling - 0.17, z, { cast: false });
+// tilt = slope of the ceiling across x (radians), for vaulted ceilings
+export function recessedLight(parent, ctx, x, z, ceiling, tilt = 0) {
+  const g = new THREE.Group();
+  g.position.set(x, ceiling, z);
+  g.rotation.z = tilt;
+  addMesh(g, new THREE.CylinderGeometry(3.4, 3.4, 0.3, 24), ctx.M.trim, 0, -0.15, 0, { cast: false });
+  addMesh(g, new THREE.CylinderGeometry(2.6, 2.6, 0.32, 24), ctx.M.canLens, 0, -0.17, 0, { cast: false });
+  parent.add(g);
   const light = new THREE.PointLight('#fff1dc', 2.2, 0, 2);
   light.position.set(x, ceiling - 3, z);
   parent.add(light);
