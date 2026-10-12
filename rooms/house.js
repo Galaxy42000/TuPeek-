@@ -245,8 +245,8 @@ export default {
     // utility room back wall, from the utility room photo (left to right): main panel,
     // EcoSmart tankless heater with a copper manifold below it, whole-house filters near
     // the floor, and the well pressure tank next to the washer/dryer ⚠ positions scaled from the photo
-    { id: 'ELEC', type: 'Main electrical panel', kind: 'box', x: 120.25, z: EXT, width: 14.5, depth: 4, height: 36, bottom: 29, color: '#a7abaf', metal: true,
-      notes: 'Main breaker panel, recessed in the wall framing. ⚠ Size and height scaled from the photo.' },
+    { id: 'ELEC', type: 'Main electrical panel (flush mount)', code: 'Square D', kind: 'box', x: 120.25, z: EXT, width: 14.5, depth: 0.4, height: 36, bottom: 29, color: '#a7abaf', metal: true, materials: ['squareDPanel'],
+      notes: 'Square D main breaker panel, mounted flush: the box is set into the wall framing, so only the cover shows. ⚠ Size and height scaled from the photo.' },
     { id: 'H2O', type: 'Electric tankless water heater', code: 'EcoSmart', kind: 'box', x: 143, z: EXT, width: 17, depth: 4, height: 16, bottom: 58, color: '#d6d8d8', materials: ['ecosmartHeater'],
       notes: 'EcoSmart electric tankless heater (the plan listed a Takagi gas unit; the photo shows the EcoSmart installed). ⚠ Size typical for the EcoSmart ECO line; model not recorded.' },
     { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 151.75, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },

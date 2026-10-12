@@ -127,6 +127,12 @@ export default {
     name: 'Stone step',
     Type: 'Decorative natural stone slab ⚠ stone and size not recorded',
   },
+  squareDPanel: {
+    name: 'Electrical panel',
+    Brand: 'Square D',
+    Type: 'Plug-On Neutral load center with main breaker',
+    Mounting: 'Flush (recessed in the wall)',
+  },
   ecosmartHeater: {
     name: 'Water heater',
     Brand: 'EcoSmart',
