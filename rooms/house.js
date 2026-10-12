@@ -19,7 +19,8 @@
 //    (drain from the toilet past the shower trap, a close-up of the shower trap, and the kitchen sink wye
 //    where the drain turns down to the septic); framing photos: the kitchen toward the bathroom
 //    end (scissor trusses, partition studs), the sink wall (window, slider, heel blocking), and
-//    toward the bedrooms (steel beams on posts over the old outside wall).
+//    toward the bedrooms (steel beams on posts over the old outside wall), and into the living
+//    room (its two tall windows, the slider, vented blocking along the top of the end wall).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //

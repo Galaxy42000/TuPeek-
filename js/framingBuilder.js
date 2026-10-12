@@ -216,8 +216,7 @@ export function roofFraming(cfg, mat) {
   const B = (x) => Math.max(H, vaultHeight({ x0: vx0, x1: vx1, peak }, H, x)) + depth / 2;
   // blocking between the truss heels on top of the eave walls (seen over the sink wall)
   const blocking = (zs, xw, roofY) => {
-    const h = roofY(xw) - c - depth / 2 - H;
-    if (h < 1) return;
+    const h = Math.max(3.5, roofY(xw) - c - depth / 2 - H); // at least a 2×4 on edge, as in the photos
     for (let i = 0; i + 1 < zs.length; i++) fm.add([xw, H + h / 2, zs[i] + T / 2], [xw, H + h / 2, zs[i + 1] - T / 2], [1, 0, 0], T, h);
   };
   const zMain = layout(T / 2, mn.z1 - T / 2), zLiving = layout(mn.z1 + 24, z1 - 12);
@@ -262,11 +261,17 @@ export function roofFraming(cfg, mat) {
   fm.add([xm, yr(P + ml * (xm - xa)), zr], [xb + O, yr(Hp(z1 + O)), z1 + O], [1, 0, -1], T, depth);
   fm.add([xm, yr(P + ml * (xm - xa)), mn.z1], [xm, yr(P + ml * (xm - xa)), zr], [1, 0, 0], T, depth + 2);
   // jack rafters on the hipped end, from the end wall up to the hips
+  const jacks = [xa + 3];
   for (let x = xa + 16; x < xb - 4; x += 24) {
     const zt = z1 - Math.min(x - xa, xb - x); // where the jack meets the hip
     if (zt > z1 - 4) continue;
     fm.add([x, yr(Hp(z1 + O)), z1 + O], [x, yr(Hp(Math.max(zt, zr))), Math.max(zt, zr)], [1, 0, 0], T, depth);
+    jacks.push(x);
   }
+  // and blocking between them along the top of the end wall (the row of vented blocks over
+  // the living room windows in the photo)
+  jacks.push(xb - 3);
+  for (let i = 0; i + 1 < jacks.length; i++) fm.add([jacks[i] + T / 2, H + 1.75, z1 - 3], [jacks[i + 1] - T / 2, H + 1.75, z1 - 3], [0, 0, 1], T, 3.5);
 
   // bedroom wing: shed rafters 24″ on centre from the outside wall up to the old outside
   // wall (where they meet the trusses), over flat ceiling joists
