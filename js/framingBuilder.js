@@ -9,8 +9,9 @@ import { vaultHeight } from './geometry.js';
 //    added to the wall's group, so it cuts away with the wall. Where a wall closes a
 //    vault, a sloped ceiling or a gable, studs carry on up to `topAt(x)` under a raked plate;
 //  • roofFraming: trusses 24″ on centre across the house (scissor trusses under the
-//    kitchen/bathroom vault, common and step-down hip trusses over the living room),
-//    shed rafters and ceiling joists over the bedroom wing, and the living room's hips.
+//    kitchen/bathroom vault),
+//    shed rafters and ceiling joists over the bedroom wing, and a stick-framed hip roof
+//    (rafters, hips and jacks) over the living room.
 // Every member is one instance of a unit box, so each wall (and the roof) is a single draw.
 
 const T = 1.5; // thickness of a 2× member
@@ -237,35 +238,31 @@ export function roofFraming(cfg, mat) {
     ]);
   }
 
-  // living room: common trusses with a flat bottom chord at the wall plates; toward the
-  // hipped end they step down (flat top) under the hip
-  const xL = xa, xR = xb, yB = H + depth / 2;
+  // living room: stick-framed hip roof (living room photo): 2×6 common rafters in pairs from
+  // each eave up to a ridge board, then side jacks from the eaves up to the hips
+  const rd = 5.5, cr = 0.75 + rd / 2 + 0.6, ry = (x) => Math.min(SL(x), NL(x)) - cr;
   for (const z of zLiving) {
-    const top0 = (x) => Math.min(SL(x), NL(x), Hp(z)) - c;
-    const xs = [xa - O, xL, xm, xR, xb + O];
-    const flatY = Hp(z);
-    if (flatY < Math.min(SL(xm), NL(xm))) xs.push(xa + (flatY - P) / ml, xb - (flatY - P) / ml);
-    const top = [...new Set(xs)].sort((p, q) => p - q).map((x) => [x, top0(x)]);
-    if (top0(xm) - yB < 3) continue;
-    const bottom = [[xL, yB], [xR, yB]];
-    const webs = [[[xm, yB], [xm, top0(xm)]]];
-    for (const f of [0.33, 0.67]) {
-      const x = xL + (xR - xL) * f;
-      if (top0(x) - yB > 5) webs.push([[x, yB], [f < 0.5 ? xL + (xR - xL) * 0.18 : xL + (xR - xL) * 0.82, top0(f < 0.5 ? xL + (xR - xL) * 0.18 : xL + (xR - xL) * 0.82)]], [[x, yB], [xm, top0(xm) - (top0(xm) - yB) * 0.3]]);
+    if (z <= zr) {
+      fm.add([xa - O, ry(xa - O), z], [xm - T, ry(xm - T), z], n, T, rd);
+      fm.add([xb + O, ry(xb + O), z], [xm + T, ry(xm + T), z], n, T, rd);
+    } else {
+      const reach = z1 - z; // the hips run at 45° in plan
+      if (reach < 6) continue;
+      fm.add([xa - O, ry(xa - O), z], [xa + reach, ry(xa + reach), z], n, T, rd);
+      fm.add([xb + O, ry(xb + O), z], [xb - reach, ry(xb - reach), z], n, T, rd);
     }
-    truss(z, top, bottom, webs);
   }
   // hip rafters from the end of the living room ridge down to the corners, and a ridge board
-  const yr = (y) => y - c;
-  fm.add([xm, yr(P + ml * (xm - xa)), zr], [xa - O, yr(Hp(z1 + O)), z1 + O], [1, 0, 1], T, depth);
-  fm.add([xm, yr(P + ml * (xm - xa)), zr], [xb + O, yr(Hp(z1 + O)), z1 + O], [1, 0, -1], T, depth);
-  fm.add([xm, yr(P + ml * (xm - xa)), mn.z1], [xm, yr(P + ml * (xm - xa)), zr], [1, 0, 0], T, depth + 2);
+  const yr = (y) => y - cr;
+  fm.add([xm, yr(P + ml * (xm - xa)), zr], [xa - O, yr(Hp(z1 + O)), z1 + O], [1, 0, 1], T, 7.25);
+  fm.add([xm, yr(P + ml * (xm - xa)), zr], [xb + O, yr(Hp(z1 + O)), z1 + O], [1, 0, -1], T, 7.25);
+  fm.add([xm, yr(P + ml * (xm - xa)), mn.z1], [xm, yr(P + ml * (xm - xa)), zr], [1, 0, 0], T, 7.25);
   // jack rafters on the hipped end, from the end wall up to the hips
   const jacks = [xa + 3];
   for (let x = xa + 16; x < xb - 4; x += 24) {
     const zt = z1 - Math.min(x - xa, xb - x); // where the jack meets the hip
     if (zt > z1 - 4) continue;
-    fm.add([x, yr(Hp(z1 + O)), z1 + O], [x, yr(Hp(Math.max(zt, zr))), Math.max(zt, zr)], [1, 0, 0], T, depth);
+    fm.add([x, yr(Hp(z1 + O)), z1 + O], [x, yr(Hp(Math.max(zt, zr))), Math.max(zt, zr)], [1, 0, 0], T, rd);
     jacks.push(x);
   }
   // and blocking between them along the top of the end wall (the row of vented blocks over

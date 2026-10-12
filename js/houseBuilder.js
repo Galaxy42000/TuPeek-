@@ -421,7 +421,7 @@ export function buildHouse(cfg, focus) {
     root.add(rf);
     framingLayers.push(rf);
     tag(rf, { id: 'Roof framing', type: 'Trusses and rafters', materials: ['scissorTrusses'],
-      notes: 'Scissor trusses 24″ on centre over the kitchen, hall and bathroom (their bottom chords follow the vaulted ceiling), common and step-down hip trusses over the living room, and shed rafters over flat ceiling joists in the bedroom wing. ⚠ Truss webs and spacing drawn to a typical layout; only the kitchen trusses are seen in the photos.' });
+      notes: 'Scissor trusses 24″ on centre over the kitchen, hall and bathroom (their bottom chords follow the vaulted ceiling), a stick-framed hip roof over the living room (2×6 rafters to a ridge board, hip rafters at the corners and jack rafters on the end, as in the living room photo), and shed rafters over flat ceiling joists in the bedroom wing. ⚠ Truss webs and spacing drawn to a typical layout; only the kitchen trusses are seen in the photos.' });
   }
   const framing = { layers: framingLayers, finish };
 
