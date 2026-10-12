@@ -183,8 +183,8 @@ export default {
     {
       id: 'Main north wall (entry)', exterior: true, inside: 'east', x0: X_MAIN - OLD, z0: WING_LENGTH, x1: X_MAIN, z1: LENGTH,
       openings: [
-        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 7, width: 36, height: 80, open: 0, lites: 5, color: '#c4212b', materials: ['reebEntryDoor'],
-          notes: 'Red 5-lite fiberglass entry door, 36″ × 80″. Swings in, hinged on the west jamb; shown closed. ⚠ Position scaled from the drawing.' },
+        { id: 'ENTRY', type: 'door', door: 'swing', hinge: 'south', at: 22, width: 36, height: 80, open: 0, lites: 5, color: '#c4212b', materials: ['reebEntryDoor'],
+          notes: 'Red 5-lite fiberglass entry door, 36″ × 80″. Swings in, hinged on the west jamb; shown closed. About 22″ from the bedroom wing corner: the interior photos show a strip of wall about 20″ wide (doubled studs, a plywood panel and the post under beam BEAM-2) between the door and that corner, and about 5′ of wall on its other side. ⚠ Measured off the photos.' },
       ],
     },
     {
@@ -281,6 +281,9 @@ export default {
       notes: 'Two filter housings on the incoming water line. ⚠ Size scaled from the photo.' },
     { id: 'WASHER BOX', type: 'Washer outlet box (shut-off valves)', code: 'Eastman', kind: 'box', x: WASHER_BOX_X - 4.5, z: EXT, width: 9, depth: 0.75, height: 10, bottom: 33, color: '#f4f4f2', materials: ['eastmanBox'],
       notes: 'Eastman recessed box with the hot and cold shut-off valves and the drain for the washer/dryer, on the back wall right next to the bathroom wall, behind the washer/dryer. ⚠ Size typical; position from the bathroom plumbing photo.' },
+    // switches beside the entry door, on the strip of wall between it and the bedroom wing corner
+    { id: 'SW-ENTRY', type: 'Light switches (4-gang)', kind: 'box', x: X_MAIN, z: WING_LENGTH + 6, width: 0.4, depth: 8.2, height: 4.5, bottom: 46, color: '#f4f4f2',
+      notes: 'Four-gang switch box beside the entry door (entry door photo), presumably for the living room cans and the porch light. ⚠ Height and what each switch runs are assumptions.' },
     { id: 'TANK', type: 'Well pressure tank', kind: 'tank', x: X_BATH - INT - 27.5 - 2 - 16, z: EXT + 2, width: 16, depth: 16, height: 37, color: '#2f6fb7', materials: ['pressureTank'],
       notes: '25-gallon blue pressure tank on the floor, beside the washer/dryer, with its pressure switch and fittings. ⚠ Size typical for a 25-gallon tank.' },
     // heating / cooling: the indoor unit hangs on the framing above the living room
