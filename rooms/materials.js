@@ -133,6 +133,11 @@ export default {
     Opening: '88″ wide × 80″ tall',
     Finish: 'Painted to match the trim',
   },
+  pexHot: { name: 'Water line', Material: 'PEX tubing, red (hot)' },
+  pexCold: { name: 'Water line', Material: 'PEX tubing, blue (cold)' },
+  copperManifold: { name: 'Manifold', Material: 'Copper' },
+  pvcDwv: { name: 'Drain / vent pipe', Material: 'PVC Schedule 40 DWV (2″ shown in the photo)' },
+  eastmanBox: { name: 'Washer outlet box', Brand: 'Eastman', Contents: 'Hot and cold shut-off valves, drain' },
   squareDPanel: {
     name: 'Electrical panel',
     Brand: 'Square D',

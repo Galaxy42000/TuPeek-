@@ -17,6 +17,7 @@ An interactive 3D model of the house that runs in the browser, built with [Three
 | **All labels** | Labels (IDs, widths, room sizes, dimensions) are hidden until you click something, which shows just that piece's label. Tick this to show them all. |
 | **Cut away walls** | Hides the walls between the camera and the room, dollhouse style |
 | **Outside** / **Roof** | (Whole house) Outside walks around the finished exterior (walls stay up so the siding and roof show). The roof also shows whenever Cut away walls is off, and from below the ridge. Untick Roof to hide it. |
+| **Plumbing** | Shows the water lines (red hot, blue cold PEX), drains and vents through the walls and floor. Click a pipe for what it feeds. |
 | **Deck framing** | (Whole house) Shows the deck's framing as a blue line drawing over the decking |
 | Compass (bottom left) | Always points to true north and shows which way you're facing, in every view and in walk mode |
 
@@ -64,6 +65,7 @@ js/fixtures.js      cabinets, appliances, sink, windows, lights, stools
 js/houseFixtures.js toilet, vanity, shower, washer/dryer, mechanical boxes
 js/deckBuilder.js   deck boards, border, skirt and the framing line drawing
 js/roofBuilder.js   roof, fascia, soffits and lights, entry porch roof
+js/plumbingBuilder.js  plumbing runs (x-ray layer)
 js/materials.js     materials + procedural textures (wood, tile, quartz)
 js/compass.js       plan → true directions
 rooms/index.js      list of views in the menu

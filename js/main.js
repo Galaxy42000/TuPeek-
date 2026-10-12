@@ -59,7 +59,7 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true };
+const opts = { cutaway: true, ceiling: true, dims: false, framing: false, roof: true, plumbing: false };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
@@ -98,6 +98,8 @@ async function loadRoom(id) {
   $('#roof-toggle').hidden = !room.roof;
   $('#outside-btn').hidden = !viewPresets().outside;
   if (room.framing) room.framing.visible = opts.framing;
+  $('#plumbing-toggle').hidden = !room.plumbing;
+  if (room.plumbing) room.plumbing.visible = opts.plumbing;
   setView('overview', false);
 }
 
@@ -263,7 +265,9 @@ function pick(cx, cy) {
   raycaster.setFromCamera(ndc, camera);
   const p = new THREE.Vector3();
   const shown = (h) => !room.clip || insideClip(room.clip, p.copy(h.point).divideScalar(IN), 0);
-  const hit = raycaster.intersectObject(room.root, true).find((h) => visibleInScene(h.object) && !h.object.material?.transparent && shown(h));
+  // x-ray layers (plumbing) are drawn through walls, so they win the click when shown
+  const xray = room.plumbing?.visible ? raycaster.intersectObject(room.plumbing, true).find((h) => shown(h)) : null;
+  const hit = xray || raycaster.intersectObject(room.root, true).find((h) => visibleInScene(h.object) && !h.object.material?.transparent && shown(h));
   let o = hit?.object;
   while (o && !o.userData.info) o = o.parent;
   select(o || null);
@@ -379,6 +383,7 @@ $('#t-dims').addEventListener('change', (e) => { opts.dims = e.target.checked; a
 $('#t-cutaway').addEventListener('change', (e) => (opts.cutaway = e.target.checked));
 $('#t-roof').addEventListener('change', (e) => (opts.roof = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
+$('#t-plumbing').addEventListener('change', (e) => { opts.plumbing = e.target.checked; if (room?.plumbing) room.plumbing.visible = opts.plumbing; });
 $('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; if (room?.framing) room.framing.visible = opts.framing; });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));
 

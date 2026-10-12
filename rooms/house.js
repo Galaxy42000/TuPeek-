@@ -87,6 +87,17 @@ const LOWER = { z0: 110, z1: 290, out: 144, clip: 45 };
 // sill, and a narrower step in front that stops short of the landing's far end.
 // ⚠ Sizes estimated from the photos.
 const PORCH = { width: 72, out: 48, step: 12, stepWidth: 58 };
+
+// Plumbing, from the bathroom plumbing photo (⚠ routes approximate). Supply lines run
+// along the back (gable) wall in its stud cavity from the manifolds in the utility room,
+// through the bathroom wall, to the washer box and the bathroom fixtures.
+const CAV = EXT / 2; // middle of the back wall's stud cavity
+const WASHER_BOX_X = X_BATH - INT - 11;
+const P_VANITY = X_EAST - 38 - 12, P_TOILET = X_BATH + 11.5, P_SHOWER = X_EAST - 18, P_STACK = X_EAST - 30;
+const supply = (kind, id, y, toX, endY, what) => ({
+  id, kind, materials: [kind === 'hot' ? 'pexHot' : 'pexCold'], notes: `Runs from the ${kind === 'hot' ? 'water heater’s manifold' : 'cold manifold'} along the back wall to ${what}. ⚠ Route approximate.`,
+  path: [[151.75, kind === 'hot' ? 28 : 24, CAV], [151.75, y, CAV], [toX, y, CAV], [toX, endY, CAV]],
+});
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
 // wall of the house: the vault runs from the kitchen's range wall to it.
 const Z_BEAM = WING_LENGTH - OLD / 2; // ⚠ beam centerline (288″), placed from the photo
@@ -255,8 +266,8 @@ export default {
     { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 151.75, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
     { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: 138.5, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
       notes: 'Two filter housings on the incoming water line. ⚠ Size scaled from the photo.' },
-    { id: 'WASHER BOX', type: 'Washer outlet box (shut-off valves)', kind: 'box', x: 172, z: EXT, width: 9, depth: 0.75, height: 10, bottom: 33, color: '#f4f4f2',
-      notes: 'Recessed box with the hot and cold shut-off valves (and drain) for the washer/dryer, just right of the pressure tank, behind the washer/dryer. ⚠ Size typical; position scaled from the utility room photo.' },
+    { id: 'WASHER BOX', type: 'Washer outlet box (shut-off valves)', code: 'Eastman', kind: 'box', x: WASHER_BOX_X - 4.5, z: EXT, width: 9, depth: 0.75, height: 10, bottom: 33, color: '#f4f4f2', materials: ['eastmanBox'],
+      notes: 'Eastman recessed box with the hot and cold shut-off valves and the drain for the washer/dryer, on the back wall right next to the bathroom wall, behind the washer/dryer. ⚠ Size typical; position from the bathroom plumbing photo.' },
     { id: 'TANK', type: 'Well pressure tank', kind: 'tank', x: X_BATH - INT - 27.5 - 2 - 16, z: EXT + 2, width: 16, depth: 16, height: 37, color: '#2f6fb7', materials: ['pressureTank'],
       notes: '25-gallon blue pressure tank on the floor, beside the washer/dryer, with its pressure switch and fittings. ⚠ Size typical for a 25-gallon tank.' },
     // heating / cooling: the indoor unit hangs on the framing above the living room
@@ -288,6 +299,34 @@ export default {
   ceilings: [
     { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, height: LIVING_CEILING,
       notes: '⚠ About 7′, flush with the underside of beam BEAM-2; estimated from the living room photo.' },
+  ],
+
+  // Plumbing runs (see js/plumbingBuilder.js): kind hot | cold | main | drain | vent,
+  // path = [x, y, z] points. Shown with the Plumbing checkbox.
+  plumbing: [
+    // main: pressure tank → filters → cold manifold; heater fed from it
+    { id: 'Main line', kind: 'main', materials: ['pexCold'], notes: 'From the well pressure tank through the whole-house filters to the cold manifold and the water heater. ⚠ Route approximate.',
+      path: [[X_BATH - INT - 27.5 - 10, 6, EXT + 10], [X_BATH - INT - 27.5 - 10, 6, CAV], [143.5, 6, CAV], [143.5, 24, CAV], [151.75, 24, CAV]] },
+    { id: 'Heater feed', kind: 'cold', path: [[149, 24, CAV], [149, 58, CAV]], materials: ['pexCold'], notes: 'Cold water up to the EcoSmart heater.' },
+    { id: 'Hot manifold', kind: 'hot', d: 1, path: [[151.75, 58, CAV], [151.75, 28, CAV]], materials: ['copperManifold'], notes: 'Copper manifold under the heater.' },
+    supply('hot', 'Hot to washer', 32, WASHER_BOX_X - 1.5, 38, 'the washer box'),
+    supply('cold', 'Cold to washer', 27, WASHER_BOX_X + 1.5, 38, 'the washer box'),
+    supply('hot', 'Hot to vanity', 30.5, P_VANITY - 3, 20, 'the vanity'),
+    supply('hot', 'Hot to shower', 29, P_SHOWER, 46, 'the shower valve'),
+    supply('cold', 'Cold to toilet', 25.5, P_TOILET + 6, 8, 'the toilet'),
+    supply('cold', 'Cold to vanity', 24, P_VANITY + 3, 20, 'the vanity'),
+    supply('cold', 'Cold to shower', 22.5, P_SHOWER + 2, 46, 'the shower valve'),
+    // drains and vents (PVC)
+    { id: 'Washer drain', kind: 'drain', materials: ['pvcDwv'], notes: 'Standpipe and trap under the washer box, down into the floor.',
+      path: [[WASHER_BOX_X, 33, CAV], [WASHER_BOX_X, 6, CAV], [WASHER_BOX_X + 3, 3, CAV], [WASHER_BOX_X + 3, -8, CAV]] },
+    { id: 'Vanity drain', kind: 'drain', materials: ['pvcDwv'], notes: '2″ PVC: the vanity drain comes down the wall to a tee near the floor; the line along the wall continues to the washer side.',
+      path: [[P_VANITY, 20, EXT + 3], [P_VANITY, 20, CAV], [P_VANITY, 11, CAV], [X_BATH - INT, 11, CAV]] },
+    { id: 'Bathroom drain', kind: 'drain', d: 3.5, materials: ['pvcDwv'], notes: '3″ drain under the floor from the toilet and the shower to the stack. ⚠ Route assumed.',
+      path: [[P_TOILET, 0, EXT + 12], [P_TOILET, -8, EXT + 12], [P_SHOWER - 4, -8, EXT + 14], [P_SHOWER - 4, 0, EXT + 14]] },
+    { id: 'Vanity tee', kind: 'drain', materials: ['pvcDwv'], path: [[P_VANITY, 11, CAV], [P_VANITY, -8, CAV], [P_VANITY, -8, EXT + 12]], notes: 'Down into the floor to the bathroom drain.' },
+    { id: 'Vent stack', kind: 'vent', d: 2.375, materials: ['pvcDwv'], notes: 'Vent stack up the back wall, through the ceiling and out the roof. The vanity vent ties into it.',
+      path: [[P_STACK, -8, CAV], [P_STACK, 126, CAV]] },
+    { id: 'Vanity vent', kind: 'vent', materials: ['pvcDwv'], path: [[P_VANITY, 20, CAV], [P_VANITY, 37, CAV], [P_STACK, 37, CAV]], notes: 'Vent from the vanity drain over to the stack.' },
   ],
 
   // Single sloped ceilings, following the roof: `along` is the vault whose slope it
