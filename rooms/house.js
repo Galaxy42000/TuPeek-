@@ -404,7 +404,7 @@ export default {
     // small gable roof over the entry door; the porch floor is one board below the door sill
     porch: {
       wall: X_MAIN - OLD, z0: WING_LENGTH - 30, z1: WING_LENGTH + 72, depth: 40, overhang: 6, eave: 100, pitch: 6 / 12, back: 90,
-      notes: 'Open gable with no tie beam across the front; its side over the bedroom wing comes down onto the wing roof. The porch floor and steps are in `decks` and `stoneSteps`.',
+      notes: 'Gable with no tie beam across the front; the wall above the door is closed, sided straight up to the underside of the porch roof. Its side over the bedroom wing comes down onto the wing roof. The porch floor and steps are in `decks` and `stoneSteps`.',
     },
     notes: 'Kitchen/bathroom roof with gables at both ends; a lower, shallower hipped roof over the living room that the kitchen gable end sits above; a shed roof over the bedroom wing; a gable over the entry. ⚠ Pitches and overhangs estimated from the photos.',
   },

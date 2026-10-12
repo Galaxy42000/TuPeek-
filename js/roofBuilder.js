@@ -100,7 +100,12 @@ export function buildRoof(cfg, M) {
   const zl0 = mn.z1;
   roofFace([sl(xb + O, zl0), sl(xb + O, z1 + O), [xm, ridgeL, zr], [xm, ridgeL, zl0]], [0, 1]);
   roofFace([[xb + O, Hp(z1 + O), z1 + O], [xm, ridgeL, zr], [xa - O, Hp(z1 + O), z1 + O]], [1, 0]);
-  roofFace([nl(xa - O, zl0), [xm, ridgeL, zl0], [xm, ridgeL, zr], nl(xa - O, z1 + O)], [0, 1]);
+  // (no overhang where the entry porch roof is: the wall runs up to the porch roof there;
+  // the outline starts at that notch's inside corner so the fan stays inside it)
+  const zn = R.porch ? Math.min(Math.max(zl0, R.porch.z1 + R.porch.overhang), z1) : zl0;
+  roofFace(zn > zl0
+    ? [nl(xa, zn), nl(xa, zl0), [xm, ridgeL, zl0], [xm, ridgeL, zr], nl(xa - O, z1 + O), nl(xa - O, zn)]
+    : [nl(xa - O, zl0), [xm, ridgeL, zl0], [xm, ridgeL, zr], nl(xa - O, z1 + O)], [0, 1]);
   // wing: a plain shed roof sloping down to its outside wall, with straight ends
   roofFace([w3(wg.x0 - O, zk0), w3(xk, zk0), w3(xk, zw), w3(wg.x0 - O, zw)], [0, 1]);
   // walls closing the gaps: the kitchen's gable end above the living room roof, and the
@@ -116,10 +121,13 @@ export function buildRoof(cfg, M) {
 
   // fascia: eaves (level) and rakes (sloped)
   const fas = M.fascia;
+  // under the entry porch roof the wall runs straight up to the roof, so the eave's fascia
+  // and soffit along that wall stop where the porch roof starts
+  const pr = R.porch, zPorch = pr ? Math.max(zw, pr.z1 + pr.overhang) : zw;
   board(group, fas, sk(xb + O, zk0), sk(xb + O, zk1), F, [1, 0]);
   board(group, fas, sl(xb + O, zk1), sl(xb + O, z1 + O), F, [1, 0]);
   board(group, fas, [xa - O, Hp(z1 + O), z1 + O], [xb + O, Hp(z1 + O), z1 + O], F, [0, 1]);
-  board(group, fas, nl(xa - O, zw), nl(xa - O, z1 + O), F, [-1, 0]);
+  board(group, fas, nl(xa - O, zPorch), nl(xa - O, z1 + O), F, [-1, 0]);
   board(group, fas, w3(wg.x0 - O, zk0), w3(wg.x0 - O, zw), F, [-1, 0]);
   for (const [a, b] of [[w3(wg.x0 - O, zk0), w3(xk, zk0)], [nk(xk, zk0), [xr, ridgeK, zk0]], [[xr, ridgeK, zk0], sk(xb + O, zk0)]]) board(group, fas, a, b, F, [0, -1]);
   for (const [a, b] of [[w3(wg.x0 - O, zw), w3(xk, zw)], [nk(xk, zk1), [xr, ridgeK, zk1]], [[xr, ridgeK, zk1], sk(xb + O, zk1)]]) board(group, fas, a, b, F, [0, 1]);
@@ -130,7 +138,7 @@ export function buildRoof(cfg, M) {
   sof(xb, mn.z0, xb + O, zk1, yK); // south, kitchen
   sof(xb, zk1, xb + O, z1 + O, yL); // south, living room
   sof(xa - O, z1, xb, z1 + O, yL); // west (hip end)
-  sof(xa - O, wg.z1, xa, z1, yL); // north, past the wing
+  sof(xa - O, Math.max(wg.z1, zPorch), xa, z1, yL); // north, past the wing (and the porch)
   sof(wg.x0 - O, mn.z0, wg.x0, wg.z1, yWing); // wing
   for (const [x, z] of R.lights || []) {
     const y = x < wg.x0 + 1 ? yWing : z > zk1 ? yL : yK;
@@ -142,7 +150,6 @@ export function buildRoof(cfg, M) {
   // entry porch roof: gable over the door, ridge running out from the wall. Its side over
   // the bedroom wing comes down onto the wing roof, and its ridge runs back into the main
   // roof (`back` inches past the wall; that part only above the ceilings).
-  const pr = R.porch;
   if (pr) {
     const pg = new THREE.Group();
     const zc = (pr.z0 + pr.z1) / 2, half = (pr.z1 - pr.z0) / 2 + pr.overhang;
@@ -158,6 +165,10 @@ export function buildRoof(cfg, M) {
       board(pg, fas, [xOut, pr.eave, ze], [pr.wall, pr.eave, ze], 5, [0, side]);
       board(pg, fas, [xOut, ps(ze), ze], [xOut, peak, zc], 5, [-1, 0]);
     }
+    // the wall above the door is closed: siding from below the eave line straight up to
+    // the underside of the porch roof (from the bedroom wing's end, where the wing roof is)
+    const za = Math.max(zc - half, wg.z1), zb = zc + half, under = (z) => ps(z) - 3, x = pr.wall - 0.6;
+    pg.add(face([[x, 90, zb], [x, 90, za], [x, under(za), za], [x, peak - 3, zc], [x, under(zb), zb]], M.sidingGable ??= Object.assign(M.siding.clone(), { side: THREE.DoubleSide }), [0, 1]));
     group.add(pg);
   }
 
