@@ -82,7 +82,7 @@ button.icon { padding: 2px 8px; background: transparent; border-color: transpare
 .btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .toggles { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; }
 .toggles label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; user-select: none; }
-.toggles label[hidden] { display: none; }
+.toggles label[hidden], button[hidden] { display: none; }
 .hint { margin: 8px 0 0; color: var(--muted); font-size: 12.5px; }
 .walk-hint { display: none; }
 body.walking .walk-hint { display: block; }

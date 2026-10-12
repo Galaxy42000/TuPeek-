@@ -18,7 +18,24 @@ export default {
   },
   kolbeWindow: {
     name: 'Window',
-    Maker: 'Kolbe Windows & Doors (label on the glass in the photos)',
+    Maker: 'Kolbe Windows & Doors',
+    Outside: 'Black frames, white trim',
+  },
+  vinylSiding: {
+    name: 'Siding',
+    Material: 'Vinyl',
+    Style: 'Vertical (board and batten)',
+    Color: 'Gray',
+    Trim: 'White corner boards, window trim, fascia and soffits',
+  },
+  clipstone: {
+    name: 'Stone skirt',
+    Brand: 'Clipstone (Canada)',
+    Look: 'Gray stacked ledgestone with a stone cap',
+  },
+  roofShingles: {
+    name: 'Roof',
+    Material: 'Asphalt shingles, dark gray',
   },
   kolbeSlider: {
     name: 'Sliding glass patio door',

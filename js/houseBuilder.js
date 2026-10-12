@@ -6,7 +6,8 @@ import * as F from './fixtures.js';
 import * as HF from './houseFixtures.js';
 import { buildRoom, placeFootprint } from './roomBuilder.js';
 import { buildDecks } from './deckBuilder.js';
-import { tileTexture } from './materials.js';
+import { sidingTexture, shingleTexture, stoneTexture } from './materials.js';
+import { buildRoof } from './roofBuilder.js';
 import { fmtIn, fmtFt, fmtFtIn } from './units.js';
 import { trueDir, capDir } from './compass.js';
 
@@ -45,7 +46,16 @@ export function buildHouse(cfg, focus) {
     door: std(cfg.palette.doors || cfg.palette.trim, 0.45),
     tileFloor: std(cfg.palette.tileFloor || '#c9c7c2', 0.5),
     ground: std(cfg.palette.ground || '#d3d8cf', 0.95),
-    stone: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.9, map: tileTexture(cfg.palette.stone || '#6f7379', '#565a60', 12, 4) }),
+    stone: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.92, map: stoneTexture(cfg.palette.stone || '#6e737c') }),
+    stoneCap: std(cfg.palette.stoneCap || '#8d929a', 0.85),
+    siding: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.6, map: sidingTexture(cfg.palette.siding || '#78838f') }),
+    exteriorTrim: std(cfg.palette.exteriorTrim || '#f4f2ea', 0.5),
+    windowFrame: std(cfg.palette.windowFrame || '#1f1d1c', 0.45),
+    shingles: new THREE.MeshStandardMaterial({ color: '#ffffff', roughness: 0.95, side: THREE.DoubleSide, map: shingleTexture(cfg.palette.shingles || '#45474b') }),
+    roofUnder: new THREE.MeshStandardMaterial({ color: '#d9d6cf', roughness: 0.9, side: THREE.DoubleSide }),
+    soffit: std(cfg.palette.soffit || '#f2f0e8', 0.6),
+    fascia: new THREE.MeshStandardMaterial({ color: cfg.palette.fascia || '#f4f2ea', roughness: 0.5, side: THREE.DoubleSide }),
+    wood: std('#b48a5a', 0.8),
     dimension: new THREE.MeshBasicMaterial({ color: '#3d4b5c' }),
   });
   const colors = {};
@@ -92,8 +102,8 @@ export function buildHouse(cfg, focus) {
   for (const [x0, z0, x1, z1] of cfg.footprint) {
     // subfloor sits a hair below the room floors so it only shows under walls and doorways
     tag(addBox(root, M.floor, x0, -1.05, z0, x1 - x0, 1, z1 - z0, { cast: false }), { id: 'Floor', type: 'Floor', materials: mats(undefined, 'floor') });
-    // foundation / stone skirt from the ground up to the floor framing
-    if (grade < -1.05) tag(addBox(root, M.stone, x0, grade - 0.6, z0, x1 - x0, -1.05 - grade + 0.6, z1 - z0), { id: 'Foundation', type: 'Foundation (stone skirt outside)', height: -grade, notes: `Floor is about ${fmtIn(-grade)} above the ground.` });
+    // stone skirt from the ground up to the cap at floor level (1½″ proud of the wall)
+    if (grade < -1.05) tag(addBox(root, M.stone, x0 - 1.5, grade - 0.6, z0 - 1.5, x1 - x0 + 3, -2.5 - grade + 0.6, z1 - z0 + 3), { id: 'Stone skirt', type: 'Stone veneer skirt', height: -grade, materials: mats(undefined, 'stone'), notes: `From the ground up to the floor, about ${fmtIn(-grade)}. ⚠ Height estimated from the photos.` });
     // flat ceiling everywhere except under the vaults
     let flat = [{ x: x0, y: z0, w: x1 - x0, h: z1 - z0 }];
     for (const v of [...vaults, ...(cfg.ceilings || [])]) flat = carve(flat, { x: v.x0, y: v.z0, w: v.x1 - v.x0, h: v.z1 - v.z0 });
@@ -155,6 +165,13 @@ export function buildHouse(cfg, focus) {
     }
   }
 
+  // ---------- roof (only drawn when there is one; walls run up to it) ----------
+  const roof = cfg.roof ? buildRoof(cfg, M) : null;
+  if (roof) {
+    root.add(roof.group);
+    tag(roof.group, { id: 'Roof', type: 'Roof', materials: mats(cfg.roof.materials, 'roof'), notes: cfg.roof.notes });
+  }
+
   // ---------- walls, doors, windows ----------
   for (const spec of cfg.walls) {
     const fr = SIDES[spec.inside];
@@ -196,6 +213,25 @@ export function buildHouse(cfg, focus) {
       rects = carve(rects, { x: fr.flip ? L - at - w : at, w, y: b.bottom ?? H - b.depth, h: b.depth });
     }
     for (const r of rects) addBox(g, M.wall, r.x, r.y, -t, r.w, r.h, t, { cast: false });
+    if (spec.exterior && roof) {
+      // siding on the outside face, up to the roof; the stone cap runs along the bottom
+      const skin = new THREE.Group();
+      for (const r of panelRects(L, H, ops)) sidingBox(skin, M.siding, r.x, r.y, -t - 0.6, r.w, r.h, 0.6);
+      const toWorld = (lx, lz) => [ox + lx * Math.cos(fr.rot) + lz * Math.sin(fr.rot), oz - lx * Math.sin(fr.rot) + lz * Math.cos(fr.rot)];
+      const prof = [];
+      for (let lx = 0; lx <= L; lx = Math.min(L, lx + 3) + (lx === L ? 1 : 0)) prof.push([lx, roof.heightAt(...toWorld(lx, -t - 0.6))]);
+      if (Math.max(...prof.map((q) => q[1])) > H + 0.5) {
+        const sh = new THREE.Shape([new THREE.Vector2(0, H), new THREE.Vector2(L, H), ...prof.reverse().map(([x, y]) => new THREE.Vector2(x, Math.max(H, y)))]);
+        const band = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 0.6, bevelEnabled: false }), M.siding);
+        band.position.z = -t - 0.6;
+        band.castShadow = band.receiveShadow = true;
+        skin.add(band);
+      }
+      tag(skin, { id: `${spec.id} (outside)`, type: 'Siding', materials: mats(spec.outsideMaterials, 'siding') });
+      g.add(skin);
+      const cap = addBox(g, M.stoneCap, -3, -2.5, -t - 3, L + 6, 2.5, 3.2);
+      tag(cap, { id: 'Stone cap', type: 'Stone skirt cap', materials: mats(undefined, 'stone') });
+    }
     const endA = fr.along === 'x' ? 'west' : 'north';
     tag(g, { id: spec.id, type: spec.exterior ? 'Exterior wall' : 'Interior wall', width: L, height: H, depth: t, materials: mats(spec.materials, 'walls'), notes: spec.notes });
 
@@ -205,6 +241,7 @@ export function buildHouse(cfg, focus) {
       F.opening(og, ctx, o, t);
       if (!spec.exterior && o.type !== 'opening' && o.casing !== false) backCasing(og, M, o, t);
       if (o.type === 'door') doorLeaf(og, ctx, o, t);
+      if (spec.exterior && roof && o.type !== 'opening') exteriorTrim(og, M, o, t);
       const kind = o.type === 'window' ? 'Window' : o.type === 'opening' ? 'Cased opening' : { swing: 'Hinged door', pocket: 'Pocket door', bypass: 'Bypass (sliding) doors', slider: 'Sliding glass door' }[o.door] || 'Doorway';
       tag(og, {
         id: o.id, type: kind, wall: spec.id, width: o.width, height: o.height, bottom: o.bottom || undefined,
@@ -232,6 +269,28 @@ export function buildHouse(cfg, focus) {
     }
   }
   for (const o of imported) if (!o.used) console.warn(`No house wall found for ${o.from} opening ${o.id}`);
+
+  // white corner boards on the outside corners; each is cut away like a wall
+  if (roof) {
+    for (const [cx, cz, sx, sz] of cfg.roof.corners || []) {
+      const cg = new THREE.Group();
+      const top = roof.heightAt(cx + sx, cz + sz), w = 6.5;
+      addBox(cg, M.exteriorTrim, sx > 0 ? cx - w : cx - 1.4, 0, sz > 0 ? cz - w : cz - 1.4, w + 1.4, top, w + 1.4);
+      root.add(cg);
+      walls.push({ name: 'corner', group: cg, center: new THREE.Vector3(cx, H / 2, cz), normal: new THREE.Vector3(-sx, 0, -sz).normalize() });
+    }
+    // entry porch floor and step
+    const pr = cfg.roof.porch;
+    if (pr?.floor) {
+      const pf = new THREE.Group();
+      const [f0, f1] = pr.floorZ || [pr.z0, pr.z1];
+      addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 1.5, f0, pr.depth, 1.5, f1 - f0);
+      addBox(pf, M.wood, pr.wall - pr.depth, pr.floor - 7.25, f0, 1.5, 5.75, f1 - f0);
+      addBox(pf, M.wood, pr.wall - pr.depth - 12, pr.floor - 8.75, f0 + 12, 12, 1.5, 36);
+      tag(pf, { id: 'Entry porch', type: 'Porch', width: f1 - f0, depth: pr.depth, notes: pr.notes });
+      root.add(pf);
+    }
+  }
 
   // ---------- fixtures ----------
   for (const it of cfg.fixtures || []) {
@@ -298,8 +357,12 @@ export function buildHouse(cfg, focus) {
   // ---------- decks (framing is a separate line drawing the viewer can toggle) ----------
   const framing = buildDecks(root, ctx, cfg.decks, tag, label, grade);
 
-  if (focus) return focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H });
-  return { root, walls, ceiling, labels, framing, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
+  if (focus) {
+    if (roof) roof.group.visible = false; // single-room views have no roof
+    return focusRoom(cfg, focus, { root, ceiling, labels, wallGroups, label, H });
+  }
+  const roofInfo = roof && { group: roof.group, top: roof.top + 6, footprint: cfg.footprint };
+  return { root, walls, ceiling, labels, framing, roof: roofInfo, views: cfg.views, bounds: { W: bbox.x1 - bbox.x0, D: bbox.z1 - bbox.z0, H, floor: bbox } };
 }
 
 // Cut the model down to one room (plus any rooms listed in its `with`): the clip box reaches through the walls around it
@@ -352,6 +415,35 @@ function carve(rects, c) {
     if (y1 < r.y + r.h) out.push({ x: x0, y: y1, w: x1 - x0, h: r.y + r.h - y1 });
   }
   return out;
+}
+
+// Box whose UVs follow the wall (u = x, v = y), so siding battens line up across boxes.
+function sidingBox(parent, mat, x, y, z, w, h, d) {
+  const m = addBox(parent, mat, x, y, z, w, h, d, { cast: false });
+  const pos = m.geometry.attributes.position, uv = m.geometry.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) + x + w / 2, pos.getY(i) + y + h / 2);
+  return m;
+}
+
+// Outside of a window or door in an exterior wall: white casing on the siding, and the
+// window's dark exterior frame.
+function exteriorTrim(parent, M, o, t) {
+  const cw = 3.5, z = -t - 0.6 - 0.75, { start: x, width: w, bottom: y, height: h } = o;
+  const T = M.exteriorTrim;
+  addBox(parent, T, x - cw, y, z, cw, h + cw, 0.75);
+  addBox(parent, T, x + w, y, z, cw, h + cw, 0.75);
+  addBox(parent, T, x - cw, y + h, z, w + 2 * cw, cw, 0.75);
+  if (o.type === 'window') {
+    addBox(parent, T, x - cw - 0.5, y - cw, z - 0.5, w + 2 * cw + 1, cw, 1.25); // sill
+    const fz = -t / 2 - 1.6, fw = 1.75, Fm = M.windowFrame;
+    addBox(parent, Fm, x, y, fz, fw, h, 0.8);
+    addBox(parent, Fm, x + w - fw, y, fz, fw, h, 0.8);
+    addBox(parent, Fm, x, y, fz, w, fw, 0.8);
+    addBox(parent, Fm, x, y + h - fw, fz, w, fw, 0.8);
+    const [cols, rows] = o.grid || [1, 1];
+    for (let c = 1; c < cols; c++) addBox(parent, Fm, x + (w * c) / cols - 1, y, fz, 2, h, 0.8);
+    for (let r = 1; r < rows; r++) addBox(parent, Fm, x, y + (h * r) / rows - 1, fz, w, 2, 0.8);
+  }
 }
 
 // Casing on the second face of an interior wall (fixtures.opening trims the inside face).

@@ -94,6 +94,71 @@ export function grainTexture(base) {
   return toTexture(c, S);
 }
 
+// Vertical vinyl siding (board and batten look): u runs along the wall, v up.
+export function sidingTexture(color, module = 8) {
+  const S = module * 3, PX = 384, k = PX / S;
+  const [c, ctx] = canvas(PX, PX);
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, PX, PX);
+  for (let i = 0; i < 3; i++) {
+    const x = i * module * k;
+    ctx.fillStyle = shade(color, -0.12);
+    ctx.fillRect(x, 0, 0.35 * k, PX); // shadow line of the batten
+    ctx.fillStyle = shade(color, 0.07);
+    ctx.fillRect(x + 0.35 * k, 0, 0.8 * k, PX); // lit face of the batten
+    ctx.fillStyle = shade(color, -0.05);
+    ctx.fillRect(x + (module / 2) * k, 0, 0.2 * k, PX); // groove midway
+  }
+  return toTexture(c, S);
+}
+
+// Asphalt shingles: u along the eave, v up the slope.
+export function shingleTexture(color) {
+  const S = 36, PX = 512, k = PX / S, course = 5.625;
+  const [c, ctx] = canvas(PX, PX);
+  const r = rng(9);
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, PX, PX);
+  for (let i = 0; i < 3000; i++) {
+    ctx.fillStyle = shade(color, (r() - 0.5) * 0.12);
+    ctx.fillRect(r() * PX, r() * PX, 1.5, 1.5);
+  }
+  for (let row = 0; row * course < S; row++) {
+    const y = row * course * k;
+    ctx.fillStyle = shade(color, -0.1);
+    ctx.fillRect(0, y, PX, 0.25 * k);
+    for (let x = ((row % 2) * 6 + r() * 3) * k; x < PX; x += (10 + r() * 5) * k) ctx.fillRect(x, y, 0.2 * k, course * k);
+  }
+  return toTexture(c, S);
+}
+
+// Stacked ledgestone veneer: courses of long, thin stones in mixed grays.
+export function stoneTexture(color) {
+  const S = 36, PX = 512, k = PX / S;
+  const [c, ctx] = canvas(PX, PX);
+  const r = rng(13);
+  ctx.fillStyle = shade(color, -0.2);
+  ctx.fillRect(0, 0, PX, PX);
+  let y = 0;
+  const rows = [];
+  while (y < S - 1.2) { const h = 1.2 + r() * 2.6; rows.push([y, Math.min(h, S - y)]); y += h; }
+  rows[rows.length - 1][1] = S - rows[rows.length - 1][0];
+  for (const [ry, rh] of rows) {
+    let x = -r() * 8;
+    while (x < S) {
+      const w = 4 + r() * 12;
+      for (const dx of [0, -S, S]) {
+        ctx.fillStyle = shade(color, (r() - 0.5) * 0.16, (r() - 0.5) * 0.04);
+        ctx.fillRect((x + dx) * k + 1, ry * k + 1, w * k - 2, rh * k - 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect((x + dx) * k + 1, ry * k + 1, w * k - 2, 0.25 * k);
+      }
+      x += w;
+    }
+  }
+  return toTexture(c, S);
+}
+
 export function tileTexture(color, grout, tileW = 6, tileH = 3) {
   const cols = 4, rows = 4, k = 24;
   const SX = tileW * cols, SY = tileH * rows;

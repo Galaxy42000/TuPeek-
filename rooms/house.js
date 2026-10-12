@@ -12,7 +12,8 @@
 //    peak, steel beam across the living room, its windows, the mini-split);
 //    the kitchen without cabinets (4′ × 4′ window, 6′ sliding glass door, 8′ walls);
 //    outside at the bathroom end (bathroom window with the condenser under it);
-//    the deck framing outside the sliding door.
+//    the deck framing outside the sliding door; the outside all round (vinyl siding,
+//    Clipstone skirt, Kolbe windows, roof, entry porch).
 //  Anything marked ⚠ is not written on the plan: it was scaled off the drawing
 //  or a photo, or assumed, and should be measured.
 //
@@ -76,7 +77,7 @@ const Z_COUNTER_END = KZ + SINK_RUN.start + SINK_RUN.items.reduce((a, it) => a +
 // an upper landing one step down from the floor, 12′ along the house × 10′ out (from
 // the owner), and a lower deck along its north and outer sides with a 45° corner,
 // ending a little short of the landing's south end.
-const DECK_X = WIDTH; // outside face of the wall the deck is built against
+const DECK_X = WIDTH + 3; // the deck's ledger, against the stone skirt's cap
 const UPPER = { z0: 180, z1: 180 + 144, out: 120 }; // 12′ × 10′; ⚠ where it starts along the wall is from the photos
 const LOWER = { z0: 110, z1: 290, out: 144, clip: 45 };
 // The living room beam lines up with the bedroom wing's end wall, likely the old back
@@ -100,6 +101,9 @@ export default {
     doors: '#f8f7f3',
     tileFloor: '#cfccc6',
     ground: '#d3d8cf',
+    siding: '#7a8591',
+    stone: '#6e737c',
+    shingles: '#45474b',
   },
   style: kitchen.style,
 
@@ -107,7 +111,10 @@ export default {
   // bathroom is drawn with a tile floor, which isn't recorded yet.
   surfaces: {
     floor: ['oakFloor'],
-    windows: ['cherrySill', 'drywallReturns'],
+    windows: ['kolbeWindow', 'cherrySill', 'drywallReturns'],
+    siding: ['vinylSiding'],
+    stone: ['clipstone'],
+    roof: ['roofShingles'],
   },
 
   // Floor/ceiling outline: bedroom wing + main building.
@@ -123,6 +130,7 @@ export default {
       id: 'East wall', exterior: true, inside: 'south', x0: 0, z0: 0, x1: WIDTH, z1: EXT,
       notes: 'The gable end at the bathroom.',
       openings: [
+        { id: 'W11', type: 'window', at: 24, width: 52, bottom: 64, height: 20, notes: 'Wide awning window high in bedroom 1’s east end. ⚠ Size, height and position estimated from the outside photos.' },
         { id: 'W9', type: 'window', at: X_BATH + 2, width: 24, bottom: 48, height: 24, notes: 'Bathroom awning window, over the toilet, with the mini-split condenser below it outside. ⚠ Size, height and position estimated from the outside photo.' },
       ],
     },
@@ -130,14 +138,14 @@ export default {
       id: 'Bedroom wing north wall', exterior: true, inside: 'east', x0: 0, z0: EXT, x1: EXT, z1: WING_LENGTH,
       notes: 'Windows are not on the plan; they come from the bedroom photo.',
       openings: [
-        { id: 'W5', type: 'window', at: 16, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 1. ⚠ Size, height and position estimated from the photo.' },
-        { id: 'W6', type: 'window', at: 159, width: 56, bottom: 42, height: 46, grid: [2, 1], notes: 'Pair of casements in bedroom 2. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W5', type: 'window', at: 28, width: 84, bottom: 26, height: 58, grid: [3, 1], notes: 'Three-panel sliding window in bedroom 1. ⚠ Size, height and position estimated from the outside photos.' },
+        { id: 'W6', type: 'window', at: 187, width: 70, bottom: 26, height: 58, grid: [2, 1], notes: 'Two-panel sliding window in bedroom 2. ⚠ Size, height and position estimated from the outside photos.' },
       ],
     },
     {
       id: 'Bedroom wing west wall', exterior: true, inside: 'north', x0: EXT, z0: WING_LENGTH - EXT, x1: X_MAIN - OLD, z1: WING_LENGTH,
       openings: [
-        { id: 'W7', type: 'window', at: 16, width: 24, bottom: 36, height: 46, notes: 'Textured (obscure) glass, near the north corner. ⚠ Size, height and position estimated from the photo.' },
+        { id: 'W7', type: 'window', at: 4, width: 18, bottom: 34, height: 50, notes: 'Narrow window beside the entry porch, near the north corner. ⚠ Size, height and position estimated from the photos.' },
       ],
     },
     {
@@ -227,7 +235,10 @@ export default {
     // beam, facing the kitchen
     { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: LIVING_CEILING + 8, color: '#f6f6f4',
       notes: 'Mounted above beam BEAM-2 under the peak of the vault, blowing into the kitchen. ⚠ Size is a typical 18,000 BTU Blueridge unit, judged from the photo.' },
-    // outside, hung on wall brackets under the bathroom window (W9), fan facing out
+    // outside on the bathroom end wall: electric meter, the condenser on brackets under the
+    // bathroom window (W9, fan facing out), and a disconnect box ⚠ sizes typical, from the photos
+    { id: 'METER', type: 'Electric meter', kind: 'box', x: 231, z: -6, width: 9, depth: 6, height: 14, bottom: 12, color: '#9ea3a8', metal: true },
+    { id: 'DISCONNECT', type: 'Electrical box (outside)', kind: 'box', x: 152, z: -4, width: 12, depth: 4, height: 18, bottom: 34, color: '#a7abaf', metal: true },
     { id: 'CONDENSER', type: 'Mini-split condenser (outside)', code: 'Blueridge', kind: 'box', x: X_BATH + 26 - 34, z: -13, width: 34, depth: 13, height: 28, bottom: 0, color: '#eeeeea', grille: 'north',
       notes: 'On wall brackets below the bathroom window, lined up with its east edge, at about floor level. ⚠ Size is typical for a Blueridge outdoor unit, not measured.' },
   ],
@@ -261,6 +272,25 @@ export default {
       notes: '9′-0″ at the peak. Runs from the kitchen’s range wall to the living room beam. ⚠ Where it starts at the range-wall end is assumed.',
     },
   ],
+
+  // Roof and outside trim (see js/roofBuilder.js). plate = roof height at the outside of
+  // the walls; overhang = eaves, rake = gable ends, fascia = depth of the white fascia.
+  // ⚠ Pitches, overhangs and heights are estimated from the outside photos.
+  roof: {
+    plate: 101, overhang: 14, rake: 6, fascia: 7,
+    main: { x0: X_MAIN - OLD, x1: WIDTH, z0: 0, z1: LENGTH, pitch: 4.5 / 12 }, // gable at the bathroom end, hip at the living room end
+    wing: { x0: 0, z0: 0, z1: WING_LENGTH, pitch: 2 / 12 }, // shed over the bedrooms, running up into the main roof
+    // outside corners [x, z, outward x sign, outward z sign] get white corner boards
+    corners: [[0, 0, -1, -1], [0, WING_LENGTH, -1, 1], [X_MAIN - OLD, LENGTH, -1, 1], [WIDTH, LENGTH, 1, 1], [WIDTH, 0, 1, -1]],
+    // recessed lights in the soffits (plan x, z) ⚠ from the photos
+    lights: [[120, LENGTH + 7], [265, LENGTH + 7], [WIDTH + 7, LENGTH - 16], [WIDTH + 7, 215], [X_MAIN - OLD - 7, LENGTH - 16]],
+    // small gable roof over the entry door; the porch floor is one board below the door sill
+    porch: {
+      wall: X_MAIN - OLD, z0: WING_LENGTH + 6, z1: WING_LENGTH + 72, floorZ: [WING_LENGTH, WING_LENGTH + 72], depth: 40, overhang: 6, eave: 88, pitch: 7 / 12, floor: -1.5,
+      notes: 'Wood floor with a step; still being built in the photos. ⚠ Size estimated from the photos.',
+    },
+    notes: 'Gable at the bathroom end, hipped at the living room end; a lower shed roof over the bedroom wing. ⚠ Pitches and overhangs estimated from the photos.',
+  },
 
   // Dimension lines on the ground outside the walls, as written on the plan.
   dimensions: [
@@ -299,6 +329,7 @@ export default {
   ],
 
   views: {
+    outside: { pos: [WIDTH + 330, 70, LENGTH + 250], target: [X_MAIN + 70, 45, LENGTH - 140] }, // from the south-west corner
     eye: { pos: [215, 64, 395], target: [195, 42, 120] },
   },
 };

@@ -59,7 +59,7 @@ scene.add(highlight);
 // ---------- state ----------
 let room = null; // result of buildRoom + config
 let selected = null;
-const opts = { cutaway: true, ceiling: true, dims: true, framing: false };
+const opts = { cutaway: true, ceiling: true, dims: true, framing: false, roof: true };
 
 // ---------- room loading ----------
 async function loadRoom(id) {
@@ -95,6 +95,8 @@ async function loadRoom(id) {
   select(null);
   applyLabelVisibility();
   $('#framing-toggle').hidden = !room.framing;
+  $('#roof-toggle').hidden = !room.roof;
+  $('#outside-btn').hidden = !viewPresets().outside;
   if (room.framing) room.framing.visible = opts.framing;
   setView('overview', false);
 }
@@ -137,6 +139,8 @@ function viewPresets() {
 let tween = null;
 function setView(name, animate = true) {
   exitWalk();
+  // the outside view shows the whole shell: walls stay up so the siding and roof show
+  if (name === 'outside') setCutaway(false);
   const p = viewPresets()[name];
   if (!p) return;
   if (!animate) {
@@ -338,6 +342,16 @@ function updateVisibility() {
     w.group.visible = !(opts.cutaway && outside);
   }
   room.ceiling.visible = opts.ceiling && camIn.y < room.bounds.H;
+  // the roof shows from outside: always with walls up, or from below the ridge when cutting away
+  const r = room.roof;
+  if (r) {
+    const inside = camIn.y < r.top && r.footprint.some(([x0, z0, x1, z1]) => camIn.x > x0 && camIn.x < x1 && camIn.z > z0 && camIn.z < z1);
+    r.group.visible = opts.roof && !inside && (!opts.cutaway || camIn.y < r.top);
+  }
+}
+function setCutaway(on) {
+  opts.cutaway = on;
+  $('#t-cutaway').checked = on;
 }
 
 function applyLabelVisibility() {
@@ -354,6 +368,7 @@ document.querySelectorAll('[data-view]').forEach((b) => b.addEventListener('clic
 $('#walk-btn').addEventListener('click', () => (walk.on ? exitWalk() : enterWalk()));
 $('#t-dims').addEventListener('change', (e) => { opts.dims = e.target.checked; applyLabelVisibility(); });
 $('#t-cutaway').addEventListener('change', (e) => (opts.cutaway = e.target.checked));
+$('#t-roof').addEventListener('change', (e) => (opts.roof = e.target.checked));
 $('#t-ceiling').addEventListener('change', (e) => (opts.ceiling = e.target.checked));
 $('#t-framing').addEventListener('change', (e) => { opts.framing = e.target.checked; if (room?.framing) room.framing.visible = opts.framing; });
 $('#hud-toggle').addEventListener('click', () => document.body.classList.toggle('hud-collapsed'));

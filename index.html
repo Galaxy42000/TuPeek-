@@ -34,12 +34,14 @@
         <button data-view="overview">Overview</button>
         <button data-view="eye">Eye level</button>
         <button data-view="top">Top down</button>
+        <button data-view="outside" id="outside-btn" hidden>Outside</button>
         <button id="walk-btn">Walk</button>
       </div>
       <div class="toggles">
         <label><input type="checkbox" id="t-dims" checked> Measurements</label>
         <label><input type="checkbox" id="t-cutaway" checked> Cut away walls</label>
         <label><input type="checkbox" id="t-ceiling" checked> Ceiling</label>
+        <label id="roof-toggle" hidden><input type="checkbox" id="t-roof" checked> Roof</label>
         <label id="framing-toggle" hidden><input type="checkbox" id="t-framing"> Deck framing</label>
       </div>
       <p class="hint orbit-hint">Drag to orbit · right-drag or two fingers to pan · scroll or pinch to zoom · click anything for its size.</p>
