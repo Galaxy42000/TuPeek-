@@ -340,7 +340,7 @@ export function buildHouse(cfg, focus) {
       g = placeFootprint(it.x, it.z, it.width, it.depth, it.facing || 'south');
       if (it.kind === 'toilet') HF.toilet(g, ctx, it.width, it.depth);
       else if (it.kind === 'vanity') HF.vanity(g, ctx, it.width, it.depth, it);
-      else if (it.kind === 'laundry') HF.laundry(g, ctx, it.width, it.depth, it.height);
+      else if (it.kind === 'laundry') HF.laundry(g, ctx, it.width, it.depth, it.height, it.unit);
       else if (it.kind === 'cabinet') F.tallCabinet(g, ctx, it.width, it.height, it.depth, 4, { fronts: 'doors', ...it });
     }
     root.add(g);

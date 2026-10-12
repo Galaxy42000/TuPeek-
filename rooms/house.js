@@ -240,19 +240,20 @@ export default {
       materials: ['dreamlineShower', 'showerTile'],
       notes: 'Frameless glass: two short returns and a hinged door on the angled front, on a white neo-angle base. White 12″ × 24″ tile on both walls with two niches on the outside wall. ⚠ Base size (36″) and glass height (72″) assumed.' },
     // utility room, against the top wall of the plan
-    { id: 'W/D', type: 'Stacked washer + dryer', kind: 'laundry', x: X_MAIN + 1, z: EXT + 0.5, width: 27, depth: 30, height: 77, facing: 'south' },
+    { id: 'W/D', type: 'Stacked all-in-one washer + dryer', kind: 'laundry', unit: true, x: X_BATH - INT - 27.5, z: EXT + 0.5, width: 27, depth: 30, height: 77, facing: 'south',
+      notes: 'One stacked unit (washer below, dryer above), on the right side of the utility room against the bathroom wall. ⚠ Size typical, not measured.' },
     // utility room back wall, from the utility room photo (left to right): main panel,
     // EcoSmart tankless heater with a copper manifold below it, whole-house filters near
-    // the floor, and the well pressure tank in the corner ⚠ positions scaled from the photo
-    { id: 'ELEC', type: 'Main electrical panel', kind: 'box', x: 147, z: EXT, width: 14.5, depth: 4, height: 36, bottom: 29, color: '#a7abaf', metal: true,
+    // the floor, and the well pressure tank next to the washer/dryer ⚠ positions scaled from the photo
+    { id: 'ELEC', type: 'Main electrical panel', kind: 'box', x: 120.25, z: EXT, width: 14.5, depth: 4, height: 36, bottom: 29, color: '#a7abaf', metal: true,
       notes: 'Main breaker panel, recessed in the wall framing. ⚠ Size and height scaled from the photo.' },
-    { id: 'H2O', type: 'Electric tankless water heater', code: 'EcoSmart', kind: 'box', x: 170, z: EXT, width: 17, depth: 4, height: 16, bottom: 58, color: '#d6d8d8', materials: ['ecosmartHeater'],
+    { id: 'H2O', type: 'Electric tankless water heater', code: 'EcoSmart', kind: 'box', x: 143, z: EXT, width: 17, depth: 4, height: 16, bottom: 58, color: '#d6d8d8', materials: ['ecosmartHeater'],
       notes: 'EcoSmart electric tankless heater (the plan listed a Takagi gas unit; the photo shows the EcoSmart installed). ⚠ Size typical for the EcoSmart ECO line; model not recorded.' },
-    { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 177.5, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
-    { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: 158, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
+    { id: 'MANIFOLD', type: 'Copper water manifold', kind: 'box', x: 151.75, z: EXT, width: 1.5, depth: 2, height: 22, bottom: 28, color: '#b87333', metal: true, label: false },
+    { id: 'FILTERS', type: 'Whole-house water filters', kind: 'box', x: 138.5, z: EXT, width: 10, depth: 5, height: 14, bottom: 10, color: '#c9d6ec',
       notes: 'Two filter housings on the incoming water line. ⚠ Size scaled from the photo.' },
-    { id: 'TANK', type: 'Well pressure tank', kind: 'tank', x: 196.5 - 18, z: EXT + 2, width: 16, depth: 16, height: 37, color: '#2f6fb7', materials: ['pressureTank'],
-      notes: '25-gallon blue pressure tank on the floor, with its pressure switch and fittings. ⚠ Size typical for a 25-gallon tank.' },
+    { id: 'TANK', type: 'Well pressure tank', kind: 'tank', x: X_BATH - INT - 27.5 - 2 - 16, z: EXT + 2, width: 16, depth: 16, height: 37, color: '#2f6fb7', materials: ['pressureTank'],
+      notes: '25-gallon blue pressure tank on the floor, beside the washer/dryer, with its pressure switch and fittings. ⚠ Size typical for a 25-gallon tank.' },
     // heating / cooling: the indoor unit hangs on the framing above the living room
     // beam, facing the kitchen
     { id: 'A/C', type: 'Ductless mini-split (indoor unit)', code: 'Blueridge', kind: 'box', x: (X_MAIN + X_EAST) / 2 - 18.8, z: Z_BEAM - 2 - 9.8, width: 37.6, depth: 9.8, height: 11.8, bottom: LIVING_CEILING + 8, color: '#f6f6f4',

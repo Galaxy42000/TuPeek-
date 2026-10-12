@@ -97,11 +97,12 @@ export function cornerShower(parent, ctx, a, { returnLen = 12, height = 72, tile
   addMesh(parent, new THREE.CylinderGeometry(3, 3, 0.6, 24), M.steel, wz + 7, 75.6, sz);
 }
 
-// Stacked washer + dryer.
-export function laundry(parent, ctx, w = 27, d = 30, h = 77) {
+// Stacked washer + dryer: two machines, or one cabinet with both (unit = true).
+export function laundry(parent, ctx, w = 27, d = 30, h = 77, unit = false) {
   const M = ctx.M, split = Math.min(39, h / 2);
+  if (unit) addBox(parent, M.appliance, 0, 0, 0, w, h, d);
   for (const [y0, hh] of [[0, split], [split + 0.5, h - split - 0.5]]) {
-    addBox(parent, M.appliance, 0, y0, 0, w, hh, d);
+    if (!unit) addBox(parent, M.appliance, 0, y0, 0, w, hh, d);
     addBox(parent, M.black, 1.5, y0 + hh - 4.5, d, w - 3, 3.25, 0.3, { cast: false }); // control strip
     const r = Math.min(8, w / 2 - 4);
     addMesh(parent, new THREE.CylinderGeometry(r, r, 1, 36).rotateX(Math.PI / 2), M.trim, w / 2, y0 + (hh - 5) / 2, d + 0.5);
