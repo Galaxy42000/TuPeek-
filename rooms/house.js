@@ -376,7 +376,7 @@ export default {
     // living room roof: lower and shallower, hipped at the far end; the kitchen roof's
     // slopes come down onto it (the flashed joint in the roof photo)
     low: { z1: LENGTH, pitch: 2.5 / 12 },
-    wing: { x0: 0, z0: 0, z1: WING_LENGTH, pitch: 2 / 12 }, // shed over the bedrooms, running up into the main roof, hipped at the entry end
+    wing: { x0: 0, z0: 0, z1: WING_LENGTH, pitch: 2 / 12 }, // shed over the bedrooms, running up into the main roof (straight ends)
     // outside corners [x, z, outward x sign, outward z sign] get white corner boards
     corners: [[0, 0, -1, -1], [0, WING_LENGTH, -1, 1], [X_MAIN - OLD, LENGTH, -1, 1], [WIDTH, LENGTH, 1, 1], [WIDTH, 0, 1, -1]],
     // recessed lights in the soffits (plan x, z) ⚠ from the photos

@@ -7,7 +7,7 @@ import { addBox } from './geometry.js';
 //  • low: the living room roof, lower and shallower, hipped at z1 and running in under
 //    the kitchen roof's gable end;
 //  • wing: a shed roof over the wing, sloping down to its x0 side and rising until it
-//    meets the main roof's slope, hipped down at its z1 end (where the entry roof sits);
+//    meets the main roof's slope, with straight (rake) ends;
 //  • white fascia on every roof edge, vinyl soffits under the eaves with recessed
 //    lights, and a small gable roof over the entry porch.
 // heightAt(x, z) is the height of the roof surface at a point, used to run the siding
@@ -69,12 +69,9 @@ export function buildRoof(cfg, M) {
   const SK = (x) => P + m * (xb - x), NK = (x) => P + m * (x - xa);
   const SL = (x) => P + ml * (xb - x), NL = (x) => P + ml * (x - xa), Hp = (z) => P + ml * (z1 - z);
   const W = (x) => P + mw * (x - wg.x0);
-  const He = (z) => P + mw * (wg.z1 - z); // the wing's hipped end, same pitch as its main slope
   const xk = (m * xa - mw * wg.x0) / (m - mw); // where the wing roof meets the kitchen roof
-  const zh = wg.z1 - (xk - wg.x0); // where the hip line reaches the kitchen roof
-  const xv = xa + (mw * (wg.z1 - zw)) / m; // where the valley between them reaches the eave
   const heightAt = (x, z) => {
-    if (x <= xk && z <= zw && x >= wg.x0 - O) return Math.max(Math.min(W(x), He(z)), NK(x));
+    if (x <= xk && z <= zw && x >= wg.x0 - O) return W(x);
     if (z <= zk1) return Math.min(SK(x), NK(x));
     return Math.min(SL(x), NL(x), Hp(z));
   };
@@ -90,16 +87,15 @@ export function buildRoof(cfg, M) {
   const sl = (x, z) => [x, SL(x), z], nl = (x, z) => [x, NL(x), z], w3 = (x, z) => [x, W(x), z];
   // kitchen roof: a gable at both ends, ridge along z
   roofFace([sk(xb + O, zk0), sk(xb + O, zk1), [xm, ridgeK, zk1], [xm, ridgeK, zk0]], [0, 1]);
-  roofFace([nk(xk, zk0), [xm, ridgeK, zk0], [xm, ridgeK, zk1], nk(xv, zk1), nk(xk, zh)], [0, 1]);
+  roofFace([nk(xk, zk0), [xm, ridgeK, zk0], [xm, ridgeK, zk1], nk(xk, zk1)], [0, 1]);
   // living room roof: lower and shallower, hipped at the far end; its near end runs in
   // under the kitchen roof, so the two meet along the kitchen roof's slopes
   const zl0 = mn.z1;
   roofFace([sl(xb + O, zl0), sl(xb + O, z1 + O), [xm, ridgeL, zr], [xm, ridgeL, zl0]], [0, 1]);
   roofFace([[xb + O, Hp(z1 + O), z1 + O], [xm, ridgeL, zr], [xa - O, Hp(z1 + O), z1 + O]], [1, 0]);
   roofFace([nl(xa - O, zl0), [xm, ridgeL, zl0], [xm, ridgeL, zr], nl(xa - O, z1 + O)], [0, 1]);
-  // wing: shed sloping down to its outside wall, hipped down at its end by the entry
-  roofFace([w3(wg.x0 - O, zk0), w3(xk, zk0), w3(xk, zh), w3(wg.x0 - O, zw)], [0, 1]);
-  roofFace([[wg.x0 - O, He(zw), zw], [xk, W(xk), zh], [xv, He(zw), zw]], [1, 0]);
+  // wing: a plain shed roof sloping down to its outside wall, with straight ends
+  roofFace([w3(wg.x0 - O, zk0), w3(xk, zk0), w3(xk, zw), w3(wg.x0 - O, zw)], [0, 1]);
   // walls closing the gaps: the kitchen's gable end above the living room roof, and the
   // end of the wing roof above the living room roof
   const tri = (pts, z) => {
@@ -108,6 +104,7 @@ export function buildRoof(cfg, M) {
     top.add(mesh);
   };
   tri([[xa, P], [xb, P], [xm, ridgeK]], mn.z1);
+  tri([[xa - O, NL(xa - O)], [xk, NL(xk)], [xk, W(xk)], [xa - O, W(xa - O)]], zw - 1); // shed end above the living room roof
   group.add(top);
 
   // fascia: eaves (level) and rakes (sloped)
@@ -118,8 +115,7 @@ export function buildRoof(cfg, M) {
   board(group, fas, nl(xa - O, zw), nl(xa - O, z1 + O), F, [-1, 0]);
   board(group, fas, w3(wg.x0 - O, zk0), w3(wg.x0 - O, zw), F, [-1, 0]);
   for (const [a, b] of [[w3(wg.x0 - O, zk0), w3(xk, zk0)], [nk(xk, zk0), [xm, ridgeK, zk0]], [[xm, ridgeK, zk0], sk(xb + O, zk0)]]) board(group, fas, a, b, F, [0, -1]);
-  board(group, fas, [wg.x0 - O, He(zw), zw], [xv, He(zw), zw], F, [0, 1]); // wing's hipped end
-  for (const [a, b] of [[nk(xv, zk1), [xm, ridgeK, zk1]], [[xm, ridgeK, zk1], sk(xb + O, zk1)]]) board(group, fas, a, b, F, [0, 1]);
+  for (const [a, b] of [[w3(wg.x0 - O, zw), w3(xk, zw)], [nk(xk, zk1), [xm, ridgeK, zk1]], [[xm, ridgeK, zk1], sk(xb + O, zk1)]]) board(group, fas, a, b, F, [0, 1]);
 
   // soffits under the eaves (from the fascia's bottom back to the wall) and their lights
   const sof = (x0, z0, x1, z1s, y) => addBox(group, M.soffit, x0, y - 0.5, z0, x1 - x0, 0.5, z1s - z0, { cast: false });
