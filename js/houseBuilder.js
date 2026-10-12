@@ -120,6 +120,7 @@ export function buildHouse(cfg, focus) {
   }
   // rooms with a lower flat ceiling (the walls carry on up behind it)
   for (const c of cfg.ceilings || []) {
+    if (c.follow) continue; // built with the roof, below
     tag(addBox(ceiling, M.ceiling, c.x0, c.height, c.z0, c.x1 - c.x0, 1, c.z1 - c.z0, { cast: false }), { id: c.id || 'Ceiling', type: 'Ceiling', height: c.height, materials: mats(c.materials, 'ceiling'), notes: c.notes });
   }
 
@@ -204,6 +205,40 @@ export function buildHouse(cfg, focus) {
   if (roof) {
     root.add(roof.group);
     tag(roof.group, { id: 'Roof', type: 'Roof', materials: mats(cfg.roof.materials, 'roof'), notes: cfg.roof.notes });
+  }
+
+  // ceilings following the living room's hip roof: two slopes up to the ridge and the hipped
+  // end, `below` the roof surface so they meet the walls at the wall height; the end above
+  // the beam closes the gap up from the kitchen vault
+  for (const c of (cfg.ceilings || []).filter((c) => c.follow === 'roof')) {
+    if (!roof) continue;
+    const { at, xm, zr } = roof.low;
+    const below = at(c.x0, (c.z0 + c.z1) / 2) - H;
+    const y = (x, z) => Math.max(H, at(x, z) - below);
+    const zc0 = Math.min(c.z1, zr + (xm - c.x0)), zc1 = Math.min(c.z1, zr + (c.x1 - xm));
+    const faces = [
+      [[c.x0, c.z0], [xm, c.z0], [xm, zr], [c.x0, zc0]],
+      [[xm, c.z0], [c.x1, c.z0], [c.x1, zc1], [xm, zr]],
+      [[c.x0, zc0], [xm, zr], [c.x1, zc1]],
+    ];
+    const pos = [];
+    for (const f of faces) for (let i = 1; i + 1 < f.length; i++) for (const [x, z] of [f[0], f[i], f[i + 1]]) pos.push(x, y(x, z), z);
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    geo.computeVertexNormals();
+    const cg = new THREE.Group();
+    ceiling.add(cg);
+    cg.add(new THREE.Mesh(geo, M.ceilingBoth ??= Object.assign(M.ceiling.clone(), { side: THREE.DoubleSide })));
+    const v = vaults.find((a) => Math.abs(a.z1 - c.z0) < 6);
+    if (v) {
+      const bot = (x) => Math.max(H, vaultHeight(v, H, x)), xs = [c.x0, (v.x0 + v.x1) / 2, xm, c.x1].sort((p, q) => p - q);
+      const sh = new THREE.Shape([...xs.map((x) => new THREE.Vector2(x, bot(x))), ...xs.reverse().map((x) => new THREE.Vector2(x, y(x, c.z0) + 1))]);
+      const end = new THREE.Mesh(new THREE.ExtrudeGeometry(sh, { depth: 4, bevelEnabled: false }), M.wall);
+      end.position.z = c.z0 - 4;
+      cg.add(end);
+    }
+    for (const [lx, lz] of c.lights || []) F.recessedLight(cg, ctx, lx, lz, y(lx, lz), 0);
+    tag(cg, { id: c.id, type: 'Sloped ceiling (follows the roof)', height: y(xm, c.z0), materials: mats(c.materials, 'ceiling'), notes: c.notes });
   }
 
   // ---------- walls, doors, windows ----------

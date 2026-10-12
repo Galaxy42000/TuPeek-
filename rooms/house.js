@@ -49,7 +49,7 @@ import { fmtFt } from '../js/units.js';
 
 const HEIGHT = 96; // ⚠ wall height (8′), from the kitchen photo: the 6′ slider is a standard 6′-8″ tall
 const PEAK = 108; // 9′-0″ peak of the vaulted kitchen ceiling (keep HEIGHT and PEAK in step with rooms/kitchen.js)
-const LIVING_CEILING = 84; // ⚠ the living room's flat ceiling looks lower (about 7′), flush with the beam's underside
+const LIVING_CEILING = 84; // ⚠ underside of the living room beam (BEAM-2), about 7′
 const EXT = 6; // ⚠ exterior wall thickness
 const INT = 4.5; // interior partition thickness
 const OLD = 6; // ⚠ wall between the bedroom wing and the main room
@@ -308,10 +308,13 @@ export default {
     },
   ],
 
-  // Rooms whose flat ceiling is lower than the wall height (x/z box, inches).
+  // Ceilings that differ from the flat one at the wall height (x/z box, inches): `height`
+  // for a lower flat ceiling, or follow: 'roof' for one fixed to the rafters of the living
+  // room's hip roof (rising from the wall tops to the ridge, hipped at the end).
   ceilings: [
-    { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, height: LIVING_CEILING,
-      notes: '⚠ About 7′, flush with the underside of beam BEAM-2; estimated from the living room photo.' },
+    { id: 'Living room ceiling', x0: X_MAIN, z0: Z_BEAM + 2, x1: X_EAST, z1: Z_SOUTH, follow: 'roof',
+      lights: [[X_MAIN + 62, Z_SOUTH - 40], [X_EAST - 62, Z_SOUTH - 40]], // the two cans near the end wall in the photo ⚠ positions estimated
+      notes: 'Fixed to the rafters of the hip roof (living room ceiling photos: the cans hang between the rafters, which are furred down with new 2× lumber): it rises from the tops of the walls to the ridge and is hipped at the end wall. Beam BEAM-2 hangs below it. ⚠ Slope follows the roof pitch estimated from the outside photos.' },
   ],
 
   // Plumbing runs (see js/plumbingBuilder.js): kind hot | cold | main | drain | vent,

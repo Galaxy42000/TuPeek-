@@ -172,5 +172,8 @@ export function buildRoof(cfg, M) {
     group.add(pg);
   }
 
-  return { group, heightAt, top: ridgeK };
+  // the living room roof on its own (for a ceiling following it), with its ridge line and
+  // where its hips meet the ridge
+  const low = { at: (x, z) => Math.min(SL(x), NL(x), Hp(z)), xm, zr };
+  return { group, heightAt, low, top: ridgeK };
 }
