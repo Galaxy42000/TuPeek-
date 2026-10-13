@@ -88,8 +88,9 @@ export function houseWiring(c) {
   const SLIDER_END = KZ + kitchen.baseRuns[1].start + 84 + 0.75 + kitchen.baseRuns[1].extendRight + 1.5 + 72;
 
   // ---------------- switches ----------------
-  const swKitchen = dev('SW-KITCHEN', 'switch', cav.old, 48, D_BR1 + 30 + 6, 'x', 'Three-gang switch box on the walkway wall beside the bedroom 1 door: kitchen cans, island pendants, walkway. ⚠ Proposed.', { gang: 3 });
-  const swSlider = dev('SW-SLIDER', 'switch', cav.south, 48, SLIDER_END + 5, 'x', 'Two-gang switch box beside the sliding door: deck/soffit lights and kitchen cans (3-way). ⚠ Proposed.', { gang: 2 });
+  // kitchen wiring photo: a three-gang box on the sink wall just short of the slider, with
+  // the yellow cables from the cans and white ones coming down to it from the top plate
+  const swKitchen = dev('SW-KITCHEN', 'switch', cav.south, 48, KZ + 110, 'x', 'Three-gang switch box on the sink wall, about 14″ short of the sliding door, over the end of the counter (kitchen wiring photo): kitchen cans, island pendants, and the deck/soffit lights. ⚠ Which switch runs what is assumed.', { gang: 3 });
   const swEntry = { at: [cav.entry, 48, WING_LENGTH + 6 + 4.1] }; // the four-gang box drawn as a fixture (SW-ENTRY)
   const swHall = dev('SW-HALL', 'switch', cav.old, 48, Z_CLOSET + 14, 'x', 'Two-gang switch box in the hall: hall and utility room lights. ⚠ Proposed.', { gang: 2 });
   const swBath = dev('SW-BATH', 'switch', cav.bathN, 48, EXT + 34, 'x', 'Three-gang box inside the bathroom door: light, fan, and the Ditra-Heat floor thermostat. ⚠ Proposed.', { gang: 3 });
@@ -97,27 +98,28 @@ export function houseWiring(c) {
   const swBr2 = dev('SW-BR2', 'switch', cav.old, 48, 245 - 4, 'x', 'Bedroom 2 light switch, inside the door. ⚠ Proposed.');
 
   // ---------------- kitchen ----------------
-  circuit('K-LIGHTS · 15 A', '14/2', 'Kitchen recessed cans (the new-construction cans hung on the scissor trusses in the photo, wired with NM along the bottom chords), the island pendants and the walkway; switched at SW-KITCHEN and 3-way at SW-SLIDER. ⚠ Breaker size and switching proposed.', [
+  circuit('K-LIGHTS · 20 A', '12/2', 'Kitchen recessed cans (the new-construction cans hung on the scissor trusses, wired with yellow 12/2 along the bottom chords, as in the photos) and the island pendants; switched at SW-KITCHEN by the slider. ⚠ Breaker and the order the cans are fed in are assumed.', [
     swKitchen,
     // up and down the four rows of cans
     ...[0, 1, 2, 3].flatMap((row) => (row % 2 ? [2, 1, 0] : [0, 1, 2]).map((i) => ceil(...cans[row * 3 + i]))),
     { ...ceil(...pend[1]), turn: 'zx' }, ceil(...pend[0]),
-    { ...swSlider, turn: 'zx' },
   ]);
   const ctr = 44; // countertop receptacles, 8″ over the counter
-  circuit('K-SA1 · 20 A GFCI', '12/2', 'Small-appliance circuit 1: countertop receptacles on the range wall and the corner. GFCI protected. ⚠ Proposed.', [
+  circuit('K-SA1 · 20 A GFCI', '12/2', 'Small-appliance circuit 1: countertop receptacles on the range wall, and the island (fed under the floor). GFCI protected. ⚠ Proposed.', [
     { at: dev('K1', 'gfci', RANGE_C - 26, ctr, cav.range, 'z', 'Countertop GFCI left of the range.').at, turn: 'zx' },
     dev('K2', 'outlet', RANGE_C + 32, ctr, cav.range, 'z', 'Countertop receptacle right of the range.', { via: { wall: ctr } }),
-    dev('K3', 'outlet', cav.south, ctr, KZ + 20, 'x', 'Countertop receptacle in the corner, sink wall.'),
-  ]);
-  circuit('K-SA2 · 20 A GFCI', '12/2', 'Small-appliance circuit 2: the sink-wall counter past the window and the island (fed under the floor). ⚠ Proposed.', [
-    { at: dev('K4', 'gfci', cav.south, ctr, KZ + 92, 'x', 'Countertop GFCI past the window, over the dishwasher.').at, turn: 'zx' },
-    dev('K5', 'outlet', cav.south, ctr, KZ + 112, 'x', 'Countertop receptacle at the end of the sink run.', { via: { wall: ctr } }),
     dev('K6', 'outlet', KX + isl.x + 1.5, 30, KZ + isl.z + isl.depth / 2, 'x', 'Island receptacle on its west end panel, fed up through the floor.', { via: { floor: true, turn: 'zx' } }),
   ]);
-  circuit('DW / DISPOSAL · 20 A', '12/2', 'Dishwasher (hard-wired at its junction box) and the disposal receptacle under the sink. ⚠ Proposed.', [
-    { at: dev('DISP', 'outlet', cav.south, 14, KZ + 64, 'x', 'Switched receptacle for the disposal, in the sink base.').at, turn: 'zx' },
-    dev('DW-J', 'junction', cav.south - 2, 4, KZ + 92, 'x', 'Dishwasher junction box (hard-wired).', { via: { wall: 10 } }),
+  // sink wall, from the kitchen wiring photo: a box between the corner and the vent stack,
+  // a cable through the studs under the window (with nail plates), two boxes side by side
+  // just past the window and a low box below them
+  circuit('K-SA2 · 20 A GFCI', '12/2', 'Small-appliance circuit 2: the sink-wall counter. Comes down from the ceiling to the corner box, then through the studs under the window (about 30″ up, behind nail plates) to the GFCI past the window (kitchen wiring photo). ⚠ Breaker assumed.', [
+    { at: dev('K3', 'outlet', cav.south, ctr, KZ + 24, 'x', 'Countertop receptacle between the corner and the vent stack (photo).').at, turn: 'zx' },
+    dev('K4', 'gfci', cav.south, ctr, KZ + 90, 'x', 'Countertop GFCI past the window (photo).', { via: { wall: 30 } }),
+  ]);
+  circuit('DW / DISPOSAL · 20 A', '12/2', 'Disposal switch beside the window, down to the low box behind the dishwasher that feeds the dishwasher and the (switched) disposal (kitchen wiring photo). ⚠ Breaker assumed.', [
+    { at: dev('SW-DISP', 'switch', cav.south, 47, KZ + 82, 'x', 'Disposal switch, on the stud just past the window (photo).').at, turn: 'zx' },
+    dev('DW/DISP', 'outlet', cav.south, 16, KZ + 90, 'x', 'Low box under the counter, behind the dishwasher: receptacles for the dishwasher and the disposal (photo).', { via: { wall: 30 } }),
   ]);
   circuit('FRIDGE · 20 A', '12/2', 'Dedicated refrigerator receptacle behind the fridge. ⚠ Proposed.', [
     { at: dev('FRIDGE-R', 'outlet', K(kitchen.tall[1].start + 18, 0)[0], 48, cav.range, 'z', 'Refrigerator receptacle.').at, turn: 'zx' },
@@ -212,8 +214,8 @@ export function houseWiring(c) {
     { at: dev('EXT-DECK', 'gfci', WIDTH + 0.5, 18, SLIDER_END + 18, 'x', 'Weatherproof GFCI receptacle on the deck.').at, turn: 'zx' },
     { at: dev('EXT-PORCH', 'gfci', X_MAIN - OLD - 0.5, 18, WING_LENGTH + 8, 'x', 'Weatherproof GFCI receptacle at the entry porch.').at, turn: 'zx' },
   ]);
-  circuit('SOFFIT LIGHTS · 15 A', '14/2', 'Recessed soffit lights: the two over the deck switched beside the slider, on round the living room end. ⚠ Proposed.', [
-    swSlider,
+  circuit('SOFFIT LIGHTS · 15 A', '14/2', 'Recessed soffit lights, from SW-KITCHEN by the slider: the two over the deck, then on round the living room end. ⚠ Proposed.', [
+    swKitchen,
     ...c.soffit.map(([x, z]) => ({ at: [x, P - 4, z], turn: 'zx' })),
   ]);
   circuit('SMOKE ALARMS · 15 A', '14/3', 'Hard-wired, interconnected smoke / CO alarms (14/3): hall, each bedroom, living room. ⚠ Positions proposed.', [
@@ -233,7 +235,7 @@ export function houseWiring(c) {
   data('D-LR', cav.entry, 390, 'x', 'The living room corner by the entry.');
   data('D-BR1', cav.wingN, 26, 'x', 'Bedroom 1.');
   data('D-BR2', cav.wingN, 182, 'x', 'Bedroom 2.');
-  data('D-KITCHEN', cav.south, SLIDER_END + 12, 'x', 'The kitchen end of the living room.');
+  data('D-SINK', cav.south, KZ + 96, 'x', 'The sink wall: the blue cable in the kitchen wiring photo drops from the top plate to just past the dishwasher box (purpose not known).', 22);
   data('D-AP', X_MAIN + 70, (Z_BATH + 205) / 2, 'y', 'A ceiling Wi-Fi access point over the walkway.', ceilY(X_MAIN + 70, 140) - 0.75);
 
   return { runs, devices };
