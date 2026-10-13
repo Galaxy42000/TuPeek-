@@ -183,10 +183,13 @@ export function houseWiring(c) {
     { at: dev('BR1-1', 'outlet', cav.old, r, EXT + 4, 'x', 'Receptacle on the short strip of wall between the corner and the utility room doorway (bedroom wiring photo).').at, wall: 28 },
     dev('BR1-2', 'outlet', X_MAIN - OLD - 12, 16, cav.east, 'z', 'Receptacle on the east wall by the corner (photo).', { via: { wall: 24 } }),
     dev('BR1-3', 'outlet', 35, 16, cav.east, 'z', 'Receptacle under the window (photo).', { via: { wall: 24 } }),
-    dev('BR1-4', 'outlet', cav.wingN, r, 20, 'x', 'Receptacle. ⚠ Proposed.', { via: { wall: 24 } }),
-    dev('BR1-5', 'outlet', cav.wingN, r, 132, 'x', 'Receptacle past the window. ⚠ Proposed.', { via: { wall: r } }),
+    // the north-east corner (second bedroom wiring photo): a box either side of the corner,
+    // then the cable carries on along the north wall under the sliding window
+    dev('BR1-4', 'outlet', EXT + 10, 20, cav.east, 'z', 'Receptacle on the east wall, about 10″ from the north-east corner (photo).', { via: { wall: 24 } }),
+    dev('BR1-5', 'outlet', cav.wingN, 18, EXT + 10, 'x', 'Receptacle on the north wall, about 10″ from the corner (photo).', { via: { wall: 24 } }),
+    dev('BR1-6', 'outlet', cav.wingN, r, 132, 'x', 'Receptacle past the sliding window. ⚠ Proposed; the photo shows the cable running on under the window.', { via: { wall: 22 } }),
   ];
-  circuit('BEDROOM 1 · 20 A AFCI', '12/2', 'Bedroom 1 receptacles, fed in yellow 12/2 straight from the panel through the new doorway framing, then along the east wall through the studs (bedroom wiring photo). ⚠ Breaker assumed; the far wall’s receptacles are proposed.', br1, { from: 'bottom' });
+  circuit('BEDROOM 1 · 20 A AFCI', '12/2', 'Bedroom 1 receptacles, fed in yellow 12/2 straight from the panel through the new doorway framing, then along the east wall through the studs about 22–24″ up, round the north-east corner and on along the north wall under the sliding window (bedroom wiring photos). ⚠ Breaker assumed; the receptacle past the sliding window is proposed.', br1, { from: 'bottom' });
   runs.push({ id: 'BEDROOM 1 · light', cable: '12/2', notes: 'From the receptacle by the corner up to the switch box at about 50″ beside it, then up into the ceiling to the bedroom light, and on to the switch by the hall door (3-way). ⚠ Switching assumed.', path: (() => {
     const sw = { at: dev('SW-BR1B', 'switch', X_MAIN - OLD - 8, 50, cav.east, 'z', 'Switch box at about 50″ by the corner, near the utility room doorway (bedroom wiring photo); its cable goes up to the ceiling. ⚠ What it switches is assumed.').at, wall: 50 };
     const stops = [br1[1], sw, ceil((EXT + X_MAIN - OLD) / 2, (EXT + DIVIDER) / 2), { ...swBr1, turn: 'zx' }];
