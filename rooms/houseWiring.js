@@ -98,11 +98,21 @@ export function houseWiring(c) {
   const swBr2 = dev('SW-BR2', 'switch', cav.old, 48, 245 - 4, 'x', 'Bedroom 2 light switch, inside the door. ⚠ Proposed.');
 
   // ---------------- kitchen ----------------
-  circuit('K-LIGHTS · 20 A', '12/2', 'Kitchen recessed cans (the new-construction cans hung on the scissor trusses, wired with yellow 12/2 along the bottom chords, as in the photos) and the island pendants; switched at SW-KITCHEN by the slider. ⚠ Breaker and the order the cans are fed in are assumed.', [
+  circuit('K-LIGHTS · 20 A', '12/2', 'Kitchen recessed cans (the new-construction cans hung on the scissor trusses, wired with yellow 12/2 along the bottom chords, as in the photos), the light over the sink and the island pendants; switched at SW-KITCHEN by the slider. ⚠ Breaker and the order the cans are fed in are assumed.', [
     swKitchen,
     // up and down the four rows of cans
-    ...[0, 1, 2, 3].flatMap((row) => (row % 2 ? [2, 1, 0] : [0, 1, 2]).map((i) => ceil(...cans[row * 3 + i]))),
+    // the box over the sink window first, then the cans from the row along the sink wall
+    // (kitchen ceiling photo) back across the vault
+    dev('SINK-LIGHT', 'ceilingBox', X_EAST - 9, ceilY(X_EAST - 9, KZ + 54.25) - 0.75, KZ + 54.25, 'y', 'Round ceiling box centred over the sink window, just in from the wall (kitchen ceiling photo): for a light over the sink. ⚠ Fixture not chosen.'),
+    ...[3, 2, 1, 0].flatMap((row) => (row % 2 ? [0, 1, 2] : [2, 1, 0]).map((i) => ceil(...cans[row * 3 + i]))),
     { ...ceil(...pend[1]), turn: 'zx' }, ceil(...pend[0]),
+  ]);
+  // powered ventilator in the roof deck over the sink wall, two bays up from the eave, with
+  // its thermostat in a junction box on the flex lead (kitchen ceiling photo)
+  const fanX = X_EAST - 44, fanZ = KZ + 44, deck = (x) => P + c.roof.main.pitch * (xb - x) - 1.5;
+  circuit('ATTIC FAN · 20 A', '12/2', 'Powered roof ventilator in the roof deck over the sink wall, with its thermostat box on the flex lead (kitchen ceiling photo). ⚠ Circuit and breaker assumed.', [
+    dev('ATTIC-FAN-T', 'junction', fanX - 14, deck(fanX - 14) - 3, fanZ - 6, 'y', 'Thermostat / junction box for the roof ventilator (photo).'),
+    dev('ATTIC-FAN', 'fan', fanX, deck(fanX) - 3, fanZ, 'y', 'Powered roof (attic) ventilator, about 14″ across, set in the roof deck between the rafters (kitchen ceiling photo). ⚠ Size estimated.', { rot: [0, 0, -Math.atan(c.roof.main.pitch)] }),
   ]);
   const ctr = 44; // countertop receptacles, 8″ over the counter
   circuit('K-SA1 · 20 A GFCI', '12/2', 'Small-appliance circuit 1: countertop receptacles on the range wall, and the island (fed under the floor). GFCI protected. ⚠ Proposed.', [

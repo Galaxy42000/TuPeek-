@@ -31,6 +31,8 @@ const DEVICES = {
   data: { w: 2.25, h: 3.75, d: 1.5, color: '#e9eef6', type: 'Low-voltage data box (Cat6)' },
   smoke: { w: 4, h: 4, d: 1.5, color: '#f4f4f2', type: 'Smoke / CO alarm (hard-wired)', round: true },
   disconnect: { w: 6, h: 9, d: 3, color: '#a7abaf', type: 'A/C disconnect' },
+  ceilingBox: { w: 4, h: 4, d: 1.5, color: '#2f6fd0', type: 'Ceiling box (light)', round: true },
+  fan: { w: 14, h: 14, d: 5, color: '#b9bec4', type: 'Powered roof ventilator', round: true },
 };
 
 export function buildWiring(root, wiring, tag) {
@@ -65,9 +67,10 @@ export function buildWiring(root, wiring, tag) {
     // face: the axis the box faces along ('x' on walls running north–south, 'z' on walls
     // running east–west, 'y' in a ceiling)
     const dims = dv.face === 'x' ? [k.d, k.h, w] : dv.face === 'y' ? [w, k.d, k.h] : [w, k.h, k.d];
-    const geo = k.round ? new THREE.CylinderGeometry(k.w / 2 + 1, k.w / 2 + 1, k.d, 20) : new THREE.BoxGeometry(...dims);
+    const geo = k.round ? new THREE.CylinderGeometry(k.w / 2 + (k.w < 8 ? 1 : 0), k.w / 2 + (k.w < 8 ? 1 : 0), k.d, 24) : new THREE.BoxGeometry(...dims);
     const m = new THREE.Mesh(geo, mat(k.color));
     m.position.set(...dv.at);
+    if (dv.rot) m.rotation.set(...dv.rot); // e.g. set in a sloped roof deck
     m.renderOrder = 17;
     const g = new THREE.Group();
     g.add(m);
