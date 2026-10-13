@@ -94,7 +94,7 @@ export function houseWiring(c) {
   const swEntry = { at: [cav.entry, 48, WING_LENGTH + 6 + 4.1] }; // the four-gang box drawn as a fixture (SW-ENTRY)
   const swHall = dev('SW-HALL', 'switch', cav.old, 48, Z_CLOSET + 14, 'x', 'Two-gang switch box in the hall: hall and utility room lights. ⚠ Proposed.', { gang: 2 });
   const swBath = dev('SW-BATH', 'switch', cav.bathN, 48, EXT + 34, 'x', 'Three-gang box inside the bathroom door: light, fan, and the Ditra-Heat floor thermostat. ⚠ Proposed.', { gang: 3 });
-  const swBr1 = dev('SW-BR1', 'switch', cav.old, 48, D_BR1 - 4, 'x', 'Bedroom 1 light switch, inside the door. ⚠ Proposed.');
+  const swBr1 = dev('SW-BR1', 'switch', cav.old, 48, D_BR1 - 4, 'x', 'Bedroom 1 light switch, inside the hall door (3-way with SW-BR1B). ⚠ Proposed.');
   const swBr2 = dev('SW-BR2', 'switch', cav.old, 48, 245 - 4, 'x', 'Bedroom 2 light switch, inside the door. ⚠ Proposed.');
 
   // ---------------- kitchen ----------------
@@ -174,15 +174,27 @@ export function houseWiring(c) {
 
   // ---------------- bedrooms ----------------
   const r = 14; // receptacle height
-  circuit('BEDROOM 1 · 15 A AFCI', '14/2', 'Bedroom 1 receptacles and ceiling light. ⚠ Proposed.', [
-    swBr1,
-    ceil((EXT + X_MAIN - OLD) / 2, (EXT + DIVIDER) / 2),
-    { at: dev('BR1-1', 'outlet', cav.old, r, D_BR1 - 30, 'x', 'Receptacle.').at, turn: 'zx' },
-    dev('BR1-2', 'outlet', 60, r, cav.east, 'z', 'Receptacle under the high window.'),
-    dev('BR1-3', 'outlet', cav.wingN, r, 20, 'x', 'Receptacle.', { via: { wall: r } }),
-    dev('BR1-4', 'outlet', cav.wingN, r, 132, 'x', 'Receptacle past the window.', { via: { wall: r } }),
-  ]);
-  circuit('BEDROOM 2 · 15 A AFCI', '14/2', 'Bedroom 2 receptacles and ceiling light. ⚠ Proposed.', [
+  // bedroom 1 wiring photo: the home run comes straight from the panel through the new
+  // doorway framing about 28″ up; a box on the strip of wall by that doorway; along the east
+  // wall a 12/2 runs through the studs about 24″ up (behind nail plates) to receptacles
+  // under and past the window, and a box at switch height by the corner sends a cable up
+  // to the ceiling
+  const br1 = [
+    { at: dev('BR1-1', 'outlet', cav.old, r, EXT + 4, 'x', 'Receptacle on the short strip of wall between the corner and the utility room doorway (bedroom wiring photo).').at, wall: 28 },
+    dev('BR1-2', 'outlet', X_MAIN - OLD - 12, 16, cav.east, 'z', 'Receptacle on the east wall by the corner (photo).', { via: { wall: 24 } }),
+    dev('BR1-3', 'outlet', 35, 16, cav.east, 'z', 'Receptacle under the window (photo).', { via: { wall: 24 } }),
+    dev('BR1-4', 'outlet', cav.wingN, r, 20, 'x', 'Receptacle. ⚠ Proposed.', { via: { wall: 24 } }),
+    dev('BR1-5', 'outlet', cav.wingN, r, 132, 'x', 'Receptacle past the window. ⚠ Proposed.', { via: { wall: r } }),
+  ];
+  circuit('BEDROOM 1 · 20 A AFCI', '12/2', 'Bedroom 1 receptacles, fed in yellow 12/2 straight from the panel through the new doorway framing, then along the east wall through the studs (bedroom wiring photo). ⚠ Breaker assumed; the far wall’s receptacles are proposed.', br1, { from: 'bottom' });
+  runs.push({ id: 'BEDROOM 1 · light', cable: '12/2', notes: 'From the receptacle by the corner up to the switch box at about 50″ beside it, then up into the ceiling to the bedroom light, and on to the switch by the hall door (3-way). ⚠ Switching assumed.', path: (() => {
+    const sw = { at: dev('SW-BR1B', 'switch', X_MAIN - OLD - 8, 50, cav.east, 'z', 'Switch box at about 50″ by the corner, near the utility room doorway (bedroom wiring photo); its cable goes up to the ceiling. ⚠ What it switches is assumed.').at, wall: 50 };
+    const stops = [br1[1], sw, ceil((EXT + X_MAIN - OLD) / 2, (EXT + DIVIDER) / 2), { ...swBr1, turn: 'zx' }];
+    const out = [stops[0].at];
+    for (let i = 1; i < stops.length; i++) out.push(...hop(stops[i - 1], stops[i]));
+    return out;
+  })() });
+  circuit('BEDROOM 2 · 20 A AFCI', '12/2', 'Bedroom 2 receptacles and ceiling light, in yellow 12/2 like bedroom 1. ⚠ Proposed.', [
     swBr2,
     ceil((EXT + X_MAIN - OLD) / 2, (DIVIDER + WING_LENGTH - EXT) / 2),
     { at: dev('BR2-1', 'outlet', cav.old, r, 200, 'x', 'Receptacle.').at, turn: 'zx' },
