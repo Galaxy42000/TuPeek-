@@ -19,6 +19,7 @@ export const CABLES = {
   '14/4': { color: '#8f9499', d: 0.55, type: 'Mini-split interconnect cable 14/4' },
   service: { color: '#3a3a3a', d: 1.6, type: 'Service entrance cable' },
   cat6: { color: '#2f7fd6', d: 0.35, type: 'Cat6 data cable' },
+  coax: { color: '#2f5fb0', d: 0.3, type: 'RG6 coax cable' },
 };
 
 // device boxes: size across the face (w × h) and depth into the wall; colour

@@ -221,8 +221,12 @@ export function houseWiring(c) {
     { at: dev('LR-1', 'outlet', cav.south, r, 320, 'x', 'Receptacle between the slider and the window. ⚠ Proposed.').at, turn: 'zx' },
     dev('LR-2', 'outlet', cav.south, 18, 388, 'x', 'Receptacle on the south wall between the window and the south-west corner (photos).', { via: { wall: 10 } }),
     dev('LR-3', 'outlet', X_EAST - 7, 18, cav.west, 'z', 'Receptacle on the west wall about 7″ from the south-west corner, before its window (photos).', { via: { wall: 10 } }),
-    dev('LR-4', 'outlet', 228, r, cav.west, 'z', 'TV wall receptacle, between the windows. ⚠ Proposed.', { via: { wall: 12 } }),
-    dev('LR-5', 'outlet', X_MAIN + 14, r, cav.west, 'z', 'Receptacle by the north-west corner. ⚠ Proposed.', { via: { wall: 12 } }),
+    // TV wall photo: no low box between the windows; the run carries on at about 11″ and a
+    // cable rises from it to a box high in the middle of the wall, for a wall-mounted TV
+    { at: [228, 11, cav.west], wall: 11 },
+    dev('LR-4', 'outlet', 228, 74, cav.west, 'z', 'TV receptacle high in the middle of the wall between the two west windows, about 74″ up, fed up from the low run (TV wall photo). A coil of slack yellow cable is left in the bay beside it.', { via: { wall: 11 } }),
+    { at: [228, 11, cav.west], wall: 74 },
+    dev('LR-5', 'outlet', X_MAIN + 14, r, cav.west, 'z', 'Receptacle by the north-west corner. ⚠ Proposed; the photos show the run carrying on under the north window.', { via: { wall: 11 } }),
     dev('LR-6', 'outlet', cav.entry, r, Z_SOUTH - 10, 'x', 'Receptacle on the entry wall by the north-west corner. ⚠ Proposed.', { via: { wall: 12 } }),
   ]);
   circuit('MINI-SPLIT · 20 A 240 V', '12/2', 'Mini-split condenser: 240 V through the back wall to the disconnect outside, then a whip to the condenser under the bathroom window. ⚠ Assumes the gray box outside is its disconnect.', [
@@ -261,7 +265,11 @@ export function houseWiring(c) {
     dev(id, 'data', x, y, z, face, notes);
     runs.push({ id: `Cat6 → ${id}`, cable: 'cat6', notes: `Cat6 home run from the media box to ${notes.toLowerCase()} ⚠ Proposed.`, path: [media.at, ...hop(media, { at: [x, y, z], turn: 'zx' })] });
   };
-  data('D-TV', 228 + 12, cav.west, 'z', 'The TV wall in the living room.');
+  // TV wall photo: a blue cable with an F connector (coax) and a white one come down from the
+  // ceiling and are left coiled above the TV box
+  dev('D-TV', 'data', 222, 74, cav.west, 'z', 'Low-voltage box beside the TV receptacle, for the coax and the white data cable coiled there in the TV wall photo. ⚠ Box not fitted yet.');
+  runs.push({ id: 'Coax → D-TV', cable: 'coax', notes: 'Blue coax (RG6, F connector on the end) down from the ceiling to the TV, left coiled above the TV box (TV wall photo). ⚠ Where it starts is not known.', path: [media.at, ...hop(media, { at: [221, 74, cav.west], turn: 'zx' })] });
+  runs.push({ id: 'Cat6 → D-TV', cable: 'cat6', color: '#f1f0ea', notes: 'White low-voltage cable (taken to be Cat6) down from the ceiling to the TV, coiled beside the coax (TV wall photo). ⚠ Proposed start at the media box.', path: [media.at, ...hop(media, { at: [223, 74, cav.west], turn: 'zx' })] });
   data('D-BR1', cav.wingN, c.W5end + 7, 'x', 'Bedroom 1: an old-work box low on the north wall just past the sliding window, with the blue cable coming down the stud bay from the top plate (bedroom wiring photo).', 16);
   data('D-BR2', 40, cav.wingW, 'z', 'Bedroom 2, on its end wall. ⚠ Proposed.');
   data('D-SINK', cav.south, KZ + 96, 'x', 'The sink wall: the blue cable in the kitchen wiring photo drops from the top plate to just past the dishwasher box (purpose not known).', 22);
