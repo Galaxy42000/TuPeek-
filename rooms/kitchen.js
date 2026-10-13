@@ -234,7 +234,12 @@ export default {
   ],
 
   lighting: {
-    pendants: [{ over: 'ISLAND', count: 2, bottom: 66 }], // ⚠ placeholder
+    pendants: [
+      { over: 'ISLAND', count: 2, bottom: 66 }, // ⚠ placeholder
+      // over the sink, from the round box centred on the window just in from the wall
+      // (kitchen ceiling photo); the owner says it takes a pendant
+      { id: 'SINK PENDANT', at: [144.75 - 9, 54.25], bottom: 68, notes: 'Pendant over the sink, hung from the ceiling box centred on the window. ⚠ Fixture not chosen; drawn like the island pendants, bottom at 68″.' },
+    ],
     // recessed ceiling lights as [x, z], from the photo of the trusses with the cans hung
     // on them: about 12, in four rows running the length of the vault (two on each side
     // of its peak), three to a row. ⚠ Spacing estimated; the vault peak is at x = 52.5,

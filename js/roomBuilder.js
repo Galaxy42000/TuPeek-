@@ -432,6 +432,14 @@ export function buildRoom(cfg, opts = {}) {
   // ---------- lighting fixtures ----------
   const Lc = cfg.lighting || {};
   for (const p of Lc.pendants || []) {
+    // a single pendant at a given spot: { id, at: [x, z], bottom }
+    if (p.at) {
+      const pg = new THREE.Group();
+      root.add(pg);
+      F.pendant(pg, ctx, p.at[0], p.bottom ?? 68, p.at[1], ceilingAt(p.at[0], p.at[1]));
+      tag(pg, { id: p.id || 'Pendant', type: 'Pendant light', bottom: p.bottom ?? 68, materials: p.materials, notes: p.notes });
+      continue;
+    }
     const c = islands[p.over];
     if (!c) continue;
     const n = p.count ?? 2;

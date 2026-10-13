@@ -90,7 +90,7 @@ export function houseWiring(c) {
   // ---------------- switches ----------------
   // kitchen wiring photo: a three-gang box on the sink wall just short of the slider, with
   // the yellow cables from the cans and white ones coming down to it from the top plate
-  const swKitchen = dev('SW-KITCHEN', 'switch', cav.south, 48, KZ + 110, 'x', 'Three-gang switch box on the sink wall, about 14″ short of the sliding door, over the end of the counter (kitchen wiring photo): kitchen cans, island pendants, and the deck/soffit lights. ⚠ Which switch runs what is assumed.', { gang: 3 });
+  const swKitchen = dev('SW-KITCHEN', 'switch', cav.south, 48, KZ + 110, 'x', 'Three-gang switch box on the sink wall, about 14″ short of the sliding door, over the end of the counter (kitchen wiring photo): kitchen cans, the pendants (island and sink), and the roof ventilator, which has its own switch (owner). ⚠ Which gang is which is assumed.', { gang: 3 });
   const swEntry = { at: [cav.entry, 48, WING_LENGTH + 6 + 4.1] }; // the four-gang box drawn as a fixture (SW-ENTRY)
   const swHall = dev('SW-HALL', 'switch', cav.old, 48, Z_CLOSET + 14, 'x', 'Two-gang switch box in the hall: hall and utility room lights. ⚠ Proposed.', { gang: 2 });
   const swBath = dev('SW-BATH', 'switch', cav.bathN, 48, EXT + 34, 'x', 'Three-gang box inside the bathroom door: light, fan, and the Ditra-Heat floor thermostat. ⚠ Proposed.', { gang: 3 });
@@ -103,14 +103,15 @@ export function houseWiring(c) {
     // up and down the four rows of cans
     // the box over the sink window first, then the cans from the row along the sink wall
     // (kitchen ceiling photo) back across the vault
-    dev('SINK-LIGHT', 'ceilingBox', X_EAST - 9, ceilY(X_EAST - 9, KZ + 54.25) - 0.75, KZ + 54.25, 'y', 'Round ceiling box centred over the sink window, just in from the wall (kitchen ceiling photo): for a light over the sink. ⚠ Fixture not chosen.'),
+    dev('SINK-LIGHT', 'ceilingBox', X_EAST - 9, ceilY(X_EAST - 9, KZ + 54.25) - 0.75, KZ + 54.25, 'y', 'Round ceiling box centred over the sink window, just in from the wall (kitchen ceiling photo), for the pendant over the sink (owner).'),
     ...[3, 2, 1, 0].flatMap((row) => (row % 2 ? [0, 1, 2] : [2, 1, 0]).map((i) => ceil(...cans[row * 3 + i]))),
     { ...ceil(...pend[1]), turn: 'zx' }, ceil(...pend[0]),
   ]);
   // powered ventilator in the roof deck over the sink wall, two bays up from the eave, with
   // its thermostat in a junction box on the flex lead (kitchen ceiling photo)
   const fanX = X_EAST - 44, fanZ = KZ + 44, deck = (x) => P + c.roof.main.pitch * (xb - x) - 1.5;
-  circuit('ATTIC FAN · 20 A', '12/2', 'Powered roof ventilator in the roof deck over the sink wall, with its thermostat box on the flex lead (kitchen ceiling photo). ⚠ Circuit and breaker assumed.', [
+  circuit('ATTIC FAN · 20 A', '12/2', 'Powered roof ventilator in the roof deck over the sink wall, with its thermostat box on the flex lead (kitchen ceiling photo). It has its own wall switch (owner), taken to be in SW-KITCHEN. ⚠ Breaker and switch location assumed.', [
+    swKitchen,
     dev('ATTIC-FAN-T', 'junction', fanX - 14, deck(fanX - 14) - 3, fanZ - 6, 'y', 'Thermostat / junction box for the roof ventilator (photo).'),
     dev('ATTIC-FAN', 'fan', fanX, deck(fanX) - 3, fanZ, 'y', 'Powered roof (attic) ventilator, about 14″ across, set in the roof deck between the rafters (kitchen ceiling photo). ⚠ Size estimated.', { rot: [0, 0, -Math.atan(c.roof.main.pitch)] }),
   ]);
@@ -208,7 +209,7 @@ export function houseWiring(c) {
 
   // ---------------- living room ----------------
   const lr = c.livingLights;
-  circuit('LIVING LIGHTS · 15 A', '14/2', 'Living room cans and the ceiling-fan box (BOX-LR), from the four-gang box beside the entry door, plus the porch light. ⚠ Which switch runs what is assumed.', [
+  circuit('LIVING LIGHTS · 15 A', '14/2', 'Living room cans and the ceiling-fan box (BOX-LR), from the four-gang box beside the entry door, plus the porch light; the fourth switch there runs the soffit lights. ⚠ Which switch runs what is assumed.', [
     swEntry,
     ceil(lr[0][0], lr[0][1]), ceil(lr[2][0], lr[2][1]), ceil(c.lrBox[0], c.lrBox[1]), ceil(lr[3][0], lr[3][1]), ceil(lr[1][0], lr[1][1]),
     { at: dev('PORCH-J', 'junction', X_MAIN - OLD - 1, 84, WING_LENGTH + 22 + 36 + 8, 'x', 'Porch light beside the entry door (outside). ⚠ Proposed.').at, turn: 'zx' },
@@ -248,9 +249,9 @@ export function houseWiring(c) {
     { at: dev('EXT-DECK', 'gfci', WIDTH + 0.5, 18, SLIDER_END + 18, 'x', 'Weatherproof GFCI receptacle on the deck.').at, turn: 'zx' },
     { at: dev('EXT-PORCH', 'gfci', X_MAIN - OLD - 0.5, 18, WING_LENGTH + 8, 'x', 'Weatherproof GFCI receptacle at the entry porch.').at, turn: 'zx' },
   ]);
-  circuit('SOFFIT LIGHTS · 15 A', '14/2', 'Recessed soffit lights, from SW-KITCHEN by the slider: the two over the deck, then on round the living room end. ⚠ Proposed.', [
-    swKitchen,
-    ...c.soffit.map(([x, z]) => ({ at: [x, P - 4, z], turn: 'zx' })),
+  circuit('SOFFIT LIGHTS · 15 A', '14/2', 'Recessed soffit lights, switched in the four-gang box by the entry door (the kitchen’s three switches are the cans, the pendants and the roof fan): round the living room end and on to the two over the deck. ⚠ Proposed.', [
+    swEntry,
+    ...[...c.soffit].reverse().map(([x, z]) => ({ at: [x, P - 4, z], turn: 'zx' })),
   ]);
   circuit('SMOKE ALARMS · 15 A', '14/3', 'Hard-wired, interconnected smoke / CO alarms (14/3): hall, each bedroom, living room. ⚠ Positions proposed.', [
     smoke('SMOKE-HALL', X_MAIN + 60, (Z_CLOSET + Z_BATH) / 2),
