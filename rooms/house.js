@@ -567,6 +567,7 @@ house.wiring = houseWiring({
   livingLights: living.lights, lrBox: living.boxes[0].at,
   meter: at(fixture('METER')), disconnect: at(fixture('DISCONNECT')), condenser: at(fixture('CONDENSER')),
   acTop: fixture('A/C').bottom + fixture('A/C').height,
+  W5end: (() => { const w = house.walls.find((w) => w.id === 'Bedroom wing north wall'), o = w.openings.find((o) => o.id === 'W5'); return w.z0 + o.at + o.width; })(),
   soffit: [3, 2, 1, 0, 4].map((i) => house.roof.lights[i]),
 });
 

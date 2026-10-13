@@ -187,9 +187,12 @@ export function houseWiring(c) {
     // then the cable carries on along the north wall under the sliding window
     dev('BR1-4', 'outlet', EXT + 10, 20, cav.east, 'z', 'Receptacle on the east wall, about 10″ from the north-east corner (photo).', { via: { wall: 24 } }),
     dev('BR1-5', 'outlet', cav.wingN, 18, EXT + 10, 'x', 'Receptacle on the north wall, about 10″ from the corner (photo).', { via: { wall: 24 } }),
-    dev('BR1-6', 'outlet', cav.wingN, r, 132, 'x', 'Receptacle past the sliding window. ⚠ Proposed; the photo shows the cable running on under the window.', { via: { wall: 22 } }),
+    // the north wall between the two windows (third bedroom photo) has no box: the cable runs
+    // straight on at about 22″ under both windows into bedroom 2
+    dev('BR2-3', 'outlet', cav.wingN, r, 275, 'x', 'Receptacle past bedroom 2’s window, on the same run. ⚠ Proposed.', { via: { wall: 22 } }),
+    dev('BR2-4', 'outlet', 70, r, cav.wingW, 'z', 'Receptacle on the end wall. ⚠ Proposed.', { via: { wall: r } }),
   ];
-  circuit('BEDROOM 1 · 20 A AFCI', '12/2', 'Bedroom 1 receptacles, fed in yellow 12/2 straight from the panel through the new doorway framing, then along the east wall through the studs about 22–24″ up, round the north-east corner and on along the north wall under the sliding window (bedroom wiring photos). ⚠ Breaker assumed; the receptacle past the sliding window is proposed.', br1, { from: 'bottom' });
+  circuit('BEDROOMS · 20 A AFCI', '12/2', 'Bedroom receptacles, fed in yellow 12/2 straight from the panel through the new doorway framing, then along the east wall through the studs about 22–24″ up, round the north-east corner and on along the whole north wall under both windows into bedroom 2 (bedroom wiring photos). ⚠ Breaker assumed; the receptacles in bedroom 2 are proposed.', br1, { from: 'bottom' });
   runs.push({ id: 'BEDROOM 1 · light', cable: '12/2', notes: 'From the receptacle by the corner up to the switch box at about 50″ beside it, then up into the ceiling to the bedroom light, and on to the switch by the hall door (3-way). ⚠ Switching assumed.', path: (() => {
     const sw = { at: dev('SW-BR1B', 'switch', X_MAIN - OLD - 8, 50, cav.east, 'z', 'Switch box at about 50″ by the corner, near the utility room doorway (bedroom wiring photo); its cable goes up to the ceiling. ⚠ What it switches is assumed.').at, wall: 50 };
     const stops = [br1[1], sw, ceil((EXT + X_MAIN - OLD) / 2, (EXT + DIVIDER) / 2), { ...swBr1, turn: 'zx' }];
@@ -197,13 +200,10 @@ export function houseWiring(c) {
     for (let i = 1; i < stops.length; i++) out.push(...hop(stops[i - 1], stops[i]));
     return out;
   })() });
-  circuit('BEDROOM 2 · 20 A AFCI', '12/2', 'Bedroom 2 receptacles and ceiling light, in yellow 12/2 like bedroom 1. ⚠ Proposed.', [
+  circuit('BEDROOM 2 · 20 A AFCI', '12/2', 'Bedroom 2 ceiling light and the receptacle on the hall wall, in yellow 12/2 like bedroom 1. ⚠ Proposed.', [
     swBr2,
     ceil((EXT + X_MAIN - OLD) / 2, (DIVIDER + WING_LENGTH - EXT) / 2),
     { at: dev('BR2-1', 'outlet', cav.old, r, 200, 'x', 'Receptacle.').at, turn: 'zx' },
-    dev('BR2-2', 'outlet', cav.wingN, r, 176, 'x', 'Receptacle.'),
-    dev('BR2-3', 'outlet', cav.wingN, r, 275, 'x', 'Receptacle under the window.', { via: { wall: r } }),
-    dev('BR2-4', 'outlet', 70, r, cav.wingW, 'z', 'Receptacle on the end wall.', { via: { wall: r } }),
   ]);
 
   // ---------------- living room ----------------
@@ -258,8 +258,8 @@ export function houseWiring(c) {
   };
   data('D-TV', 228 + 12, cav.west, 'z', 'The TV wall in the living room.');
   data('D-LR', cav.entry, 390, 'x', 'The living room corner by the entry.');
-  data('D-BR1', cav.wingN, 26, 'x', 'Bedroom 1.');
-  data('D-BR2', cav.wingN, 182, 'x', 'Bedroom 2.');
+  data('D-BR1', cav.wingN, c.W5end + 7, 'x', 'Bedroom 1: an old-work box low on the north wall just past the sliding window, with the blue cable coming down the stud bay from the top plate (bedroom wiring photo).', 16);
+  data('D-BR2', 40, cav.wingW, 'z', 'Bedroom 2, on its end wall. ⚠ Proposed.');
   data('D-SINK', cav.south, KZ + 96, 'x', 'The sink wall: the blue cable in the kitchen wiring photo drops from the top plate to just past the dishwasher box (purpose not known).', 22);
   data('D-AP', X_MAIN + 70, (Z_BATH + 205) / 2, 'y', 'A ceiling Wi-Fi access point over the walkway.', ceilY(X_MAIN + 70, 140) - 0.75);
 
