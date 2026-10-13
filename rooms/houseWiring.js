@@ -213,15 +213,17 @@ export function houseWiring(c) {
     ceil(lr[0][0], lr[0][1]), ceil(lr[2][0], lr[2][1]), ceil(c.lrBox[0], c.lrBox[1]), ceil(lr[3][0], lr[3][1]), ceil(lr[1][0], lr[1][1]),
     { at: dev('PORCH-J', 'junction', X_MAIN - OLD - 1, 84, WING_LENGTH + 22 + 36 + 8, 'x', 'Porch light beside the entry door (outside). ⚠ Proposed.').at, turn: 'zx' },
   ]);
-  // living room wiring photo (the north-west corner): a box on the entry wall about 7″ from
-  // the corner, the cable through the corner studs to a box between the corner and the tall
-  // north window, then on low along the west wall under the window
-  circuit('LIVING · 20 A AFCI', '12/2', 'Living room receptacles: from the entry wall by the north-west corner, round the corner and along the west wall about 10″ up, under the tall window (living room wiring photo), then on to the TV wall and the south wall. ⚠ Breaker and the receptacles past the north window are proposed.', [
-    { at: dev('LR-1', 'outlet', cav.entry, 16, Z_SOUTH - 7, 'x', 'Receptacle on the entry wall, about 7″ from the north-west corner (photo).').at, turn: 'zx' },
-    dev('LR-2', 'outlet', X_MAIN + 14, 18, cav.west, 'z', 'Receptacle between the corner and the tall north window, about level with its sill (photo).', { via: { wall: 12 } }),
-    dev('LR-3', 'outlet', 228, r, cav.west, 'z', 'TV wall receptacle, between the windows. ⚠ Proposed.', { via: { wall: 10 } }),
-    dev('LR-4', 'outlet', cav.south, r, 392, 'x', 'Receptacle. ⚠ Proposed.', { via: { wall: r } }),
-    dev('LR-5', 'outlet', cav.south, r, 320, 'x', 'Receptacle between the slider and the window. ⚠ Proposed.', { via: { wall: r } }),
+  // living room wiring photos (the south-west corner, from both sides): a box on the south
+  // wall between the corner and the south window, the cable through the corner studs to a
+  // box on the west wall about 7″ from the corner, and the cable on low (about 10–12″ up)
+  // both ways: east under the south window, and north under the west wall's south window
+  circuit('LIVING · 20 A AFCI', '12/2', 'Living room receptacles: along the south wall about 10″ up, under its window, round the south-west corner and on along the west wall under its south window (living room wiring photos), to the TV wall and the north-west corner. ⚠ Breaker assumed; the receptacles by the slider, on the TV wall and at the north-west corner are proposed.', [
+    { at: dev('LR-1', 'outlet', cav.south, r, 320, 'x', 'Receptacle between the slider and the window. ⚠ Proposed.').at, turn: 'zx' },
+    dev('LR-2', 'outlet', cav.south, 18, 388, 'x', 'Receptacle on the south wall between the window and the south-west corner (photos).', { via: { wall: 10 } }),
+    dev('LR-3', 'outlet', X_EAST - 7, 18, cav.west, 'z', 'Receptacle on the west wall about 7″ from the south-west corner, before its window (photos).', { via: { wall: 10 } }),
+    dev('LR-4', 'outlet', 228, r, cav.west, 'z', 'TV wall receptacle, between the windows. ⚠ Proposed.', { via: { wall: 12 } }),
+    dev('LR-5', 'outlet', X_MAIN + 14, r, cav.west, 'z', 'Receptacle by the north-west corner. ⚠ Proposed.', { via: { wall: 12 } }),
+    dev('LR-6', 'outlet', cav.entry, r, Z_SOUTH - 10, 'x', 'Receptacle on the entry wall by the north-west corner. ⚠ Proposed.', { via: { wall: 12 } }),
   ]);
   circuit('MINI-SPLIT · 20 A 240 V', '12/2', 'Mini-split condenser: 240 V through the back wall to the disconnect outside, then a whip to the condenser under the bathroom window. ⚠ Assumes the gray box outside is its disconnect.', [
     { at: [c.disconnect[0], 24, cav.east], wall: 24 },
