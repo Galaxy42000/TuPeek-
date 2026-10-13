@@ -213,12 +213,15 @@ export function houseWiring(c) {
     ceil(lr[0][0], lr[0][1]), ceil(lr[2][0], lr[2][1]), ceil(c.lrBox[0], c.lrBox[1]), ceil(lr[3][0], lr[3][1]), ceil(lr[1][0], lr[1][1]),
     { at: dev('PORCH-J', 'junction', X_MAIN - OLD - 1, 84, WING_LENGTH + 22 + 36 + 8, 'x', 'Porch light beside the entry door (outside). ⚠ Proposed.').at, turn: 'zx' },
   ]);
-  circuit('LIVING · 20 A AFCI', '12/2', 'Living room receptacles, about every 12′ along the walls, including the TV wall. ⚠ Proposed.', [
-    { at: dev('LR-1', 'outlet', cav.entry, r, 368, 'x', 'Receptacle past the entry door.').at, turn: 'zx' },
-    dev('LR-2', 'outlet', X_MAIN + 12, r, cav.west, 'z', 'Receptacle.', { via: { wall: r } }),
-    dev('LR-3', 'outlet', 228, r, cav.west, 'z', 'TV wall receptacle, between the windows.', { via: { wall: r } }),
-    dev('LR-4', 'outlet', cav.south, r, 392, 'x', 'Receptacle.', { via: { wall: r } }),
-    dev('LR-5', 'outlet', cav.south, r, 320, 'x', 'Receptacle between the slider and the window.', { via: { wall: r } }),
+  // living room wiring photo (the north-west corner): a box on the entry wall about 7″ from
+  // the corner, the cable through the corner studs to a box between the corner and the tall
+  // north window, then on low along the west wall under the window
+  circuit('LIVING · 20 A AFCI', '12/2', 'Living room receptacles: from the entry wall by the north-west corner, round the corner and along the west wall about 10″ up, under the tall window (living room wiring photo), then on to the TV wall and the south wall. ⚠ Breaker and the receptacles past the north window are proposed.', [
+    { at: dev('LR-1', 'outlet', cav.entry, 16, Z_SOUTH - 7, 'x', 'Receptacle on the entry wall, about 7″ from the north-west corner (photo).').at, turn: 'zx' },
+    dev('LR-2', 'outlet', X_MAIN + 14, 18, cav.west, 'z', 'Receptacle between the corner and the tall north window, about level with its sill (photo).', { via: { wall: 12 } }),
+    dev('LR-3', 'outlet', 228, r, cav.west, 'z', 'TV wall receptacle, between the windows. ⚠ Proposed.', { via: { wall: 10 } }),
+    dev('LR-4', 'outlet', cav.south, r, 392, 'x', 'Receptacle. ⚠ Proposed.', { via: { wall: r } }),
+    dev('LR-5', 'outlet', cav.south, r, 320, 'x', 'Receptacle between the slider and the window. ⚠ Proposed.', { via: { wall: r } }),
   ]);
   circuit('MINI-SPLIT · 20 A 240 V', '12/2', 'Mini-split condenser: 240 V through the back wall to the disconnect outside, then a whip to the condenser under the bathroom window. ⚠ Assumes the gray box outside is its disconnect.', [
     { at: [c.disconnect[0], 24, cav.east], wall: 24 },
@@ -257,7 +260,6 @@ export function houseWiring(c) {
     runs.push({ id: `Cat6 → ${id}`, cable: 'cat6', notes: `Cat6 home run from the media box to ${notes.toLowerCase()} ⚠ Proposed.`, path: [media.at, ...hop(media, { at: [x, y, z], turn: 'zx' })] });
   };
   data('D-TV', 228 + 12, cav.west, 'z', 'The TV wall in the living room.');
-  data('D-LR', cav.entry, 390, 'x', 'The living room corner by the entry.');
   data('D-BR1', cav.wingN, c.W5end + 7, 'x', 'Bedroom 1: an old-work box low on the north wall just past the sliding window, with the blue cable coming down the stud bay from the top plate (bedroom wiring photo).', 16);
   data('D-BR2', 40, cav.wingW, 'z', 'Bedroom 2, on its end wall. ⚠ Proposed.');
   data('D-SINK', cav.south, KZ + 96, 'x', 'The sink wall: the blue cable in the kitchen wiring photo drops from the top plate to just past the dishwasher box (purpose not known).', 22);
